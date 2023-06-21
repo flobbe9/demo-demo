@@ -1,0 +1,15 @@
+server:
+    port: 4001
+    error:
+        include-message: always
+
+## h2
+spring:
+    datasource:
+        url: jdbc:h2:mem:demo
+    jpa:
+        database-platform: org.hibernate.dialect.H2Dialect
+    h2:
+        console:
+            enabled: true
+            path: /h2
