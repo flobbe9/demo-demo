@@ -1,9 +1,9 @@
-package com.example.demo.repositories;
+package com.example.vorspiel.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 
-import com.example.demo.models.AbstractEntity;
+import com.example.vorspiel.entites.AbstractEntity;
 
 
 @NoRepositoryBean

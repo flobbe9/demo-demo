@@ -1,10 +1,10 @@
-package com.example.demo.services;
+package com.example.vorspiel.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.models.AbstractEntity;
-import com.example.demo.repositories.Dao;
+import com.example.vorspiel.entites.AbstractEntity;
+import com.example.vorspiel.repositories.Dao;
 
 
 @Service
