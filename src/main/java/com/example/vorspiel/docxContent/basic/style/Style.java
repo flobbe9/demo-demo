@@ -20,9 +20,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Style {
     
-    @NotNull(message = "placing cannot be null.")
-    private Placing placing;
-
     @NotNull(message = "fontSize cannot be null.")
     private Integer fontSize;
 

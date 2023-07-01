@@ -11,15 +11,18 @@ import lombok.Setter;
 
 
 /**
+ * Represents a simple paragraph in a document with some style information. <p>
+ * 
  * Should be extended by any class that holds any kind of text content.
  * 
  * @since 0.0.1
+ * @see Style
  */
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class BasicParagraph { // TODO: make this abstract?
+public class BasicParagraph {
     
     @NotEmpty(message = "content String cannot be empty or null.")
     private String text;
