@@ -18,14 +18,11 @@ import com.documents4j.api.DocumentType;
 import com.documents4j.api.IConverter;
 import com.documents4j.job.LocalConverter;
 import com.example.vorspiel.docxContent.basic.BasicParagraph;
-import com.example.vorspiel.docxContent.basic.style.Style;
+import com.example.vorspiel.docxContent.basic.style.BasicStyle;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
@@ -35,7 +32,7 @@ import lombok.extern.log4j.Log4j2;
  * 
  * @since 0.0.1
  * @see BasicParagraph
- * @see Style
+ * @see BasicStyle
  */
 @Log4j2
 @Getter
@@ -44,7 +41,10 @@ public class BasicDocumentBuilder {
 
     public static final String RESOURCE_FOLDER = "./resources";
 
+    // TODO: add description for dimension fields
     public static final int INDENT_ONE_THIRD_PORTRAIT = 2000;
+
+    public static final int PAGE_LONG_SIDE_WITH_BORDER = 14000;
 
     public static final BigInteger PAGE_LONG_SIDE = BigInteger.valueOf(842 * 20);
 
@@ -104,16 +104,17 @@ public class BasicDocumentBuilder {
             log.warn("Not adding any paragraphs because content list is empty.");
 
         for (int i = 0; i < numParagraphs; i++) 
-            addBasicParagraph(i);
+            addParagraph(i);
     }
 
 
     /**
-     * Adds {@link BasicParagraph} from content list at given index to the document. This includes text and style.
+     * Adds {@link BasicParagraph} from content list at given index to the document. This includes text and style. <p>
+     * If the basicParagraph is null, an {@link XWPFPargraph} will be add anyway an hence appear as a line break.
      * 
      * @param contentIndex index of the {@link #content} element currently processed
      */
-    protected void addBasicParagraph(int contentIndex) {
+    protected void addParagraph(int contentIndex) {
     
         XWPFParagraph paragraph = createParagraphByContentIndex(contentIndex);
         XWPFRun run = paragraph.createRun();
@@ -121,7 +122,7 @@ public class BasicDocumentBuilder {
         BasicParagraph basicParagraph = this.content.get(contentIndex);
         
         if (basicParagraph != null) {
-            Style style = basicParagraph.getStyle();
+            BasicStyle style = basicParagraph.getStyle();
             
             // add text
             run.setText(this.content.get(contentIndex).getText());
@@ -155,7 +156,7 @@ public class BasicDocumentBuilder {
     }
 
         
-    protected void addStyle(XWPFParagraph paragraph, Style style) {
+    protected void addStyle(XWPFParagraph paragraph, BasicStyle style) {
 
         paragraph.getRuns().forEach(run -> {
             run.setFontSize(style.getFontSize());
@@ -168,6 +169,8 @@ public class BasicDocumentBuilder {
 
             run.setItalic(style.getItalic());
 
+            if (style.getBreakType() != null) run.addBreak(style.getBreakType());
+
             if (style.getUnderline()) run.setUnderline(UnderlinePatterns.SINGLE);
         });
 
@@ -176,8 +179,6 @@ public class BasicDocumentBuilder {
         if (style.getIndentParagraph()) paragraph.setIndentFromLeft(INDENT_ONE_THIRD_PORTRAIT);
 
         paragraph.setAlignment(style.getTextAlign());
-
-        paragraph.setPageBreak(style.getPageBreak());
     }
     
     

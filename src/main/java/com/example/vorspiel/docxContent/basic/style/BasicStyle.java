@@ -1,5 +1,6 @@
 package com.example.vorspiel.docxContent.basic.style;
 
+import org.apache.poi.xwpf.usermodel.BreakType;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 
 import jakarta.validation.constraints.NotEmpty;
@@ -18,7 +19,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Style {
+public class BasicStyle {
     
     @NotNull(message = "fontSize cannot be null.")
     private Integer fontSize;
@@ -47,6 +48,5 @@ public class Style {
     @NotNull(message = "textAlign cannot be null.")
     private ParagraphAlignment textAlign;
 
-    @NotNull(message = "pageBreak cannot be null.")
-    private Boolean pageBreak;
+    private BreakType breakType;
 }
