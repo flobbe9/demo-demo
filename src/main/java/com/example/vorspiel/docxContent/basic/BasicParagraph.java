@@ -24,9 +24,9 @@ import lombok.Setter;
 @NoArgsConstructor
 public class BasicParagraph {
     
-    @NotEmpty(message = "content String cannot be empty or null.")
+    @NotNull(message = "'content' cannot be null.")
     private String text;
     
-    @NotNull(message = "style cannot be null.")
+    @NotNull(message = "'style' cannot be null.")
     private BasicStyle style;
 }

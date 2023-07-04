@@ -41,13 +41,14 @@ public class BasicDocumentBuilder {
 
     public static final String RESOURCE_FOLDER = "./resources";
 
-    // TODO: add description for dimension fields
+    /** Use for paragraph indentation */
     public static final int INDENT_ONE_THIRD_PORTRAIT = 2000;
 
-    public static final int PAGE_LONG_SIDE_WITH_BORDER = 14000;
+    /** Use for table dimensions */
+    public static final int PAGE_LONG_SIDE_WITH_BORDER = 13300;
 
+    /** Use for orientation dimensions  */
     public static final BigInteger PAGE_LONG_SIDE = BigInteger.valueOf(842 * 20);
-
     public static final BigInteger PAGE_SHORT_SIDE = BigInteger.valueOf(595 * 20);
     
     private XWPFDocument document;
@@ -125,7 +126,7 @@ public class BasicDocumentBuilder {
             BasicStyle style = basicParagraph.getStyle();
             
             // add text
-            run.setText(this.content.get(contentIndex).getText());
+            run.setText(basicParagraph.getText());
 
             // add style
             addStyle(paragraph, style);
@@ -142,7 +143,7 @@ public class BasicDocumentBuilder {
      * @return created paragraph
      */
     protected XWPFParagraph createParagraphByContentIndex(int contentIndex) {
-        
+
         // header
         if (contentIndex == 0)
             return this.document.createHeader(HeaderFooterType.DEFAULT).createParagraph();
@@ -155,8 +156,18 @@ public class BasicDocumentBuilder {
         return this.document.createParagraph();
     }
 
-        
-    protected void addStyle(XWPFParagraph paragraph, BasicStyle style) {
+
+    /**
+     * Add style to given {@link XWPFParagraph}. Is skipped if either paragraph or style are null.
+     * 
+     * @param paragraph to apply the style to
+     * @param style information to use
+     * @see BasicStyle
+     */
+    public static void addStyle(XWPFParagraph paragraph, BasicStyle style) {
+
+        if (paragraph == null || style == null)
+            return;
 
         paragraph.getRuns().forEach(run -> {
             run.setFontSize(style.getFontSize());
@@ -191,9 +202,7 @@ public class BasicDocumentBuilder {
 
         log.info("Starting to write.docx file...");
 
-        docxFileName = prependSlash(docxFileName);
-        
-        try (OutputStream os = new FileOutputStream(RESOURCE_FOLDER + docxFileName)) {
+        try (OutputStream os = new FileOutputStream(RESOURCE_FOLDER + prependSlash(docxFileName))) {
 
             this.document.write(os);
             this.document.close();
@@ -203,7 +212,8 @@ public class BasicDocumentBuilder {
             return true;
 
         } catch (IOException e) {
-            log.error(e.getMessage());
+            log.error("Failed to write .docx file. Cause: ");
+            e.printStackTrace();
         }
 
         return false;
@@ -212,7 +222,8 @@ public class BasicDocumentBuilder {
 
     /**
      * Convert any .docx file to .pdf file and store in {@link #RESOURCE_FOLDER}.<p>
-     * Thread safe, since accessessing existing files.
+     * Thread safe, since accessessing existing files. <p>
+     * Is threadsafe since it accesses an existing resource.
      * 
      * @param docxInputStream inputStream of .docx file
      * @param pdfFileName name and suffix of pdf file
@@ -221,10 +232,8 @@ public class BasicDocumentBuilder {
     public static synchronized boolean convertDocxToPdf(InputStream docxInputStream, String pdfFileName) {
             
         log.info("Starting to convert .docx to .pdf...");
-
-        pdfFileName = prependSlash(pdfFileName);
         
-        try (OutputStream os = new FileOutputStream(RESOURCE_FOLDER + pdfFileName)) {
+        try (OutputStream os = new FileOutputStream(RESOURCE_FOLDER + prependSlash(pdfFileName))) {
             IConverter converter = LocalConverter.builder().build();
             
             converter.convert(docxInputStream)
@@ -239,9 +248,10 @@ public class BasicDocumentBuilder {
             return true;
                 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Failed to convert .docx to .pdf. Cause: ");
+            e.printStackTrace();
         }
-
+        
         return false;
     }
 
@@ -259,7 +269,8 @@ public class BasicDocumentBuilder {
             return convertDocxToPdf(new FileInputStream(docxFile), pdfFileName);
 
         } catch (IOException e) {
-            log.error(e.getMessage());
+            log.error("Failed to convert .docx to .pdf. Cause: ");
+            e.printStackTrace();
 
             return false;
         }

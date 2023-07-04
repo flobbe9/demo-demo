@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+
 /**
  * Holds all styling information for a document.
  * 
@@ -21,31 +22,31 @@ import lombok.Setter;
 @NoArgsConstructor
 public class BasicStyle {
     
-    @NotNull(message = "fontSize cannot be null.")
+    @NotNull(message = "'fontSize' cannot be null.")
     private Integer fontSize;
 
-    @NotEmpty(message = "fontFamily cannot be empty or null.")
+    @NotEmpty(message = "'fontFamily' cannot be empty or null.")
     private String fontFamily;
 
-    @NotNull(message = "style attribute color cannot be null.")
+    @NotNull(message = "'color' cannot be null.")
     private Color color;
 
-    @NotNull(message = "style attribute bold cannot be null.")
+    @NotNull(message = "'bold' cannot be null.")
     private Boolean bold;
 
-    @NotNull(message = "style attribute italic cannot be null.")
+    @NotNull(message = "'italic' cannot be null.")
     private Boolean italic;
 
-    @NotNull(message = "style attribute underline cannot be null.")
+    @NotNull(message = "'underline' cannot be null.")
     private Boolean underline;
 
-    @NotNull(message = "indentFirstLine cannot be null.")
+    @NotNull(message = "'indentFirstLine' cannot be null.")
     private Boolean indentFirstLine;
 
-    @NotNull(message = "indentParagraph cannot be null.")
+    @NotNull(message = "'indentParagraph' cannot be null.")
     private Boolean indentParagraph;
 
-    @NotNull(message = "textAlign cannot be null.")
+    @NotNull(message = "'textAlign' cannot be null.")
     private ParagraphAlignment textAlign;
 
     private BreakType breakType;
