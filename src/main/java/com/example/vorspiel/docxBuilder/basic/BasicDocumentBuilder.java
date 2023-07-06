@@ -53,10 +53,10 @@ public class BasicDocumentBuilder {
     
     private XWPFDocument document;
     
-    @NotNull(message = "content cannot be null.")
+    @NotNull(message = "'content' cannot be null.")
     private List<BasicParagraph> content;
 
-    @NotEmpty(message = "docxFileName cannot be empty or null.")
+    @NotEmpty(message = "'docxFileName' cannot be empty or null.")
     private String docxFileName;
 
     
@@ -66,8 +66,8 @@ public class BasicDocumentBuilder {
      * @param content list of {@link BasicParagraph}s
      * @param docxFileName file name to write the .docx file to
      */
-    public BasicDocumentBuilder(@NotNull(message = "content cannot be null.") List<BasicParagraph> content,
-                                 @NotEmpty(message = "docxFileName cannot be empty or null.") String docxFileName) {
+    public BasicDocumentBuilder(@NotNull(message = "'content' cannot be null.") List<BasicParagraph> content,
+                                 @NotEmpty(message = "'docxFileName' cannot be empty or null.") String docxFileName) {
 
         this.content = content;
         this.docxFileName = docxFileName;
@@ -207,8 +207,6 @@ public class BasicDocumentBuilder {
             this.document.write(os);
             this.document.close();
             
-            log.info("Finished writing .docx file.");
-            
             return true;
 
         } catch (IOException e) {
@@ -243,7 +241,6 @@ public class BasicDocumentBuilder {
                 .execute();
 
             converter.shutDown();
-            log.info("Finished converting .docx to .pdf.");
 
             return true;
                 

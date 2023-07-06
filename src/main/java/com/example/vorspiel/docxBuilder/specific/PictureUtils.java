@@ -32,6 +32,7 @@ public class PictureUtils {
      
     private List<File> pictures;
     
+    
     /**
      * Adds any picture to given {@link XWPFRun} if fileName param is found in {@link #pictures} list. <p>
      * Dimensions are hard coded.

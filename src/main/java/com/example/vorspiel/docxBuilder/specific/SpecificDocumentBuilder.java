@@ -217,8 +217,6 @@ public class SpecificDocumentBuilder extends BasicDocumentBuilder {
         try {
             fileName = prependSlash(fileName);
 
-            log.info("Finished reading .docx file.");
-
             return new XWPFDocument(new FileInputStream(RESOURCE_FOLDER + fileName));
         
         } catch (Exception e) {

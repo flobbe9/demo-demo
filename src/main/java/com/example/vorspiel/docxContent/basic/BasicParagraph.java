@@ -2,7 +2,6 @@ package com.example.vorspiel.docxContent.basic;
 
 import com.example.vorspiel.docxContent.basic.style.BasicStyle;
 
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,7 +23,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class BasicParagraph {
     
-    @NotNull(message = "'content' cannot be null.")
+    @NotNull(message = "'text' cannot be null.")
     private String text;
     
     @NotNull(message = "'style' cannot be null.")

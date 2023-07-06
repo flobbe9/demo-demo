@@ -49,5 +49,6 @@ public class BasicStyle {
     @NotNull(message = "'textAlign' cannot be null.")
     private ParagraphAlignment textAlign;
 
+    /** May be null. */
     private BreakType breakType;
 }

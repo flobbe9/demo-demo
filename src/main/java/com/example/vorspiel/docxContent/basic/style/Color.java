@@ -4,6 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 
+/**
+ * Simple colors and corresponding hex strings.
+ * 
+ * @since 0.0.1
+ */
 @Getter
 @AllArgsConstructor
 public enum Color {
