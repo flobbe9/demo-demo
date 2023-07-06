@@ -131,19 +131,4 @@ public class TableUtils {
 
         return hasTableStarted && !hasTableEnded;
     }
-
-
-    boolean isTableTooSmall() {
-
-        int numTableCells = this.tableData.getNumColumns() * this.tableData.getNumRows();
-        int startIndex = this.tableData.getStartIndex();
-        int endIndex = this.tableData.getEndIndex();
-
-        if (numTableCells < endIndex - startIndex + 1) {
-            log.warn("Did not add table to document. Not enough cells for content.");
-            return true;
-        }
-
-        return false;
-    }
 }

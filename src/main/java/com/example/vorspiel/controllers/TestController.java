@@ -5,8 +5,10 @@ import static com.example.vorspiel.docxBuilder.basic.BasicDocumentBuilder.RESOUR
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -16,25 +18,25 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.example.vorspiel.docxBuilder.basic.BasicDocumentBuilder;
 import com.example.vorspiel.docxBuilder.specific.SpecificDocumentBuilder;
 import com.example.vorspiel.docxContent.basic.BasicParagraph;
 import com.example.vorspiel.docxContent.specific.RequestBodyWrapper;
-import com.example.vorspiel.docxContent.specific.TableData;
-import com.example.vorspiel.docxContent.specific.ValidWrapper;
+import com.example.vorspiel.utils.ApiException;
+import com.example.vorspiel.utils.RequestExceptionHandler;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 
 
 @RestController
 @RequestMapping("/test")
-@Log4j2
 public class TestController {
-    
+
     @GetMapping("/convertDocxToPdf")
     @ResponseStatus(value = HttpStatus.OK, reason = "Converted .docx to .pdf.")
     public synchronized void convertDocxToPdf() throws FileNotFoundException {
@@ -49,24 +51,34 @@ public class TestController {
      * the second is the title <p>
      * last element is the footer <p>
      * anything in between is main content <p>.
+     * @throws ApiException
      * 
-     * @param basicParagraphs list of all paragraphs in the document
      */
     @PostMapping("/createDocument")
-    @ResponseStatus(value = HttpStatus.OK, reason = "Created document.")
-    public synchronized void createDocument(@RequestBody @ValidWrapper RequestBodyWrapper wrapper, BindingResult bindingResult) {
+    public synchronized Object createDocument(@RequestBody @Validated RequestBodyWrapper wrapper, BindingResult bindingResult) {
 
-        // TODO: TableUtils validation
+        // case: http 400
+        if (bindingResult.hasErrors()) 
+            return RequestExceptionHandler.returnPretty(HttpStatus.BAD_REQUEST, bindingResult);
 
-        // catch validation errors
-        if (bindingResult.hasErrors()) {
-            log.error(bindingResult.getAllErrors().get(0).getDefaultMessage());
-            return;
-        } 
+        // case: http 422
+        if (!wrapper.isValid())
+            return RequestExceptionHandler.returnPretty(HttpStatus.UNPROCESSABLE_ENTITY);
 
-        new SpecificDocumentBuilder(wrapper.getBasicParagraphs(), "specificTest.docx", wrapper.getTableData(), new File(RESOURCE_FOLDER + "/logo.png")).build();
+        // build and write document
+        Boolean buildSuccessful = new SpecificDocumentBuilder(wrapper.getContent(), 
+                                                              "specificTest.docx", 
+                                                              wrapper.getTableData(), 
+                                                              new File(RESOURCE_FOLDER + "/logo.png")).build();
+
+        // case: http 500
+        if (!buildSuccessful)
+            return RequestExceptionHandler.returnPretty(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        // case: http 200
+        return RequestExceptionHandler.returnPrettySuccess(HttpStatus.OK);
     }
-
+    
 
     @PostMapping
     public String test(@RequestBody @Validated List<BasicParagraph> content) {
