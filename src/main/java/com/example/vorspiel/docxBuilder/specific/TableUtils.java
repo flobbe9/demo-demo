@@ -12,7 +12,6 @@ import com.example.vorspiel.docxContent.basic.style.BasicStyle;
 import com.example.vorspiel.docxContent.specific.TableData;
 
 import lombok.AllArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 
 
 /**
@@ -20,11 +19,10 @@ import lombok.extern.log4j.Log4j2;
  * 
  * @since 0.0.1
  */
-@Log4j2
 @AllArgsConstructor
 public class TableUtils {
 
-    public static final Integer TABLE_CELL_MARGIN = 120;
+    public static final Integer TABLE_CELL_MARGIN = 80;
 
     private XWPFDocument document;
 
@@ -32,37 +30,19 @@ public class TableUtils {
 
 
     /**
-     * Adds new table to the document and style it.
-     * 
-     * @param style to apply
-     * @param tableWidth width of a single row
-     * @return created table
-     */
-    XWPFTable createNewTable(BasicStyle style, int tableWidth) {
-
-        // create table
-        XWPFTable table = this.document.createTable(this.tableData.getNumRows(), this.tableData.getNumColumns());
-
-        // add style
-        addTableStyle(style, tableWidth, table);
-
-        return table;
-    }
-
-
-    /**
      * Adds a new table to the document or uses an existing one. Currently only one table per document can be used. <p>
+     * 
      * Adds one {@link BasicParagraph} per cell.
      * 
-     * @param contentIndex
+     * @param currentContentIndex index of the {@link #content} element currently processed
      * @param text
      */
-    void addTableCell(int contentIndex, String text, BasicStyle style) {
+    XWPFParagraph addTableCell(int currentContentIndex, String text, BasicStyle style) {
 
         // get current row and colum
         int startIndex = this.tableData.getStartIndex();
-        int currentRow = (contentIndex - startIndex) / this.tableData.getNumColumns();
-        int currentCol = (contentIndex - startIndex) % this.tableData.getNumColumns();
+        int currentRow = (currentContentIndex - startIndex) / this.tableData.getNumColumns();
+        int currentCol = (currentContentIndex - startIndex) % this.tableData.getNumColumns();
         
         // create table or use existing one
         XWPFTable table = this.document.getTables().isEmpty() ? createNewTable(style, SpecificDocumentBuilder.PAGE_LONG_SIDE_WITH_BORDER / 2) : 
@@ -76,8 +56,26 @@ public class TableUtils {
         // add text
         paragraph.createRun().setText(text);
 
+        return paragraph;
+    }
+
+
+    /**
+     * Adds new table to the document and style it.
+     * 
+     * @param style to apply
+     * @param tableWidth width of a single row
+     * @return created table
+     */
+    private XWPFTable createNewTable(BasicStyle style, int tableWidth) {
+
+        // create table
+        XWPFTable table = this.document.createTable(this.tableData.getNumRows(), this.tableData.getNumColumns());
+
         // add style
-        SpecificDocumentBuilder.addStyle(paragraph, style);
+        addTableStyle(style, tableWidth, table);
+
+        return table;
     }
 
 
@@ -107,7 +105,7 @@ public class TableUtils {
         table.setTableAlignment(tableRowAlign);
 
         // set table cell margins
-        table.setCellMargins(TABLE_CELL_MARGIN, TABLE_CELL_MARGIN, 0, TABLE_CELL_MARGIN);    
+        table.setCellMargins(TABLE_CELL_MARGIN, TABLE_CELL_MARGIN, TABLE_CELL_MARGIN, TABLE_CELL_MARGIN);    
         
         // set table width
         table.setWidth(tableWidth);
@@ -117,17 +115,17 @@ public class TableUtils {
     /**
      * Checks if given content index is currently inside a table cell.
      * 
-     * @param contentIndex index of the {@link #content} element currently processed
+     * @param currentContentIndex index of the {@link #content} element currently processed
      * @return true if tableData not null and index at a table cell
      */
-    boolean isTableIndex(int contentIndex) {
+    boolean isTableIndex(int currentContentIndex) {
 
         if (this.tableData == null) 
             return false;
 
-        boolean hasTableStarted = contentIndex >= this.tableData.getStartIndex();
+        boolean hasTableStarted = currentContentIndex >= this.tableData.getStartIndex();
 
-        boolean hasTableEnded = contentIndex > this.tableData.getEndIndex();
+        boolean hasTableEnded = currentContentIndex > this.tableData.getEndIndex();
 
         return hasTableStarted && !hasTableEnded;
     }

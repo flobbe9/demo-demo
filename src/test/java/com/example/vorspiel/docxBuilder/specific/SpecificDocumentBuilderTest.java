@@ -1,14 +1,10 @@
 package com.example.vorspiel.docxBuilder.specific;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.File;
 import java.util.Arrays;
 
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.junit.jupiter.api.Test;
-import org.springframework.validation.annotation.Validated;
-
 import com.example.vorspiel.docxBuilder.basic.BasicDocumentBuilder;
 import com.example.vorspiel.docxContent.basic.BasicParagraph;
 import com.example.vorspiel.docxContent.basic.style.Color;
@@ -23,9 +19,9 @@ import com.example.vorspiel.docxContent.basic.style.BasicStyle;
  */
 public class SpecificDocumentBuilderTest {
 
-    private BasicStyle style = new BasicStyle(30, 
+    private BasicStyle style = new BasicStyle(20, 
                                             "times new roman", 
-                                            Color.BLUE, 
+                                            Color.BLACK, 
                                             true, 
                                             true, 
                                             false,
@@ -44,8 +40,7 @@ public class SpecificDocumentBuilderTest {
 
     private TableData tableData = new TableData(3, 1, 2, 4);
 
-    private SpecificDocumentBuilder specificDocumentBuilder = new SpecificDocumentBuilder(Arrays.asList(header, picture, cell0, cell1, cell2, title, footer), "specificTest.docx", tableData, new File(BasicDocumentBuilder.RESOURCE_FOLDER + "/logo.png"));
-    
+    private SpecificDocumentBuilder specificDocumentBuilder = new SpecificDocumentBuilder(Arrays.asList(null, title, title, picture, cell0, cell1, cell2, null), "specificTest.docx", tableData, new File(BasicDocumentBuilder.RESOURCE_FOLDER + "/logo.png"));
 
     @Test
     void build_shouldWork() {

@@ -17,7 +17,7 @@ import com.example.vorspiel.docxContent.basic.style.BasicStyle;
  */
 public class BasicDocumentBuilderTest {
 
-    private BasicStyle style = new BasicStyle(50, 
+    private BasicStyle style = new BasicStyle(11    , 
                                     "times new roman", 
                                     Color.BLUE, 
                                     true, 
@@ -32,13 +32,13 @@ public class BasicDocumentBuilderTest {
     private BasicParagraph title = new BasicParagraph("This is the title", style);
     private BasicParagraph footer = new BasicParagraph("This is the footer", style);
 
-    private BasicDocumentBuilder basicParagraphBuilder = new BasicDocumentBuilder(Arrays.asList(header, title, footer), "basicTest.docx");
+    private BasicDocumentBuilder basicParagraphBuilder = new BasicDocumentBuilder(Arrays.asList(null, title, footer), "basicTest.docx");
     // private BasicParagraphBuilder basicParagraphBuilder = new BasicParagraphBuilder(Arrays.asList(), "basicTest.docx");
 
 
     @Test
     void build_shouldWork() {
 
-        // basicParagraphBuilder.build();
+        basicParagraphBuilder.build();
     }
 }
