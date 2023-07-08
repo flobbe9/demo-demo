@@ -111,16 +111,23 @@ public class BasicDocumentBuilder {
 
     /**
      * Adds {@link BasicParagraph} from content list at given index to the document. This includes text and style. <p>
-     * If the basicParagraph is null, an {@link XWPFPargraph} will be add anyway an hence appear as a line break.
+
+     * If basicParagraph is null, an {@link XWPFPargraph} will be added anyway an hence appear as a line break. 
+     * This applies <strong>not</strong> for header and footer.
      * 
-     * @param contentIndex index of the {@link #content} element currently processed
+     * @param currentContentIndex index of the {@link #content} element currently processed
      */
-    protected void addParagraph(int contentIndex) {
-    
-        XWPFParagraph paragraph = createParagraphByContentIndex(contentIndex);
+    protected void addParagraph(int currentContentIndex) {
+
+        XWPFParagraph paragraph = createParagraphByContentIndex(currentContentIndex);
+
+        // case: header or footer is null
+        if (paragraph == null)
+            return;
+
         XWPFRun run = paragraph.createRun();
 
-        BasicParagraph basicParagraph = this.content.get(contentIndex);
+        BasicParagraph basicParagraph = this.content.get(currentContentIndex);
         
         if (basicParagraph != null) {
             BasicStyle style = basicParagraph.getStyle();
@@ -136,23 +143,34 @@ public class BasicDocumentBuilder {
 
     /**
      * Adds an {@link XWPFParagraph} to the document either for the header, the footer or the main content. <p>
+
      * For the fist element (index = 0) a header paragraph will be generated, for the last element a footer paragraph
-     * and for any other element a normal paragraph.
+     * and for any other element a normal paragraph.<p>
      * 
-     * @param contentIndex index of the {@link #content} element currently processed
+     * @param currentContentIndex index of the {@link #content} element currently processed
      * @return created paragraph
      */
-    protected XWPFParagraph createParagraphByContentIndex(int contentIndex) {
+    protected XWPFParagraph createParagraphByContentIndex(int currentContentIndex) {
 
-        // header
-        if (contentIndex == 0)
-            return this.document.createHeader(HeaderFooterType.DEFAULT).createParagraph();
+        BasicParagraph basicParagraph = this.content.get(currentContentIndex);
 
-        // footer
-        if (contentIndex == this.content.size() - 1)
-            return this.document.createFooter(HeaderFooterType.DEFAULT).createParagraph();
+        // case: header
+        if (currentContentIndex == 0) {
+            if (basicParagraph != null)
+                return this.document.createHeader(HeaderFooterType.DEFAULT).createParagraph();
 
-        // any other
+            return null;
+        }
+
+        // case: footer
+        if (currentContentIndex == this.content.size() - 1) {
+            if (basicParagraph != null)
+                return this.document.createFooter(HeaderFooterType.DEFAULT).createParagraph();
+
+            return null;
+        }
+
+        // case: any other
         return this.document.createParagraph();
     }
 
@@ -164,7 +182,7 @@ public class BasicDocumentBuilder {
      * @param style information to use
      * @see BasicStyle
      */
-    public static void addStyle(XWPFParagraph paragraph, BasicStyle style) {
+    public void addStyle(XWPFParagraph paragraph, BasicStyle style) {
 
         if (paragraph == null || style == null)
             return;
@@ -180,14 +198,18 @@ public class BasicDocumentBuilder {
 
             run.setItalic(style.getItalic());
 
-            if (style.getBreakType() != null) run.addBreak(style.getBreakType());
+            if (style.getBreakType() != null) 
+                run.addBreak(style.getBreakType());
 
-            if (style.getUnderline()) run.setUnderline(UnderlinePatterns.SINGLE);
+            if (style.getUnderline()) 
+                run.setUnderline(UnderlinePatterns.SINGLE);
         });
 
-        if (style.getIndentFirstLine()) paragraph.setIndentationFirstLine(INDENT_ONE_THIRD_PORTRAIT);
+        if (style.getIndentFirstLine()) 
+            paragraph.setIndentationFirstLine(INDENT_ONE_THIRD_PORTRAIT);
 
-        if (style.getIndentParagraph()) paragraph.setIndentFromLeft(INDENT_ONE_THIRD_PORTRAIT);
+        if (style.getIndentParagraph()) 
+            paragraph.setIndentFromLeft(INDENT_ONE_THIRD_PORTRAIT);
 
         paragraph.setAlignment(style.getTextAlign());
     }
@@ -220,7 +242,9 @@ public class BasicDocumentBuilder {
 
     /**
      * Convert any .docx file to .pdf file and store in {@link #RESOURCE_FOLDER}.<p>
+
      * Thread safe, since accessessing existing files. <p>
+
      * Is threadsafe since it accesses an existing resource.
      * 
      * @param docxInputStream inputStream of .docx file
