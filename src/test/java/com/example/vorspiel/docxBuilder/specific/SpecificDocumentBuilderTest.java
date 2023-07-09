@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import com.example.vorspiel.docxBuilder.basic.BasicDocumentBuilder;
 import com.example.vorspiel.docxContent.basic.BasicParagraph;
 import com.example.vorspiel.docxContent.basic.style.Color;
-import com.example.vorspiel.docxContent.specific.TableData;
+import com.example.vorspiel.docxContent.specific.TableConfig;
 import com.example.vorspiel.docxContent.basic.style.BasicStyle;
 
 
@@ -38,9 +38,9 @@ public class SpecificDocumentBuilderTest {
     private BasicParagraph cell2 = new BasicParagraph("Cel 2", style);
     private BasicParagraph footer = new BasicParagraph("This is the footer", style);
 
-    private TableData tableData = new TableData(3, 1, 2, 4);
+    private TableConfig tableConfig = new TableConfig(3, 1, 2, 4);
 
-    private SpecificDocumentBuilder specificDocumentBuilder = new SpecificDocumentBuilder(Arrays.asList(null, title, title, picture, cell0, cell1, cell2, null), "specificTest.docx", tableData, new File(BasicDocumentBuilder.RESOURCE_FOLDER + "/logo.png"));
+    private SpecificDocumentBuilder specificDocumentBuilder = new SpecificDocumentBuilder(Arrays.asList(null, title, title, picture, cell0, cell1, cell2, null), "specificTest.docx", tableConfig, new File(BasicDocumentBuilder.RESOURCE_FOLDER + "/logo.png"));
 
     @Test
     void build_shouldWork() {

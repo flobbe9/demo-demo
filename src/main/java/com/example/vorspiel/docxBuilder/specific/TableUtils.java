@@ -9,7 +9,7 @@ import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 
 import com.example.vorspiel.docxContent.basic.BasicParagraph;
 import com.example.vorspiel.docxContent.basic.style.BasicStyle;
-import com.example.vorspiel.docxContent.specific.TableData;
+import com.example.vorspiel.docxContent.specific.TableConfig;
 
 import lombok.AllArgsConstructor;
 
@@ -26,7 +26,7 @@ public class TableUtils {
 
     private XWPFDocument document;
 
-    private TableData tableData;
+    private TableConfig tableConfig;
 
 
     /**
@@ -40,9 +40,9 @@ public class TableUtils {
     XWPFParagraph addTableCell(int currentContentIndex, String text, BasicStyle style) {
 
         // get current row and colum
-        int startIndex = this.tableData.getStartIndex();
-        int currentRow = (currentContentIndex - startIndex) / this.tableData.getNumColumns();
-        int currentCol = (currentContentIndex - startIndex) % this.tableData.getNumColumns();
+        int startIndex = this.tableConfig.getStartIndex();
+        int currentRow = (currentContentIndex - startIndex) / this.tableConfig.getNumColumns();
+        int currentCol = (currentContentIndex - startIndex) % this.tableConfig.getNumColumns();
         
         // create table or use existing one
         XWPFTable table = this.document.getTables().isEmpty() ? createNewTable(style, SpecificDocumentBuilder.PAGE_LONG_SIDE_WITH_BORDER / 2) : 
@@ -70,7 +70,7 @@ public class TableUtils {
     private XWPFTable createNewTable(BasicStyle style, int tableWidth) {
 
         // create table
-        XWPFTable table = this.document.createTable(this.tableData.getNumRows(), this.tableData.getNumColumns());
+        XWPFTable table = this.document.createTable(this.tableConfig.getNumRows(), this.tableConfig.getNumColumns());
 
         // add style
         addTableStyle(style, tableWidth, table);
@@ -116,16 +116,16 @@ public class TableUtils {
      * Checks if given content index is currently inside a table cell.
      * 
      * @param currentContentIndex index of the {@link #content} element currently processed
-     * @return true if tableData not null and index at a table cell
+     * @return true if tableConfig not null and index at a table cell
      */
     boolean isTableIndex(int currentContentIndex) {
 
-        if (this.tableData == null) 
+        if (this.tableConfig == null) 
             return false;
 
-        boolean hasTableStarted = currentContentIndex >= this.tableData.getStartIndex();
+        boolean hasTableStarted = currentContentIndex >= this.tableConfig.getStartIndex();
 
-        boolean hasTableEnded = currentContentIndex > this.tableData.getEndIndex();
+        boolean hasTableEnded = currentContentIndex > this.tableConfig.getEndIndex();
 
         return hasTableStarted && !hasTableEnded;
     }

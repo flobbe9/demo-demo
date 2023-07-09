@@ -68,7 +68,7 @@ public class TestController {
         // build and write document
         Boolean buildSuccessful = new SpecificDocumentBuilder(wrapper.getContent(), 
                                                               "specificTest.docx", 
-                                                              wrapper.getTableData(), 
+                                                              wrapper.getTableConfig(), 
                                                               new File(RESOURCE_FOLDER + "/logo.png")).build();
 
         // case: http 500

@@ -20,7 +20,7 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 import com.example.vorspiel.docxBuilder.basic.BasicDocumentBuilder;
 import com.example.vorspiel.docxContent.basic.BasicParagraph;
 import com.example.vorspiel.docxContent.basic.style.BasicStyle;
-import com.example.vorspiel.docxContent.specific.TableData;
+import com.example.vorspiel.docxContent.specific.TableConfig;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -45,13 +45,13 @@ public class SpecificDocumentBuilder extends BasicDocumentBuilder {
     private TableUtils tableUtils;
 
     
-    public SpecificDocumentBuilder(List<BasicParagraph> content, String docxFileName, TableData tableData, File... pictures) {
+    public SpecificDocumentBuilder(List<BasicParagraph> content, String docxFileName, TableConfig tableConfig, File... pictures) {
 
         super(content, docxFileName);
         super.setDocument(readDocxFile("2Columns.docx"));
 
         this.pictureUtils = new PictureUtils(Arrays.asList(pictures));
-        this.tableUtils = new TableUtils(getDocument(), tableData);
+        this.tableUtils = new TableUtils(getDocument(), tableConfig);
     }
     
     
@@ -169,6 +169,7 @@ public class SpecificDocumentBuilder extends BasicDocumentBuilder {
      * @param style information to use
      * @see BasicStyle
      */
+    @Override
     public void addStyle(XWPFParagraph paragraph, BasicStyle style) {
 
         if (paragraph == null || style == null)

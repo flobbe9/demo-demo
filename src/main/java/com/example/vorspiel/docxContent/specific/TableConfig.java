@@ -19,7 +19,7 @@ import lombok.extern.log4j.Log4j2;
 @AllArgsConstructor
 @NoArgsConstructor
 @Log4j2
-public class TableData {
+public class TableConfig {
      
     @NotNull(message = "'numColumns' cannot be null.")
     @Min(value = 1, message = "'numColumns' has to be greater than equal 1.")
@@ -64,7 +64,7 @@ public class TableData {
 
         // case: less cells than cell data
         if (numTableCells < numFilledCells) {
-            log.error("Invalid 'tableData'. Not enough cells for content.");
+            log.error("Invalid 'tableConfig'. Not enough cells for content.");
             return false;
         }
 

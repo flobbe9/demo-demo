@@ -17,6 +17,9 @@ import com.example.vorspiel.docxContent.basic.style.BasicStyle;
  */
 public class BasicDocumentBuilderTest {
 
+    public static final String TEST_RESOURCE_FOLDER = "./src/test/java/com/example/vorspiel/testResources";
+
+
     private BasicStyle style = new BasicStyle(11    , 
                                     "times new roman", 
                                     Color.BLUE, 

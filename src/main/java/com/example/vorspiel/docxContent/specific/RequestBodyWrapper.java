@@ -18,7 +18,7 @@ public class RequestBodyWrapper {
     private List<@Valid BasicParagraph> content;
 
     @Valid
-    private TableData tableData;
+    private TableConfig tableConfig;
 
 
     /**
@@ -28,6 +28,6 @@ public class RequestBodyWrapper {
      */
     public boolean isValid() {
 
-        return this.tableData.isValid();
+        return this.tableConfig.isValid();
     }
 }
