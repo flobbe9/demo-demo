@@ -12,6 +12,8 @@ import org.apache.poi.xwpf.usermodel.XWPFRun;
 
 import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 
@@ -21,6 +23,8 @@ import lombok.extern.log4j.Log4j2;
  * @since 0.0.1
  */
 @Log4j2
+@Getter
+@Setter
 @AllArgsConstructor
 public class PictureUtils {
 
@@ -38,8 +42,8 @@ public class PictureUtils {
      * Dimensions are hard coded.
      * 
      * @param run to add the picture to
-     * @param fileName of the picture. Has to match at least one file name from {@link #pictures}. <p>
-     * In case of duplicates the first match will be used.
+     * @param fileName of the picture. Has to match at least one file name from {@link #pictures}.
+     * In case of duplicates the first match will be used
      * @param pictureType format of the picture
      */
     void addPicture(XWPFRun run, String fileName, PictureType pictureType) {
@@ -51,8 +55,8 @@ public class PictureUtils {
 
         // find picture in list
         Optional<File> optionalPicture = this.pictures.stream()
-                                                 .filter(picture -> picture.getName().equals(fileName))
-                                                 .findFirst();
+                                                      .filter(picture -> picture.getName().equals(fileName))
+                                                      .findFirst();
 
         // add picture
         try (InputStream fis = new FileInputStream(optionalPicture.get())) {
@@ -71,7 +75,9 @@ public class PictureUtils {
 
 
     /**
-     * Checks if given string ends on a picture extension like ".jpg" or ".png" and returns the {@link PictureType}.
+     * Checks if given string ends on a picture extension like ".jpg" or ".png" and returns the {@link PictureType}.<p>
+     * 
+     * ".jpeg" is not supported.
      * 
      * @param fileName to find the pictureType of
      * @return the pictureType if fileName ends on an extension from {@link PictureType} or null

@@ -12,6 +12,8 @@ import com.example.vorspiel.docxContent.basic.style.BasicStyle;
 import com.example.vorspiel.docxContent.specific.TableConfig;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 
 /**
@@ -19,6 +21,8 @@ import lombok.AllArgsConstructor;
  * 
  * @since 0.0.1
  */
+@Getter
+@Setter
 @AllArgsConstructor
 public class TableUtils {
 
@@ -30,7 +34,9 @@ public class TableUtils {
 
 
     /**
-     * Adds a new table to the document or uses an existing one. Currently only one table per document can be used. <p>
+     * Adds content to a single table cell and adds a new table to the document or uses an existing one. <p>
+     * 
+     * Currently only one table per document can be used. <p>
      * 
      * Adds one {@link BasicParagraph} per cell.
      * 
@@ -125,8 +131,8 @@ public class TableUtils {
 
         boolean hasTableStarted = currentContentIndex >= this.tableConfig.getStartIndex();
 
-        boolean hasTableEnded = currentContentIndex > this.tableConfig.getEndIndex();
+        boolean hasTableNotEnded = currentContentIndex <= this.tableConfig.getEndIndex();
 
-        return hasTableStarted && !hasTableEnded;
+        return hasTableStarted && hasTableNotEnded;
     }
 }
