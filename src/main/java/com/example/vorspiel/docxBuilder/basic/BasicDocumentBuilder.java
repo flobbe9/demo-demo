@@ -22,6 +22,7 @@ import com.example.vorspiel.docxContent.basic.style.BasicStyle;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
@@ -57,6 +58,7 @@ public class BasicDocumentBuilder {
     private List<BasicParagraph> content;
 
     @NotEmpty(message = "'docxFileName' cannot be empty or null.")
+    @Pattern(regexp = ".*\\.docx$", message = "Wrong format of 'docxFileName'. Only '.dox' permitted.")
     private String docxFileName;
 
     
@@ -220,9 +222,9 @@ public class BasicDocumentBuilder {
      * 
      * @return true if conversion was successful
      */
-    protected boolean writeDocxFile() {
+    protected synchronized boolean writeDocxFile() {
 
-        log.info("Starting to write.docx file...");
+        log.info("Writing .docx file...");
 
         try (OutputStream os = new FileOutputStream(RESOURCE_FOLDER + prependSlash(docxFileName))) {
 
@@ -253,7 +255,7 @@ public class BasicDocumentBuilder {
      */
     public static synchronized boolean convertDocxToPdf(InputStream docxInputStream, String pdfFileName) {
             
-        log.info("Starting to convert .docx to .pdf...");
+        log.info("Converting .docx to .pdf...");
         
         try (OutputStream os = new FileOutputStream(RESOURCE_FOLDER + prependSlash(pdfFileName))) {
             IConverter converter = LocalConverter.builder().build();
@@ -284,7 +286,7 @@ public class BasicDocumentBuilder {
      * @param pdfFileName
      * @return
      */
-    public static boolean convertDocxToPdf(File docxFile, String pdfFileName) {
+    public static synchronized boolean convertDocxToPdf(File docxFile, String pdfFileName) {
 
         try {
             return convertDocxToPdf(new FileInputStream(docxFile), pdfFileName);
@@ -302,9 +304,12 @@ public class BasicDocumentBuilder {
      * Prepends a '/' to given String if there isn't already one.
      * 
      * @param str String to prepend the slash to
-     * @return the altered (or not altered) string
+     * @return the altered (or not altered) string or "/" if given str is null
      */
     protected static String prependSlash(String str) {
+
+        if (str == null || str.equals(""))
+            return "/";
 
         return str.charAt(0) == '/' ? str : "/" + str;
     }
