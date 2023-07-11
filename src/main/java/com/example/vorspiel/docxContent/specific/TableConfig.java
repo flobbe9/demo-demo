@@ -57,7 +57,7 @@ public class TableConfig {
      * 
      * @return true if table has enough cells
      */
-    boolean isTableBigEnough() {
+    private boolean isTableBigEnough() {
 
         int numTableCells = getNumColumns() * getNumRows();
         int numFilledCells = getEndIndex() - getStartIndex() + 1;

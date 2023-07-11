@@ -140,12 +140,6 @@ public class TableUtilsTest {
     }
 
 
-    // currentContentIndex == startIndex -> true
-    // currentContentIndex > startIndex -> true
-    // currentContentIndex < startIndex -> false
-    // currentContentIndex == endIndex -> false
-    // current > contentIndex  -> false
-    // current < contentIndex -> true
     @Test
     void isTableIndex_tableConfigNull_shouldBeFalse() {
 
