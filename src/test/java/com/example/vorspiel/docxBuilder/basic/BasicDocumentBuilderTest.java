@@ -308,7 +308,7 @@ public class BasicDocumentBuilderTest {
     @Test
     void convertDocxToPdf_() {
         
-        // BasicDocumentBuilder.convertDocxToPdf(new File(TEST_RESOURCE_FOLDER + "/test.docx"), pdfFileName);
+        BasicDocumentBuilder.convertDocxToPdf(new File(TEST_RESOURCE_FOLDER + "/test.docx"), pdfFileName);
     }
 
 
