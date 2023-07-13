@@ -34,7 +34,6 @@ import com.example.vorspiel.docxContent.basic.style.BasicStyle;
  * @since 0.0.1
  */
 @TestInstance(Lifecycle.PER_CLASS)
-// @TestMethodOrder(OrderAnnotation.class)
 public class BasicDocumentBuilderTest {
 
     public static final String TEST_RESOURCE_FOLDER = "./src/test/java/com/example/vorspiel/testResources";
@@ -52,6 +51,8 @@ public class BasicDocumentBuilderTest {
     private List<BasicParagraph> content;
     
     private BasicDocumentBuilder basicParagraphBuilder;
+
+    private String pdfFileName;
     
 
     @BeforeEach
@@ -66,7 +67,7 @@ public class BasicDocumentBuilderTest {
                                     true,
                                     false,
                                     false,
-                                    ParagraphAlignment.LEFT, 
+                                    ParagraphAlignment.CENTER, 
                                     null);        
         this.header = new BasicParagraph("This is the header", this.style);
         this.title = new BasicParagraph("This is the title", this.style);
@@ -75,7 +76,82 @@ public class BasicDocumentBuilderTest {
         this.basicParagraphBuilder = new BasicDocumentBuilder(this.content, this.docxFileName);
         this.document = this.basicParagraphBuilder.getDocument();
 
+        this.pdfFileName = "test.pdf";
+
         new File(RESOURCE_FOLDER + "/" + this.docxFileName).delete();
+    }
+
+
+    // check paragraph exists
+    // check file exists
+//----------- build()
+    @Test
+    void build_paragarphAndFileShouldExist() {
+
+        // should have no paragraphs
+        assertTrue(this.document.getParagraphs().size() == 0);
+
+        // file should not exist
+        assertFalse(new File(BasicDocumentBuilder.RESOURCE_FOLDER + "/" + this.docxFileName).exists());
+
+        this.basicParagraphBuilder.build();
+
+        // should have number of paragraphs minus header and footer
+        assertTrue(this.document.getParagraphs().size() == this.content.size() - 2);        
+
+        // should have written to file
+        assertTrue(new File(BasicDocumentBuilder.RESOURCE_FOLDER + "/" + this.docxFileName).exists());
+    }
+
+
+//----------- addContent()
+    @Test
+    void addContent_shouldHaveParagraph() {
+
+        // should have no paragraphs
+        assertTrue(this.document.getParagraphs().size() == 0);
+
+        this.basicParagraphBuilder.addContent();
+
+        // should have number of paragraphs minus header and footer
+        assertTrue(this.document.getParagraphs().size() == this.content.size() - 2);
+    }
+
+
+//----------- addParagraph()
+    @Test
+    void addParagraph_basicParagraphNull_shouldNotThrow_shouldAddParagraph() {
+
+        int currentContentIndex = this.content.indexOf(this.title);
+
+        // should have no paragraphs
+        assertTrue(this.document.getParagraphs().size() == 0);
+
+        // set basicParagraph null
+        this.content.set(currentContentIndex, null);
+        assertDoesNotThrow(() -> this.basicParagraphBuilder.addParagraph(currentContentIndex));
+
+        // should still have created paragraph
+        assertTrue(this.document.getParagraphs().size() == 1);
+    }
+
+
+    @Test
+    void addParagraph_shouldAddTextAndStyle() {
+
+        // use title
+        int currentContentIndex = 1;
+
+        this.basicParagraphBuilder.addParagraph(currentContentIndex);
+
+        BasicParagraph expectedParagraph = this.content.get(currentContentIndex);
+        XWPFParagraph actualParagraph = this.document.getLastParagraph();
+        
+        // should have text
+        assertEquals(expectedParagraph.getText(), actualParagraph.getText());
+
+        // should have style, check one attribute
+        assertEquals(expectedParagraph.getStyle().getTextAlign(), actualParagraph.getAlignment());
     }
 
 
@@ -228,6 +304,14 @@ public class BasicDocumentBuilderTest {
     }
 
 
+//----------- convertDocxToPdf()
+    @Test
+    void convertDocxToPdf_() {
+        
+        // BasicDocumentBuilder.convertDocxToPdf(new File(TEST_RESOURCE_FOLDER + "/test.docx"), pdfFileName);
+    }
+
+
 //----------- prependSlash()
     @Test
     void prependSlash_strNull_shouldReturnSlash() {
@@ -267,5 +351,6 @@ public class BasicDocumentBuilderTest {
         this.document.close();
 
         new File(RESOURCE_FOLDER + "/" + this.docxFileName).delete();
+        // new File(RESOURCE_FOLDER + "/" + this.pdfFileName).delete();
     }
 }

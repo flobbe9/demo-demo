@@ -26,6 +26,11 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 
+/**
+ * Variant of {@link BasicDocumentBuilder} for building a Vorspiel document.
+ * 
+ * @since 0.0.1
+ */
 @Log4j2
 @Getter
 public class SpecificDocumentBuilder extends BasicDocumentBuilder {
