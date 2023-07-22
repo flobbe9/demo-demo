@@ -1,6 +1,6 @@
 package com.example.vorspiel.controllers;
 
-import static com.example.vorspiel.docxBuilder.basic.BasicDocumentBuilder.RESOURCE_FOLDER;
+import static com.example.vorspiel.documentBuilder.DocumentBuilder.RESOURCE_FOLDER;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -22,10 +22,9 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import com.example.vorspiel.docxBuilder.basic.BasicDocumentBuilder;
-import com.example.vorspiel.docxBuilder.specific.SpecificDocumentBuilder;
-import com.example.vorspiel.docxContent.basic.BasicParagraph;
-import com.example.vorspiel.docxContent.specific.RequestBodyWrapper;
+import com.example.vorspiel.documentBuilder.DocumentBuilder;
+import com.example.vorspiel.documentParts.BasicParagraph;
+import com.example.vorspiel.documentParts.DocumentWrapper;
 import com.example.vorspiel.utils.ApiException;
 import com.example.vorspiel.utils.RequestExceptionHandler;
 
@@ -41,7 +40,7 @@ public class TestController {
     @ResponseStatus(value = HttpStatus.OK, reason = "Converted .docx to .pdf.")
     public synchronized void convertDocxToPdf() throws FileNotFoundException {
 
-        BasicDocumentBuilder.convertDocxToPdf(new File(RESOURCE_FOLDER + "./specificTest.docx"), null);
+        DocumentBuilder.convertDocxToPdf(new File(RESOURCE_FOLDER + "./specificTest.docx"), null);
     }
 
 
@@ -55,7 +54,7 @@ public class TestController {
      * 
      */
     @PostMapping("/createDocument")
-    public synchronized Object createDocument(@RequestBody @Validated RequestBodyWrapper wrapper, BindingResult bindingResult) {
+    public synchronized Object createDocument(@RequestBody @Validated DocumentWrapper wrapper, BindingResult bindingResult) {
 
         // case: http 400
         if (bindingResult.hasErrors()) 
@@ -66,10 +65,10 @@ public class TestController {
             return RequestExceptionHandler.returnPretty(HttpStatus.UNPROCESSABLE_ENTITY);
 
         // build and write document
-        Boolean buildSuccessful = new SpecificDocumentBuilder(wrapper.getContent(), 
-                                                              "specificTest.docx", 
-                                                              wrapper.getTableConfig(), 
-                                                              new File(RESOURCE_FOLDER + "/logo.png")).build();
+        Boolean buildSuccessful = new DocumentBuilder(wrapper.getContent(), 
+                                                    "specificTest.docx", 
+                                                    wrapper.getTableConfig(), 
+                                                    new File(RESOURCE_FOLDER + "/logo.png")).build();
 
         // case: http 500
         if (!buildSuccessful)

@@ -1,6 +1,6 @@
-package com.example.vorspiel.docxContent.basic;
+package com.example.vorspiel.documentParts;
 
-import com.example.vorspiel.docxContent.basic.style.BasicStyle;
+import com.example.vorspiel.documentParts.style.Style;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -15,7 +15,7 @@ import lombok.Setter;
  * Should be extended by any class that holds any kind of text content.
  * 
  * @since 0.0.1
- * @see BasicStyle
+ * @see Style
  */
 @Getter
 @Setter
@@ -27,5 +27,5 @@ public class BasicParagraph {
     private String text;
     
     @NotNull(message = "'style' cannot be null.")
-    private BasicStyle style;
+    private Style style;
 }

@@ -1,4 +1,4 @@
-package com.example.vorspiel.docxContent.basic.style;
+package com.example.vorspiel.documentParts.style;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package com.example.vorspiel.docxBuilder.specific;
+package com.example.vorspiel.documentBuilder;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,8 +18,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-
-import com.example.vorspiel.docxBuilder.basic.BasicDocumentBuilderTest;
 
 
 /**
@@ -49,7 +47,7 @@ public class PictureUtilsTest {
         this.run = document.createParagraph().createRun();
         this.testPictureName = "test.png";
         this.testPictureType = PictureType.PNG;
-        this.pictureUtils = new PictureUtils(Arrays.asList(new File(BasicDocumentBuilderTest.TEST_RESOURCE_FOLDER + "/" + testPictureName)));
+        this.pictureUtils = new PictureUtils(Arrays.asList(new File(DocumentBuilderTest.TEST_RESOURCE_FOLDER + "/" + testPictureName)));
     }
 
 

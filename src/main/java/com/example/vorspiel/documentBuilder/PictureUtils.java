@@ -1,4 +1,4 @@
-package com.example.vorspiel.docxBuilder.specific;
+package com.example.vorspiel.documentBuilder;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -64,8 +64,8 @@ public class PictureUtils {
             run.addPicture(fis, 
                            pictureType.ordinal(),
                            fileName, 
-                           cmToEMUs(SpecificDocumentBuilder.PICTURE_WIDTH_LANDSCAPE_HALF),
-                           cmToEMUs(SpecificDocumentBuilder.PICTURE_HEIGHT_LANDSCAPE_HALF));
+                           cmToEMUs(DocumentBuilder.PICTURE_WIDTH_LANDSCAPE_HALF),
+                           cmToEMUs(DocumentBuilder.PICTURE_HEIGHT_LANDSCAPE_HALF));
 
         } catch (Exception e) {
             log.error("Failed to add picture. Cause:");

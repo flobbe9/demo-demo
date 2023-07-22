@@ -1,4 +1,4 @@
-package com.example.vorspiel.docxContent.specific;
+package com.example.vorspiel.documentParts;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

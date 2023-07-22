@@ -1,10 +1,15 @@
-package com.example.vorspiel.docxBuilder.specific;
+package com.example.vorspiel.documentBuilder;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
+
 import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.wp.usermodel.HeaderFooterType;
 import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
@@ -17,50 +22,116 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 
-import com.example.vorspiel.docxBuilder.basic.BasicDocumentBuilder;
-import com.example.vorspiel.docxContent.basic.BasicParagraph;
-import com.example.vorspiel.docxContent.basic.style.BasicStyle;
-import com.example.vorspiel.docxContent.specific.TableConfig;
+import com.documents4j.api.DocumentType;
+import com.documents4j.api.IConverter;
+import com.documents4j.job.LocalConverter;
+import com.example.vorspiel.documentParts.BasicParagraph;
+import com.example.vorspiel.documentParts.TableConfig;
+import com.example.vorspiel.documentParts.style.Style;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 
 /**
- * Variant of {@link BasicDocumentBuilder} for building a Vorspiel document.
+ * Class to build and write a .docx document.
  * 
  * @since 0.0.1
+ * @see BasicParagraph
+ * @see Style
  */
 @Log4j2
 @Getter
-public class SpecificDocumentBuilder extends BasicDocumentBuilder {
+@Setter
+public class DocumentBuilder {
 
-    /** Picture dimensions in centimeters. */
+    public static final String RESOURCE_FOLDER = "./resources";
+
+    /** paragraph indentation */
+    public static final int INDENT_ONE_THIRD_PORTRAIT = 2000;
+
+    /** table dimensions */
+    public static final int PAGE_LONG_SIDE_WITH_BORDER = 13300;
+
+    /** orientation dimensions  */
+    public static final BigInteger PAGE_LONG_SIDE = BigInteger.valueOf(842 * 20);
+    public static final BigInteger PAGE_SHORT_SIDE = BigInteger.valueOf(595 * 20);
+
+    /** picture dimensions in centimeters. */
     public static final int PICTURE_WIDTH_PORTRAIT = 15;
     public static final int PICTURE_WIDTH_LANDSCAPE_HALF = 11;
     public static final int PICTURE_HEIGHT_LANDSCAPE_HALF = 7;
 
-    /** Document margins */
+    /** document margins */
     public static final int MINIMUM_MARGIN_TOP_BOTTOM = 240;
 
+    /** minimum line space (Zeilenabstand) */
     public static final int NO_LINE_SPACE = 1;
+    
+    @NotNull(message = "'content' cannot be null.")
+    private List<BasicParagraph> content;
+    
+    @NotEmpty(message = "'docxFileName' cannot be empty or null.")
+    @Pattern(regexp = ".*\\.docx$", message = "Wrong format of 'docxFileName'. Only '.dox' permitted.")
+    private String docxFileName;
 
     private PictureUtils pictureUtils;
 
-    private TableUtils tableUtils;
+    private TableUtils tableUtils;  
+
+    private XWPFDocument document;
 
     
-    public SpecificDocumentBuilder(List<BasicParagraph> content, String docxFileName, TableConfig tableConfig, File... pictures) {
+    /**
+     * Reading the an empty document from an existing file.<p>
+     * 
+     * Pictures may be added.
+     * 
+     * @param content list of {@link BasicParagraph}s
+     * @param docxFileName file name to write the .docx file to
+     * @param pictures list of files containing pictures
+     * @see PictureType for allowed formats
+     */
+    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, File... pictures) {
 
-        super(content, docxFileName);
-        super.setDocument(readDocxFile("2Columns.docx"));
+        this.content = content;
+        this.docxFileName = docxFileName;
+        this.pictureUtils = new PictureUtils(Arrays.asList(pictures));
+        this.document = readDocxFile("EmptyDocument_2Columns.docx");
+    }
 
+
+    /**
+     * Reading the an empty document from an existing file.<p>
+     * 
+     * Pictures and/or one table may be added.
+     * 
+     * @param content list of {@link BasicParagraph}s
+     * @param docxFileName file name to write the .docx file to
+     * @param tableConfig wrapper with configuration data for the table to insert
+     * @param pictures list of files containing pictures
+     * @see PictureType for allowed formats    
+     */
+    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, TableConfig tableConfig, File... pictures) {
+
+        this.content = content;
+        this.docxFileName = docxFileName;
         this.pictureUtils = new PictureUtils(Arrays.asList(pictures));
         this.tableUtils = new TableUtils(getDocument(), tableConfig);
+        this.document = readDocxFile("EmptyDocument_2Columns.docx");
     }
-    
-    
-    @Override
+
+
+    /**
+     * Builds a the document with given list of {@link BasicParagraph}s and writes it to a .docx file which will
+     * be located in the {@link #RESOURCE_FOLDER}.
+     * 
+     * @return true if document was successfully written to a .docx file
+     */
     public boolean build() {
         
         log.info("Starting to build document...");
@@ -73,15 +144,35 @@ public class SpecificDocumentBuilder extends BasicDocumentBuilder {
         
         return writeDocxFile();
     }
+    
+
+    /**
+     * Iterates {@link #content} list and adds all paragraphs to the document.
+     */
+    public void addContent() {
+
+        log.info("Adding content...");
+
+        int numParagraphs = this.content.size();
+
+        // case: no content
+        if (numParagraphs == 0) 
+            log.warn("Not adding any paragraphs because content list is empty.");
+
+        for (int i = 0; i < numParagraphs; i++) 
+            addParagraph(i);
+    }
 
 
     /**
-     * Adds {@link BasicParagraph} from content list at given index to the document. This includes text and style.
+     * Adds {@link BasicParagraph} from content list at given index to the document. This includes text and style. <p>
+
+     * If basicParagraph is null, an {@link XWPFPargraph} will be added anyway an hence appear as a line break. 
+     * This applies <strong>not</strong> for header and footer.
      * 
      * @param currentContentIndex index of the {@link #content} element currently processed
      */
-    @Override
-    protected void addParagraph(int currentContentIndex) {
+    public void addParagraph(int currentContentIndex) {
 
         // get content
         BasicParagraph basicParagraph = getContent().get(currentContentIndex);
@@ -109,11 +200,10 @@ public class SpecificDocumentBuilder extends BasicDocumentBuilder {
      * @param currentContentIndex index of the {@link #content} element currently processed
      * @return created paragraph
      */
-    @Override
-    protected XWPFParagraph createParagraphByContentIndex(int currentContentIndex) {
+    public XWPFParagraph createParagraphByContentIndex(int currentContentIndex) {
 
-        // case: table does not need paragrahp from here
-        if (tableUtils.isTableIndex(currentContentIndex))
+        // case: table does not need paragrahp from this method
+        if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex))
             return null;
 
         BasicParagraph basicParagraph = getContent().get(currentContentIndex);
@@ -144,22 +234,22 @@ public class SpecificDocumentBuilder extends BasicDocumentBuilder {
      * 
      * "text" will be added as plain string, as picture or inside a table.
      * 
-     * @param run to add the text or picture to
-     * @param text of the basicParagraph
+     * @param paragraph to add text and style to
+     * @param basicParagraph to use the text and style information from
+     * @param currentContentIndex index of the {@link #content} element currently processed
      */
-    private void addText(XWPFParagraph paragraph, BasicParagraph basicParagraph, int currentContentIndex) {
+    public void addText(XWPFParagraph paragraph, BasicParagraph basicParagraph, int currentContentIndex) {
 
         String text = basicParagraph.getText();
         PictureType pictureType = this.pictureUtils.getPictureType(text);
         
-        // case: insert into table
-        if (this.tableUtils.isTableIndex(currentContentIndex)) {
-            XWPFParagraph cellParagraph = this.tableUtils.addTableCell(currentContentIndex, text, basicParagraph.getStyle());
-            addStyle(cellParagraph, basicParagraph.getStyle());
-
         // case: text is a picture file name
-        } else if (pictureType != null) {
+        if (this.pictureUtils != null && pictureType != null) {
             this.pictureUtils.addPicture(paragraph.createRun(), text, pictureType);
+        
+        // case: insert into table
+        } else if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex)) {
+            this.tableUtils.addTableCell(currentContentIndex, text, basicParagraph.getStyle());
             
         // case: plain text
         } else
@@ -172,10 +262,9 @@ public class SpecificDocumentBuilder extends BasicDocumentBuilder {
      * 
      * @param paragraph to apply the style to
      * @param style information to use
-     * @see BasicStyle
+     * @see Style
      */
-    @Override
-    public void addStyle(XWPFParagraph paragraph, BasicStyle style) {
+    public static void addStyle(XWPFParagraph paragraph, Style style) {
 
         if (paragraph == null || style == null)
             return;
@@ -308,6 +397,31 @@ public class SpecificDocumentBuilder extends BasicDocumentBuilder {
 
 
     /**
+     * Writes the {@link XWPFDocument} to a .docx file. Stores it in {@link #RESOURCE_FOLDER}.
+     * 
+     * @return true if conversion was successful
+     */
+    public synchronized boolean writeDocxFile() {
+
+        log.info("Writing .docx file...");
+
+        try (OutputStream os = new FileOutputStream(RESOURCE_FOLDER + prependSlash(docxFileName))) {
+
+            this.document.write(os);
+            this.document.close();
+            
+            return true;
+
+        } catch (IOException e) {
+            log.error("Failed to write .docx file. Cause: ");
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+
+    /**
      * Reads given .docx file to an {@link XWPFDocument} and cleans up any content. <p>
      * 
      * File is expected to be located in {@link #RESOURCE_FOLDER}. <p>
@@ -337,5 +451,78 @@ public class SpecificDocumentBuilder extends BasicDocumentBuilder {
 
             return new XWPFDocument();
         }
+    }
+
+
+    /**
+     * Convert any .docx file to .pdf file and store in {@link #RESOURCE_FOLDER}.<p>
+
+     * Thread safe, since accessessing existing files. <p>
+
+     * Is threadsafe since it accesses an existing resource.
+     * 
+     * @param docxInputStream inputStream of .docx file
+     * @param pdfFileName name and suffix of pdf file
+     * @return true if conversion was successful
+     */
+    public static synchronized boolean convertDocxToPdf(InputStream docxInputStream, String pdfFileName) {
+            
+        log.info("Converting .docx to .pdf...");
+        
+        try (OutputStream os = new FileOutputStream(RESOURCE_FOLDER + prependSlash(pdfFileName))) {
+            IConverter converter = LocalConverter.builder().build();
+            
+            converter.convert(docxInputStream)
+                .as(DocumentType.DOCX)
+                .to(os)
+                .as(DocumentType.PDF)
+                .execute();
+
+            converter.shutDown();
+
+            return true;
+                
+        } catch (Exception e) {
+            log.error("Failed to convert .docx to .pdf. Cause: ");
+            e.printStackTrace();
+        }
+        
+        return false;
+    }
+
+
+    /**
+     * Overloading {@link #convertDocxToPdf(InputStream, String)}.
+     * 
+     * @param docxFile
+     * @param pdfFileName
+     * @return
+     */
+    public static synchronized boolean convertDocxToPdf(File docxFile, String pdfFileName) {
+
+        try {
+            return convertDocxToPdf(new FileInputStream(docxFile), pdfFileName);
+
+        } catch (IOException e) {
+            log.error("Failed to convert .docx to .pdf. Cause: ");
+            e.printStackTrace();
+
+            return false;
+        }
+    }
+
+
+    /**
+     * Prepends a '/' to given String if there isn't already one.
+     * 
+     * @param str String to prepend the slash to
+     * @return the altered (or not altered) string or "/" if given str is null
+     */
+    static String prependSlash(String str) {
+
+        if (str == null || str.equals(""))
+            return "/";
+
+        return str.charAt(0) == '/' ? str : "/" + str;
     }
 }

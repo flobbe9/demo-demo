@@ -1,4 +1,4 @@
-package com.example.vorspiel.docxContent.basic.style;
+package com.example.vorspiel.documentParts.style;
 
 import org.apache.poi.xwpf.usermodel.BreakType;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
@@ -21,7 +21,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class BasicStyle {
+public class Style {
     
     @NotNull(message = "'fontSize' cannot be null.")
     @Min(value = 8, message = "'fontSize' has to be greater than equal 8.")

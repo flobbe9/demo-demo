@@ -1,4 +1,4 @@
-package com.example.vorspiel.docxBuilder.specific;
+package com.example.vorspiel.documentBuilder;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,9 +19,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 
-import com.example.vorspiel.docxContent.basic.style.BasicStyle;
-import com.example.vorspiel.docxContent.basic.style.Color;
-import com.example.vorspiel.docxContent.specific.TableConfig;
+import com.example.vorspiel.documentParts.TableConfig;
+import com.example.vorspiel.documentParts.style.Style;
+import com.example.vorspiel.documentParts.style.Color;
 
 
 /**
@@ -36,7 +36,7 @@ public class TableUtilsTest {
 
     private List<String> tableContent;
 
-    private BasicStyle style;
+    private Style style;
 
     private TableConfig tableConfig;
     private int numColumns;
@@ -53,7 +53,7 @@ public class TableUtilsTest {
         // initialize fields
         this.document = new XWPFDocument();
         this.tableContent = Arrays.asList("cell1", "cell2", "cell3", "cell4", "cell5", "cell6", "cell7", "cell8", "cell9"); /** Don't change size!! */
-        this.style = new BasicStyle(14, 
+        this.style = new Style(14, 
                                     "sans serif", 
                                     Color.BLUE, 
                                     false, 
