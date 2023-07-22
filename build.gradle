@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.1.1'
+	id 'org.springframework.boot' version '3.1.2'
 	id 'io.spring.dependency-management' version '1.1.0'
 }
 
@@ -28,9 +28,13 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    // docxBuilder
+    // pdf converter
 	implementation 'com.documents4j:documents4j-transformer-msoffice-word:1.1.12'
 	implementation 'com.documents4j:documents4j-local:1.1.12'
+    implementation 'com.documents4j:documents4j-server-standalone:1.1.12'
+	implementation 'com.documents4j:documents4j-client:1.1.12'
+
+    // docxBuilder
 	implementation 'fr.opensagres.xdocreport:fr.opensagres.poi.xwpf.converter.pdf:2.0.4'
 	implementation 'org.apache.poi:poi-ooxml-lite:5.2.3'
 
