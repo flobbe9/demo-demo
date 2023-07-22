@@ -121,8 +121,8 @@ public class DocumentBuilder {
         this.content = content;
         this.docxFileName = docxFileName;
         this.pictureUtils = new PictureUtils(Arrays.asList(pictures));
-        this.tableUtils = new TableUtils(getDocument(), tableConfig);
         this.document = readDocxFile("EmptyDocument_2Columns.docx");
+        this.tableUtils = new TableUtils(this.document, tableConfig);
     }
 
 
@@ -149,7 +149,7 @@ public class DocumentBuilder {
     /**
      * Iterates {@link #content} list and adds all paragraphs to the document.
      */
-    public void addContent() {
+    void addContent() {
 
         log.info("Adding content...");
 
@@ -172,7 +172,7 @@ public class DocumentBuilder {
      * 
      * @param currentContentIndex index of the {@link #content} element currently processed
      */
-    public void addParagraph(int currentContentIndex) {
+    void addParagraph(int currentContentIndex) {
 
         // get content
         BasicParagraph basicParagraph = getContent().get(currentContentIndex);
@@ -200,7 +200,7 @@ public class DocumentBuilder {
      * @param currentContentIndex index of the {@link #content} element currently processed
      * @return created paragraph
      */
-    public XWPFParagraph createParagraphByContentIndex(int currentContentIndex) {
+    XWPFParagraph createParagraphByContentIndex(int currentContentIndex) {
 
         // case: table does not need paragrahp from this method
         if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex))
@@ -238,16 +238,15 @@ public class DocumentBuilder {
      * @param basicParagraph to use the text and style information from
      * @param currentContentIndex index of the {@link #content} element currently processed
      */
-    public void addText(XWPFParagraph paragraph, BasicParagraph basicParagraph, int currentContentIndex) {
+    void addText(XWPFParagraph paragraph, BasicParagraph basicParagraph, int currentContentIndex) {
 
         String text = basicParagraph.getText();
-        PictureType pictureType = this.pictureUtils.getPictureType(text);
+
+        // case: picture
+        if (this.pictureUtils != null && this.pictureUtils.isPicture(text)) {
+            this.pictureUtils.addPicture(paragraph.createRun(), text);
         
-        // case: text is a picture file name
-        if (this.pictureUtils != null && pictureType != null) {
-            this.pictureUtils.addPicture(paragraph.createRun(), text, pictureType);
-        
-        // case: insert into table
+        // case: table cell
         } else if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex)) {
             this.tableUtils.addTableCell(currentContentIndex, text, basicParagraph.getStyle());
             
@@ -264,7 +263,7 @@ public class DocumentBuilder {
      * @param style information to use
      * @see Style
      */
-    public static void addStyle(XWPFParagraph paragraph, Style style) {
+    static void addStyle(XWPFParagraph paragraph, Style style) {
 
         if (paragraph == null || style == null)
             return;
@@ -401,7 +400,7 @@ public class DocumentBuilder {
      * 
      * @return true if conversion was successful
      */
-    public synchronized boolean writeDocxFile() {
+    synchronized boolean writeDocxFile() {
 
         log.info("Writing .docx file...");
 
@@ -431,7 +430,7 @@ public class DocumentBuilder {
      * @param fileName name and suffix of the .docx file
      * @return XWPFDocument of the file or an empty one in case of exception
      */
-    private XWPFDocument readDocxFile(String fileName) {
+    XWPFDocument readDocxFile(String fileName) {
 
         log.info("Starting to read .docx file...");
 

@@ -34,8 +34,6 @@ public class PictureUtilsTest {
     
     private String testPictureName;
     
-    private PictureType testPictureType;
-
     private PictureUtils pictureUtils;
 
 
@@ -46,7 +44,6 @@ public class PictureUtilsTest {
         this.document = new XWPFDocument();
         this.run = document.createParagraph().createRun();
         this.testPictureName = "test.png";
-        this.testPictureType = PictureType.PNG;
         this.pictureUtils = new PictureUtils(Arrays.asList(new File(DocumentBuilderTest.TEST_RESOURCE_FOLDER + "/" + testPictureName)));
     }
 
@@ -58,7 +55,7 @@ public class PictureUtilsTest {
         this.pictureUtils.setPictures(null);
 
         // should not throw
-        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName, testPictureType));
+        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
 
@@ -69,7 +66,7 @@ public class PictureUtilsTest {
         this.pictureUtils.setPictures(new ArrayList<>());
 
         // should not throw
-        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName, testPictureType));
+        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
 
@@ -80,7 +77,7 @@ public class PictureUtilsTest {
         this.testPictureName = "mockName";
         
         // should not throw
-        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName, testPictureType));
+        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
 
@@ -91,7 +88,7 @@ public class PictureUtilsTest {
         this.run = null;
         
         // should not throw
-        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName, testPictureType));
+        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
 
@@ -102,7 +99,7 @@ public class PictureUtilsTest {
         this.testPictureName = null;
         
         // should not throw
-        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName, testPictureType));
+        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
 
@@ -113,7 +110,7 @@ public class PictureUtilsTest {
         assertTrue(this.run.getEmbeddedPictures().isEmpty());
 
         // should not throw
-        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName, testPictureType));
+        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
 
         // should have picture
         assertFalse(this.run.getEmbeddedPictures().isEmpty());

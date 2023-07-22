@@ -72,6 +72,7 @@ public class TableUtilsTest {
     }
     
 
+//---------- addTableCell()
     @Test
     void addTableCell_textNull_shouldNotThrow() {
 
@@ -140,6 +141,7 @@ public class TableUtilsTest {
     }
 
 
+//---------- isTableIndex()
     @Test
     void isTableIndex_tableConfigNull_shouldBeFalse() {
 

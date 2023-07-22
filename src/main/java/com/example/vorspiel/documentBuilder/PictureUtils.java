@@ -46,8 +46,10 @@ public class PictureUtils {
      * In case of duplicates the first match will be used
      * @param pictureType format of the picture
      */
-    void addPicture(XWPFRun run, String fileName, PictureType pictureType) {
+    void addPicture(XWPFRun run, String fileName) {
 
+        PictureType pictureType = getPictureType(fileName);
+        
         if (this.pictures == null) {
             log.error("Failed to add picture. Picture list cannot be null.");
             return;
@@ -95,6 +97,12 @@ public class PictureUtils {
         };
 
         return null;
+    }
+
+
+    boolean isPicture(String text) {
+
+        return getPictureType(text) != null;
     }
 
 
