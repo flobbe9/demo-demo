@@ -1,0 +1,1 @@
+Don't rename or delete files in ./resources or the folder itself since tests depent on file names!

@@ -3,6 +3,7 @@ package com.example.vorspiel.documentBuilder;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -18,6 +19,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
+
+import com.example.vorspiel.exception.ApiException;
 
 
 /**
@@ -48,58 +51,59 @@ public class PictureUtilsTest {
     }
 
 
+//------------ addPicture()
     @Test
-    void addPicture_picturesNull_shouldNotThrow() {
+    void addPicture_picturesNull_shouldThrow() {
 
         // set pictures null
         this.pictureUtils.setPictures(null);
 
         // should not throw
-        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
+        assertThrows(ApiException.class, () -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
 
     @Test
-    void addPicture_picturesEmpty_shouldNotThrow() {
+    void addPicture_picturesEmpty_shouldThrow() {
 
         // clear pictures
         this.pictureUtils.setPictures(new ArrayList<>());
 
         // should not throw
-        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
+        assertThrows(ApiException.class, () -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
 
     @Test
-    void addPicture_fielNameNotInList_shouldNotThrow() {
+    void addPicture_fielNameNotInList_shouldThrow() {
 
         // set mock fileName
         this.testPictureName = "mockName";
         
         // should not throw
-        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
+        assertThrows(ApiException.class, () -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
 
     @Test
-    void addPicture_runNull_shouldNotThrow() {
+    void addPicture_runNull_shouldThrow() {
 
         // set run null
         this.run = null;
         
         // should not throw
-        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
+        assertThrows(ApiException.class, () -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
 
     @Test
-    void addPicture_fileNameNull_shouldNotThrow() {
+    void addPicture_fileNameNull_shouldThrow() {
 
         // set fileName null
         this.testPictureName = null;
         
         // should not throw
-        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
+        assertThrows(ApiException.class, () -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
 
@@ -117,6 +121,7 @@ public class PictureUtilsTest {
     }
 
 
+//------------ getPictureType()
     @Test
     void getPictureType_fileNameNull_shouldReturnNull() {
 

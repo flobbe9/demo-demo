@@ -20,11 +20,14 @@ import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
-import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.example.vorspiel.documentParts.BasicParagraph;
 import com.example.vorspiel.documentParts.TableConfig;
@@ -40,7 +43,7 @@ import com.example.vorspiel.documentParts.style.Color;
 @TestInstance(Lifecycle.PER_CLASS)
 public class DocumentBuilderTest {
 
-    public static final String TEST_RESOURCE_FOLDER = "./src/test/java/com/example/vorspiel/testResources";
+    public static final String TEST_RESOURCE_FOLDER = "./resources/test";
 
     private XWPFDocument document;
 
@@ -62,8 +65,6 @@ public class DocumentBuilderTest {
     private int numColumns;
     private int startIndex;
     private int endIndex;
-
-    private TableUtils tableUtils;
 
     private PictureUtils pictureUtils;
     private String testPictureName;
@@ -103,14 +104,10 @@ public class DocumentBuilderTest {
         this.tableConfig = new TableConfig(this.numColumns, this.numColumns, this.startIndex, this.endIndex);
         
         // document
-        this.testDocxFileName = "test.docx";
-        this.docxFileName = "basicTest.docx";
-        this.documentBuilder = new DocumentBuilder(this.content, this.docxFileName, this.tableConfig, this.pictureUtils.getPictures().get(0));
+        this.testDocxFileName = "test/test.docx";
+        this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", this.tableConfig, this.pictureUtils.getPictures().get(0));
+        this.docxFileName = this.documentBuilder.getDocxFileName();
         this.document = this.documentBuilder.getDocument();
-
-        this.tableUtils = new TableUtils(this.document, this.tableConfig);  
-
-        new File(RESOURCE_FOLDER + "/" + this.docxFileName).delete();
     }
 
 
@@ -438,6 +435,31 @@ public class DocumentBuilderTest {
     }
 
 
+// ---------- readDocxFile()
+    @Test
+    void readDocxFile_shouldWorkWithFalsyInput() {
+        
+        // mock request context for ApiExceptionHandler
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        XWPFDocument document = this.documentBuilder.readDocxFile("some non existing file");
+
+        // expect clean document
+        assertEquals(0, document.getParagraphs().size());
+    }
+
+
+    @Test
+    void readDocxFile_shouldWorkWithTruthyInput() {
+
+        XWPFDocument document = this.documentBuilder.readDocxFile(this.testDocxFileName);
+
+        // expect clean document
+        assertEquals(0, document.getParagraphs().size());
+    }
+
+
 //----------- writeDocxFile()
     @Test
     void writeToDocxFile_fileNameWithoutSlash_shouldBeTrue() {
@@ -464,27 +486,6 @@ public class DocumentBuilderTest {
 
         // file should exist
         assertTrue(new File(RESOURCE_FOLDER + "/" + this.docxFileName).exists());
-    }
-
-
-// ---------- readDocxFile()
-    @Test
-    void readDocxFile_shouldWorkWithFalsyInput() {
-
-        XWPFDocument document = this.documentBuilder.readDocxFile("some non existing file");
-
-        // expect clean document
-        assertEquals(0, document.getParagraphs().size());
-    }
-
-
-    @Test
-    void readDocxFile_shouldWorkWithTruthyInput() {
-
-        XWPFDocument document = this.documentBuilder.readDocxFile(this.testDocxFileName);
-
-        // expect clean document
-        assertEquals(0, document.getParagraphs().size());
     }
 
 
@@ -517,10 +518,30 @@ public class DocumentBuilderTest {
     }
 
 
-    @AfterAll
-    void cleanUp() throws IOException {
+//----------- clearResourceFolder()
+    @Test
+    void clearResourceFolder_shouldDeleteCorrectFiles() {
 
-        this.document.close();
+        // create test docx file
+        this.documentBuilder.writeDocxFile();
+        File docxFile = new File(RESOURCE_FOLDER + "/" + this.docxFileName);
+
+        // should exist
+        assertTrue(docxFile.exists());
+
+        DocumentBuilder.clearResourceFolder();
+
+        // important files should still exist
+        assertTrue(new File(RESOURCE_FOLDER + "/EmptyDocument_2Columns.docx").exists());
+        assertTrue(new File(RESOURCE_FOLDER + "/logo.png").exists());
+
+        // should not exist
+        assertFalse(docxFile.exists());
+    }
+
+
+    @AfterEach
+    void cleanUp() throws IOException {
 
         new File(RESOURCE_FOLDER + "/" + this.docxFileName).delete();
     }
