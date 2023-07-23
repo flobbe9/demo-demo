@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-
 import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.wp.usermodel.HeaderFooterType;
 import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
@@ -100,7 +100,7 @@ public class DocumentBuilder {
     public DocumentBuilder(List<BasicParagraph> content, String docxFileName, File... pictures) {
 
         this.content = content;
-        this.docxFileName = docxFileName;
+        this.docxFileName = prependDateTime(docxFileName);
         this.pictureUtils = new PictureUtils(Arrays.asList(pictures));
         this.document = readDocxFile("EmptyDocument_2Columns.docx");
     }
@@ -120,7 +120,7 @@ public class DocumentBuilder {
     public DocumentBuilder(List<BasicParagraph> content, String docxFileName, TableConfig tableConfig, File... pictures) {
 
         this.content = content;
-        this.docxFileName = docxFileName;
+        this.docxFileName = prependDateTime(docxFileName);
         this.pictureUtils = new PictureUtils(Arrays.asList(pictures));
         this.document = readDocxFile("EmptyDocument_2Columns.docx");
         this.tableUtils = new TableUtils(this.document, tableConfig);
@@ -397,28 +397,6 @@ public class DocumentBuilder {
 
 
     /**
-     * Writes the {@link XWPFDocument} to a .docx file. Stores it in {@link #RESOURCE_FOLDER}.
-     * 
-     * @return true if conversion was successful
-     */
-    synchronized boolean writeDocxFile() {
-
-        log.info("Writing .docx file...");
-
-        try (OutputStream os = new FileOutputStream(RESOURCE_FOLDER + prependSlash(docxFileName))) {
-
-            this.document.write(os);
-            this.document.close();
-
-            return true;
-
-        } catch (IOException e) {
-            throw new ApiException("Failed to write .docx file.", e);
-        }
-    }
-
-
-    /**
      * Reads given .docx file to an {@link XWPFDocument} and cleans up any content. <p>
      * 
      * File is expected to be located in {@link #RESOURCE_FOLDER}. <p>
@@ -448,31 +426,77 @@ public class DocumentBuilder {
             return new XWPFDocument();
         }
     }
+    
+
+    /**
+     * Writes the {@link XWPFDocument} to a .docx file. Stores it in {@link #RESOURCE_FOLDER}.
+     * 
+     * @return true if conversion was successful
+     */
+    boolean writeDocxFile() {
+
+        log.info("Writing .docx file...");
+
+        try (OutputStream os = new FileOutputStream(RESOURCE_FOLDER + prependSlash(this.docxFileName))) {
+
+            this.document.write(os);
+            this.document.close();
+
+            return true;
+
+        } catch (IOException e) {
+            throw new ApiException("Failed to write .docx file.", e);
+        }
+    }
+
+
+    /**
+     * Deletes any file in {@link RESOURCE_FOLDER} that fulfills the conditions of {@link #shouldBeRemovedFromResources(File)}.
+     * 
+     * @return false if a deletion attempt has failed, else true
+     */
+    public static boolean clearResourceFolder() {
+
+        File resources = new File(RESOURCE_FOLDER);
+        boolean clearedFolder = true;
+
+        if (resources.exists()) {
+            // iterate files in ./resources
+            for (File docxFile : resources.listFiles()) {
+
+                if (shouldBeRemovedFromResourceFolder(docxFile)) {
+                    if (!docxFile.delete()) 
+                        clearedFolder = false;
+                }
+            }
+        }
+
+        if (!clearedFolder) 
+            log.warn("Failed to clear resourceFolder completely.");
+
+        return clearedFolder;
+    }
 
 
     /**
      * Convert any .docx file to .pdf file and store in {@link #RESOURCE_FOLDER}.<p>
-
-     * Thread safe, since accessessing existing files. <p>
-
-     * Is threadsafe since it accesses an existing resource.
      * 
      * @param docxInputStream inputStream of .docx file
      * @param pdfFileName name and suffix of pdf file
      * @return true if conversion was successful
      */
-    public static synchronized boolean convertDocxToPdf(InputStream docxInputStream, String pdfFileName) {
-            
+    public static boolean convertDocxToPdf(InputStream docxInputStream, String pdfFileName) {
+
         log.info("Converting .docx to .pdf...");
         
         try (OutputStream os = new FileOutputStream(RESOURCE_FOLDER + prependSlash(pdfFileName))) {
             IConverter converter = LocalConverter.builder().build();
             
             converter.convert(docxInputStream)
-                .as(DocumentType.DOCX)
-                .to(os)
-                .as(DocumentType.PDF)
-                .execute();
+                     .as(DocumentType.DOCX)
+                     .to(os)
+                     .as(DocumentType.PDF)
+                     .execute();
 
             converter.shutDown();
 
@@ -491,7 +515,7 @@ public class DocumentBuilder {
      * @param pdfFileName
      * @return
      */
-    public static synchronized boolean convertDocxToPdf(File docxFile, String pdfFileName) {
+    public static boolean convertDocxToPdf(File docxFile, String pdfFileName) {
 
         try {
             return convertDocxToPdf(new FileInputStream(docxFile), pdfFileName);
@@ -514,5 +538,52 @@ public class DocumentBuilder {
             return "/";
 
         return str.charAt(0) == '/' ? str : "/" + str;
+    }
+
+
+    /**
+     * Prepends current date and time to given string. Replace ':' with '-' due to
+     * .docx naming conditions.
+     * 
+     * @param str String to format
+     * @return current date and time plus str
+     */
+    private static String prependDateTime(String str) {
+
+        return LocalDateTime.now().toString().replace(":", "-") + "_" + str;
+    }
+
+
+    /**
+     * Checks if given file is user generated and hence should be deleted after beeing used.
+     * 
+     * @param file to check
+     * @return true true for user generated files
+     */
+    private static boolean shouldBeRemovedFromResourceFolder(File file) {
+
+        String fileName = file.getName();
+
+        return isInteger(Character.toString(fileName.charAt(0))) && 
+               fileName.endsWith(".docx");
+    }
+
+
+    /**
+     * Checks if given string is an integer.
+     * 
+     * @param str to check
+     * @return true if str is integer, else false (even in case it's a double)
+     */
+    private static boolean isInteger(String str) {
+
+        try {
+            Integer.parseInt(str);
+
+            return true;
+
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 }
