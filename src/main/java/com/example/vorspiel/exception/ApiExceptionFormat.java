@@ -1,14 +1,15 @@
-package com.example.vorspiel.utils;
+package com.example.vorspiel.exception;
 
 
 /**
- * General format any exception thrown in this api should have so the front end can rely
+ * General format any exception thrown in this api should have so the frontend can rely
  * on this object's fields. <p>
+ * 
  * Don't change this class for above reason!
  * 
  * @since 0.0.1
  */
-public record ApiException(
+public record ApiExceptionFormat(
 
     int status,
 

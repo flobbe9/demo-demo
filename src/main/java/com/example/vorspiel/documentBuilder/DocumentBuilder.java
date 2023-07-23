@@ -21,13 +21,14 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
-
 import com.documents4j.api.DocumentType;
 import com.documents4j.api.IConverter;
 import com.documents4j.job.LocalConverter;
 import com.example.vorspiel.documentParts.BasicParagraph;
 import com.example.vorspiel.documentParts.TableConfig;
 import com.example.vorspiel.documentParts.style.Style;
+import com.example.vorspiel.exception.ApiException;
+import com.example.vorspiel.exception.ApiExceptionHandler;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -76,7 +77,7 @@ public class DocumentBuilder {
     private List<BasicParagraph> content;
     
     @NotEmpty(message = "'docxFileName' cannot be empty or null.")
-    @Pattern(regexp = ".*\\.docx$", message = "Wrong format of 'docxFileName'. Only '.dox' permitted.")
+    @Pattern(regexp = ".*\\.docx$", message = "Wrong format of 'docxFileName'. Only '.docx' permitted.")
     private String docxFileName;
 
     private PictureUtils pictureUtils;
@@ -408,15 +409,12 @@ public class DocumentBuilder {
 
             this.document.write(os);
             this.document.close();
-            
+
             return true;
 
         } catch (IOException e) {
-            log.error("Failed to write .docx file. Cause: ");
-            e.printStackTrace();
+            throw new ApiException("Failed to write .docx file.", e);
         }
-
-        return false;
     }
 
 
@@ -445,8 +443,7 @@ public class DocumentBuilder {
             return document;
         
         } catch (Exception e) {
-            log.warn("Failed to read docx file. Returning an empty document instead. Cause: " + e.getMessage());
-            e.printStackTrace();
+            ApiExceptionHandler.handleApiException(new ApiException("Failed to read docx file. Returning an empty document instead.", e));
 
             return new XWPFDocument();
         }
@@ -482,11 +479,8 @@ public class DocumentBuilder {
             return true;
                 
         } catch (Exception e) {
-            log.error("Failed to convert .docx to .pdf. Cause: ");
-            e.printStackTrace();
+            throw new ApiException("Failed to convert .docx to .pdf.", e);
         }
-        
-        return false;
     }
 
 
@@ -503,10 +497,7 @@ public class DocumentBuilder {
             return convertDocxToPdf(new FileInputStream(docxFile), pdfFileName);
 
         } catch (IOException e) {
-            log.error("Failed to convert .docx to .pdf. Cause: ");
-            e.printStackTrace();
-
-            return false;
+            throw new ApiException("Failed to convert .docx to .pdf.", e);
         }
     }
 

@@ -22,15 +22,4 @@ public class DocumentWrapper {
 
     @Valid
     private TableConfig tableConfig;
-
-
-    /**
-     * Calls all neccessary validation methods on fields.
-     * 
-     * @return true if all fields are valid
-     */
-    public boolean isValid() {
-
-        return this.tableConfig.isValid();
-    }
 }

@@ -10,11 +10,12 @@ import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 
+import com.example.vorspiel.exception.ApiException;
+
 import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
 
 
 /**
@@ -22,7 +23,6 @@ import lombok.extern.log4j.Log4j2;
  * 
  * @since 0.0.1
  */
-@Log4j2
 @Getter
 @Setter
 @AllArgsConstructor
@@ -50,10 +50,8 @@ public class PictureUtils {
 
         PictureType pictureType = getPictureType(fileName);
         
-        if (this.pictures == null) {
-            log.error("Failed to add picture. Picture list cannot be null.");
-            return;
-        }
+        if (this.pictures == null)
+            throw new ApiException("Failed to add picture. Picture list cannot be null.");
 
         // find picture in list
         Optional<File> optionalPicture = this.pictures.stream()
@@ -70,8 +68,7 @@ public class PictureUtils {
                            cmToEMUs(DocumentBuilder.PICTURE_HEIGHT_LANDSCAPE_HALF));
 
         } catch (Exception e) {
-            log.error("Failed to add picture. Cause:");
-            e.printStackTrace();
+            throw new ApiException("Failed to add picture.", e);
         }
     }
 
