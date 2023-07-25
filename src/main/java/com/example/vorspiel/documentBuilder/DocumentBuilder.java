@@ -532,7 +532,7 @@ public class DocumentBuilder {
      * @param str String to prepend the slash to
      * @return the altered (or not altered) string or "/" if given str is null
      */
-    static String prependSlash(String str) {
+    public static String prependSlash(String str) {
 
         if (str == null || str.equals(""))
             return "/";
