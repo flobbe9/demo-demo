@@ -1,7 +1,7 @@
 FROM gradle:jdk17-alpine
 
-WORKDIR /app/backend/builder
+WORKDIR /app
 
-COPY . /app/backend/builder/
+COPY . /app/
 
 ENTRYPOINT gradle bootRun

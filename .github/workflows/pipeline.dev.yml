@@ -1,4 +1,4 @@
-name: vorspiel CI
+name: vorspiel_backend dev
 
 run-name: ${{ github.event.head_commit.message }}
 on: 
