@@ -21,7 +21,6 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import com.example.vorspiel_backend.documentParts.TableConfig;
 import com.example.vorspiel_backend.documentParts.style.Style;
-import com.example.vorspiel_backend.documentParts.style.Color;
 
 
 /**
@@ -55,7 +54,7 @@ public class TableUtilsTest {
         this.tableContent = Arrays.asList("cell1", "cell2", "cell3", "cell4", "cell5", "cell6", "cell7", "cell8", "cell9"); /** Don't change size!! */
         this.style = new Style(14, 
                                     "sans serif", 
-                                    Color.BLUE, 
+                                    "2B01FF", // blue
                                     false, 
                                     true,
                                     false, 

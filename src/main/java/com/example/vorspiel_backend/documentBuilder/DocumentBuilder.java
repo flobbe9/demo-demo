@@ -274,7 +274,7 @@ public class DocumentBuilder {
 
             run.setFontFamily(style.getFontFamily());
 
-            run.setColor(style.getColor().getRGB());
+            run.setColor(style.getColor());
 
             run.setBold(style.getBold());
 

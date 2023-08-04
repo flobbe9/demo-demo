@@ -6,6 +6,7 @@ import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,7 +32,8 @@ public class Style {
     private String fontFamily;
 
     @NotNull(message = "'color' cannot be null.")
-    private Color color;
+    @Pattern(regexp = "^([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$", message = "'color' hex string invalid.")
+    private String color;
 
     @NotNull(message = "'bold' cannot be null.")
     private Boolean bold;

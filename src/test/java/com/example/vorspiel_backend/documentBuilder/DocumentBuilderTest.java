@@ -32,7 +32,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import com.example.vorspiel_backend.documentParts.BasicParagraph;
 import com.example.vorspiel_backend.documentParts.TableConfig;
 import com.example.vorspiel_backend.documentParts.style.Style;
-import com.example.vorspiel_backend.documentParts.style.Color;
 
 
 /**
@@ -82,7 +81,7 @@ public class DocumentBuilderTest {
         // content
         this.style = new Style(11, 
                                     "times new roman", 
-                                    Color.BLUE, 
+                                    "2B01FF", // blue
                                     true, 
                                     true, 
                                     true,
@@ -389,7 +388,7 @@ public class DocumentBuilderTest {
         // check each style attribute
         assertEquals(this.style.getFontSize(), (int) Math.round(run.getFontSizeAsDouble()));
         assertEquals(this.style.getFontFamily(), run.getFontFamily());
-        assertEquals(this.style.getColor().getRGB(), run.getColor());
+        assertEquals(this.style.getColor(), run.getColor());
         assertEquals(this.style.getBold(), run.isBold());
         assertEquals(this.style.getItalic(), run.isItalic());
         assertEquals(this.style.getUnderline(), run.getUnderline().equals(UnderlinePatterns.SINGLE));
