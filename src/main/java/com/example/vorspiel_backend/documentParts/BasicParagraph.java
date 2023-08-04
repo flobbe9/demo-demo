@@ -2,6 +2,7 @@ package com.example.vorspiel_backend.documentParts;
 
 import com.example.vorspiel_backend.documentParts.style.Style;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,5 +28,6 @@ public class BasicParagraph {
     private String text;
     
     @NotNull(message = "'style' cannot be null.")
+    @Valid
     private Style style;
 }

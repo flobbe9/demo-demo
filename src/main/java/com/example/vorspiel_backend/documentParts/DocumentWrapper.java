@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 public class DocumentWrapper {
     
     @NotEmpty(message = "'content' cannot be null or empty.")
-    private List<com.example.vorspiel_backend.documentParts.BasicParagraph> content;
+    private List<@Valid BasicParagraph> content;
 
     @Valid
     private TableConfig tableConfig;
