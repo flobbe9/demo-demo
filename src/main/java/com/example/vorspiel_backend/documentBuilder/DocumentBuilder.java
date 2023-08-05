@@ -80,11 +80,15 @@ public class DocumentBuilder {
     @Pattern(regexp = ".*\\.docx$", message = "Wrong format of 'docxFileName'. Only '.docx' permitted.")
     private String docxFileName;
 
+    /** may be null */
     private PictureUtils pictureUtils;
 
+    /** may be null */
     private TableUtils tableUtils;  
 
     private XWPFDocument document;
+
+    private static boolean useLastParagraph = false;
 
     
     /**
@@ -212,7 +216,7 @@ public class DocumentBuilder {
         // case: header
         if (currentContentIndex == 0) {
             if (basicParagraph != null)
-                return getDocument().createHeader(HeaderFooterType.DEFAULT).createParagraph();
+                return this.document.createHeader(HeaderFooterType.DEFAULT).createParagraph();
 
             return null;
         }
@@ -220,13 +224,19 @@ public class DocumentBuilder {
         // case: footer
         if (currentContentIndex == this.getContent().size() - 1) {
             if (basicParagraph != null)
-                return getDocument().createFooter(HeaderFooterType.DEFAULT).createParagraph();
+                return this.document.createFooter(HeaderFooterType.DEFAULT).createParagraph();
 
             return null;
         }
 
+        // case: use last paragraph
+        if (useLastParagraph) {
+            useLastParagraph = false;
+            return this.document.getLastParagraph();
+        }
+
         // case: any other
-        return getDocument().createParagraph();
+        return this.document.createParagraph();
     }
 
 
@@ -280,8 +290,10 @@ public class DocumentBuilder {
 
             run.setItalic(style.getItalic());
 
-            if (style.getBreakType() != null) 
+            if (style.getBreakType() != null) {
                 run.addBreak(style.getBreakType());
+                useLastParagraph = true;
+            }
 
             if (style.getUnderline()) 
                 run.setUnderline(UnderlinePatterns.SINGLE);
@@ -311,7 +323,7 @@ public class DocumentBuilder {
      */
     private void setDocumentMargins(Integer top, Integer right, Integer bottom, Integer left) {
 
-        CTSectPr sectPr = getDocument().getDocument().getBody().addNewSectPr();
+        CTSectPr sectPr = this.document.getDocument().getBody().addNewSectPr();
         CTPageMar pageMar = sectPr.addNewPgMar();
 
         if (top != null) 
@@ -390,7 +402,7 @@ public class DocumentBuilder {
      */
     private CTSectPr getSectPr() {
 
-        CTBody ctBody = getDocument().getDocument().getBody();
+        CTBody ctBody = this.document.getDocument().getBody();
 
         return ctBody.getSectPr() == null ? ctBody.addNewSectPr() : ctBody.getSectPr();
     }
