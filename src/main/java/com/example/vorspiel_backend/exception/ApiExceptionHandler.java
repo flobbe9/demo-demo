@@ -7,12 +7,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.example.vorspiel_backend.VorspielApplication;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.log4j.Log4j2;
 
 
@@ -25,11 +25,24 @@ import lombok.extern.log4j.Log4j2;
 @ControllerAdvice
 public class ApiExceptionHandler {
 
-    @ExceptionHandler(value = HttpStatusCodeException.class) 
-    public static ResponseEntity<ApiExceptionFormat> handleBadRequest() {
+    /**
+     * Catches any {@link ConstraintViolationException}. Returns a {@link ResponseEntity} object with an {@link ApiExceptionFormat} and 
+     * logs neccessary stackTrace information.
+     * 
+     * @param exception ConstraintViolationException that was thrown
+     * @param request request object that caused the exception
+     * @return ResponseEntity with internalServerError status and an ApiExceptionFormat object
+     */
+    @ExceptionHandler(value = ConstraintViolationException.class) 
+    public static ResponseEntity<ApiExceptionFormat> handleBadRequest(ConstraintViolationException exception) {
 
-        System.out.println("called");
-        return null;
+        // log message
+        log.error(exception.getMessage());
+
+        // log relevant stackTrace parts
+        logPackageStackTrace(exception.getStackTrace());
+
+        return ResponseEntity.badRequest().body(returnPretty(HttpStatus.BAD_REQUEST, exception.getMessage()));
     }
 
     /**
