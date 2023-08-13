@@ -8,8 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 
 import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -47,7 +46,8 @@ public class PictureUtilsTest {
         this.document = new XWPFDocument();
         this.run = document.createParagraph().createRun();
         this.testPictureName = "test.png";
-        this.pictureUtils = new PictureUtils(Arrays.asList(new File(DocumentBuilderTest.TEST_RESOURCE_FOLDER + "/" + testPictureName)));
+        this.pictureUtils = new PictureUtils();
+        this.pictureUtils.setPictures(List.of(new File(DocumentBuilderTest.TEST_RESOURCE_FOLDER + "/" + testPictureName)));
     }
 
 
@@ -59,7 +59,7 @@ public class PictureUtilsTest {
         this.pictureUtils.setPictures(null);
 
         // should not throw
-        assertThrows(ApiException.class, () -> this.pictureUtils.addPicture(run, testPictureName));
+        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
 
@@ -67,10 +67,11 @@ public class PictureUtilsTest {
     void addPicture_picturesEmpty_shouldThrow() {
 
         // clear pictures
-        this.pictureUtils.setPictures(new ArrayList<>());
+        this.pictureUtils.setPictures(List.of());
 
         // should not throw
-        assertThrows(ApiException.class, () -> this.pictureUtils.addPicture(run, testPictureName));
+        // assertThrows(ApiException.class, () -> this.pictureUtils.addPicture(run, testPictureName));
+        assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
 

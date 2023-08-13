@@ -3,6 +3,8 @@ package com.example.vorspiel_backend.documentBuilder;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,9 +15,9 @@ import org.apache.poi.xwpf.usermodel.XWPFRun;
 import com.example.vorspiel_backend.exception.ApiException;
 
 import jakarta.validation.constraints.DecimalMin;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 
 
 /**
@@ -25,7 +27,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@AllArgsConstructor
+@Log4j2
 public class PictureUtils {
 
     /** 
@@ -33,10 +35,24 @@ public class PictureUtils {
      * @see org.apache.poi.util.Units
      */
     public static final Integer EMU_PER_CENTIMETER = 360000;   
+
+    public static final String PICTURES_FOLDER = DocumentBuilder.RESOURCE_FOLDER + "/pictures";
      
     private List<File> pictures;
-    
-    
+
+
+    /**
+     * Reads all files in {@link #PICTURES_FOLDER} and adds them to {@link #pictures}.
+     */
+    public PictureUtils() {
+
+        this.pictures = new ArrayList<>();
+
+        // got through pictures folder
+        Arrays.asList(new File(PICTURES_FOLDER).listFiles()).forEach(picture -> pictures.add(picture));
+    }
+
+
     /**
      * Adds any picture to given {@link XWPFRun} if fileName param is found in {@link #pictures} list. <p>
      * Dimensions are hard coded.
@@ -50,9 +66,11 @@ public class PictureUtils {
 
         PictureType pictureType = getPictureType(fileName);
         
-        if (this.pictures == null)
-            throw new ApiException("Failed to add picture. Picture list cannot be null.");
-
+        if (this.pictures == null || this.pictures.size() == 0) {
+            log.warn("Did not add pictures. 'pictures' list is either null or empty.");
+            return;
+        }
+        
         // find picture in list
         Optional<File> optionalPicture = this.pictures.stream()
                                                       .filter(picture -> picture.getName().equals(fileName))

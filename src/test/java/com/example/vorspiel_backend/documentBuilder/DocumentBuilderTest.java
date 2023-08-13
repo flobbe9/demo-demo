@@ -2,6 +2,7 @@ package com.example.vorspiel_backend.documentBuilder;
 
 import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.INDENT_ONE_THIRD_PORTRAIT;
 import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.RESOURCE_FOLDER;
+import static com.example.vorspiel_backend.documentBuilder.PictureUtils.PICTURES_FOLDER;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -10,7 +11,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -74,10 +79,6 @@ public class DocumentBuilderTest {
     @BeforeEach
     void setup() {
 
-        // picture
-        this.testPictureName = "test.png";
-        this.pictureUtils = new PictureUtils(Arrays.asList(new File(DocumentBuilderTest.TEST_RESOURCE_FOLDER + "/" + this.testPictureName)));
-
         // content
         this.style = new Style(11, 
                                     "times new roman", 
@@ -104,9 +105,15 @@ public class DocumentBuilderTest {
         
         // document
         this.testDocxFileName = "test/test.docx";
-        this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", this.tableConfig, this.pictureUtils.getPictures().get(0));
+        this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", this.tableConfig);
         this.docxFileName = this.documentBuilder.getDocxFileName();
         this.document = this.documentBuilder.getDocument();
+
+        // picture
+        this.testPictureName = "test.png";
+        this.pictureUtils = new PictureUtils();
+        this.pictureUtils.setPictures(List.of(new File(TEST_RESOURCE_FOLDER + "/" + testPictureName)));
+        this.documentBuilder.setPictureUtils(this.pictureUtils);
     }
 
 
@@ -291,6 +298,9 @@ public class DocumentBuilderTest {
     
     @Test
     void addText_shouldAddPicture() {
+
+        // should start without pictures
+        assertEquals(0, this.document.getAllPictures().size());
 
         int pictureIndex = this.content.indexOf(this.picture);
 
@@ -519,7 +529,7 @@ public class DocumentBuilderTest {
 
 //----------- clearResourceFolder()
     @Test
-    void clearResourceFolder_shouldDeleteCorrectFiles() {
+    void clearResourceFolder_shouldDeleteCorrectDocxFiles() {
 
         // create test docx file
         this.documentBuilder.writeDocxFile();
@@ -539,9 +549,52 @@ public class DocumentBuilderTest {
     }
 
 
+    @Test
+    void clearResourceFolder_shouldDeletePictures() {
+
+        // should move test picture to PICTURES_FOLDER
+        assertTrue(moveTestPicture());
+
+        File picture = new File(PICTURES_FOLDER + "/" + this.testPictureName);
+
+        DocumentBuilder.clearResourceFolder();
+
+        // important files should still exist
+        assertTrue(new File(RESOURCE_FOLDER + "/EmptyDocument_2Columns.docx").exists());
+        assertTrue(new File(RESOURCE_FOLDER + "/logo.png").exists());
+
+        // should not exist
+        assertFalse(picture.exists());
+    }
+
+
     @AfterEach
     void cleanUp() throws IOException {
 
         new File(RESOURCE_FOLDER + "/" + this.docxFileName).delete();
+    }
+
+
+    /**
+     * Attempts to move {@link #testPictureName} from {@link #TEST_RESOURCE_FOLDER} to {@link #PICTURES_FOLDER}.
+     * 
+     * @return true if test picture exists in pictures folder, else false
+     */
+    private boolean moveTestPicture() {
+
+        // take test.png
+        File testPicture = new File(TEST_RESOURCE_FOLDER + "/" + testPictureName);
+
+        // write to file located in pictures folder
+        try (OutputStream fos = new FileOutputStream(PICTURES_FOLDER + "/" + testPictureName);
+             InputStream fis = new FileInputStream(testPicture)) {
+
+            fos.write(fis.readAllBytes());
+
+            return new File(PictureUtils.PICTURES_FOLDER + "/" + testPictureName).exists();
+
+        } catch (IOException e) {
+            return false;
+        }
     }
 }

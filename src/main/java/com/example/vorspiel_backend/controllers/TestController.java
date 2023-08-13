@@ -5,7 +5,10 @@ import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.RESOU
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 import org.springframework.core.io.InputStreamResource;
@@ -14,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -22,19 +26,29 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.annotation.SessionScope;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.vorspiel_backend.documentBuilder.DocumentBuilder;
+import com.example.vorspiel_backend.documentBuilder.PictureUtils;
 import com.example.vorspiel_backend.documentParts.BasicParagraph;
 import com.example.vorspiel_backend.documentParts.DocumentWrapper;
+import com.example.vorspiel_backend.exception.ApiException;
 import com.example.vorspiel_backend.exception.ApiExceptionFormat;
 import com.example.vorspiel_backend.exception.ApiExceptionHandler;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
+
+// TODO: add picture upload endpoint
 @RestController
 @RequestMapping("/test")
+@Validated
 @CrossOrigin
 public class TestController {
 
@@ -59,17 +73,19 @@ public class TestController {
 
         // build and write document
         DocumentBuilder documentBuilder;
+        // case: with table
         if (wrapper.getTableConfig() != null) {
              documentBuilder = new DocumentBuilder(wrapper.getContent(), 
-                                                                    "vorspiel.docx", 
-                                                                    wrapper.getTableConfig(),
-                                                                    new File(RESOURCE_FOLDER + "/logo.png"));
-                                                                    
-        } else
+                                                    "vorspiel.docx", 
+                                                    wrapper.getTableConfig());
+
+        // case: without table
+        } else 
             documentBuilder = new DocumentBuilder(wrapper.getContent(), "vorspiel.docx");
-                                                                
+
         documentBuilder.build();
 
+        // set file name for download
         this.fileName = documentBuilder.getDocxFileName();
 
         // case: http 200
@@ -92,8 +108,9 @@ public class TestController {
     }
 
 
+    // TODO: reconsider handling exceptions here
     @GetMapping("/download")
-    public ResponseEntity<Resource> download(@RequestParam boolean pdf) {
+    public Object download(@RequestParam boolean pdf) {
 
         if (pdf) {
             // TODO: 
@@ -110,15 +127,26 @@ public class TestController {
                                 .body(isr);
 
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().build();
+            throw new ApiException(e.getMessage());
         }
     }
 
 
-    @PostMapping
-    public String test(@RequestBody @Validated List<BasicParagraph> content) {
+    @PostMapping("/uploadFile")
+    public Object uploadFile(@RequestBody @NotNull(message = "Failed to upload picture. Pictures cannot be null.") MultipartFile file,
+                             @RequestParam @NotBlank(message = "Failed to upload picture. Picture name cannot be blank or null.") String fileName) {
 
-        return "test";
+        // write to file
+        try (OutputStream os = new FileOutputStream(PictureUtils.PICTURES_FOLDER + DocumentBuilder.prependSlash(fileName));
+             InputStream is = file.getInputStream()) {
+                
+            os.write(is.readAllBytes());
+
+            return ApiExceptionHandler.returnPrettySuccess(HttpStatus.OK);
+
+        } catch (IOException e) {
+            throw new ApiException("Failed to upload picture.", e);
+        }
     }
 
 

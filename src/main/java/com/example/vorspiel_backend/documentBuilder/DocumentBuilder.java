@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.wp.usermodel.HeaderFooterType;
+import org.apache.poi.xwpf.usermodel.BreakType;
 import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
@@ -88,8 +89,6 @@ public class DocumentBuilder {
 
     private XWPFDocument document;
 
-    private static boolean useLastParagraph = false;
-
     
     /**
      * Reading the an empty document from an existing file.<p>
@@ -98,14 +97,13 @@ public class DocumentBuilder {
      * 
      * @param content list of {@link BasicParagraph}s
      * @param docxFileName file name to write the .docx file to
-     * @param pictures list of files containing pictures
      * @see PictureType for allowed formats
      */
-    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, File... pictures) {
+    public DocumentBuilder(List<BasicParagraph> content, String docxFileName) {
 
         this.content = content;
         this.docxFileName = prependDateTime(docxFileName);
-        this.pictureUtils = new PictureUtils(Arrays.asList(pictures));
+        this.pictureUtils = new PictureUtils();
         this.document = readDocxFile("EmptyDocument_2Columns.docx");
     }
 
@@ -118,14 +116,13 @@ public class DocumentBuilder {
      * @param content list of {@link BasicParagraph}s
      * @param docxFileName file name to write the .docx file to
      * @param tableConfig wrapper with configuration data for the table to insert
-     * @param pictures list of files containing pictures
      * @see PictureType for allowed formats    
      */
-    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, TableConfig tableConfig, File... pictures) {
+    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, TableConfig tableConfig) {
 
         this.content = content;
         this.docxFileName = prependDateTime(docxFileName);
-        this.pictureUtils = new PictureUtils(Arrays.asList(pictures));
+        this.pictureUtils = new PictureUtils();
         this.document = readDocxFile("EmptyDocument_2Columns.docx");
         this.tableUtils = new TableUtils(this.document, tableConfig);
     }
@@ -180,7 +177,7 @@ public class DocumentBuilder {
     void addParagraph(int currentContentIndex) {
 
         // get content
-        BasicParagraph basicParagraph = getContent().get(currentContentIndex);
+        BasicParagraph basicParagraph = this.content.get(currentContentIndex);
     
         XWPFParagraph paragraph = createParagraphByContentIndex(currentContentIndex);
 
@@ -190,7 +187,10 @@ public class DocumentBuilder {
 
             // add style
             addStyle(paragraph, basicParagraph.getStyle());
-        }
+
+        // case: break intended
+        } else if (paragraph != null) 
+            paragraph.setSpacingAfter(NO_LINE_SPACE);
     }
 
 
@@ -211,7 +211,7 @@ public class DocumentBuilder {
         if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex))
             return null;
 
-        BasicParagraph basicParagraph = getContent().get(currentContentIndex);
+        BasicParagraph basicParagraph = this.content.get(currentContentIndex);
 
         // case: header
         if (currentContentIndex == 0) {
@@ -222,17 +222,11 @@ public class DocumentBuilder {
         }
 
         // case: footer
-        if (currentContentIndex == this.getContent().size() - 1) {
+        if (currentContentIndex == this.content.size() - 1) {
             if (basicParagraph != null)
                 return this.document.createFooter(HeaderFooterType.DEFAULT).createParagraph();
 
             return null;
-        }
-
-        // case: use last paragraph
-        if (useLastParagraph) {
-            useLastParagraph = false;
-            return this.document.getLastParagraph();
         }
 
         // case: any other
@@ -290,10 +284,8 @@ public class DocumentBuilder {
 
             run.setItalic(style.getItalic());
 
-            if (style.getBreakType() != null) {
+            if (style.getBreakType() != null) 
                 run.addBreak(style.getBreakType());
-                useLastParagraph = true;
-            }
 
             if (style.getUnderline()) 
                 run.setUnderline(UnderlinePatterns.SINGLE);
@@ -474,13 +466,15 @@ public class DocumentBuilder {
 
         if (resources.exists()) {
             // iterate files in ./resources
-            for (File docxFile : resources.listFiles()) {
-
-                if (shouldBeRemovedFromResourceFolder(docxFile)) {
+            for (File docxFile : resources.listFiles()) 
+                if (shouldBeRemovedFromResourceFolder(docxFile)) 
                     if (!docxFile.delete()) 
                         clearedFolder = false;
-                }
-            }
+            
+            // iterate files in ./resources/picture
+            for (File picture : new File(PictureUtils.PICTURES_FOLDER).listFiles())
+                if (!picture.delete())
+                    clearedFolder = false;
         }
 
         if (!clearedFolder) 
