@@ -1,6 +1,9 @@
 package com.example.vorspiel_backend.controllers;
 
 import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.RESOURCE_FOLDER;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.OK;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,7 +14,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -54,14 +56,13 @@ public class TestController {
      * last element is the footer <p>
      * anything in between is main content <p>.
      * @throws ApiExceptionFormat
-     * 
      */
     @PostMapping("/createDocument")
     public ApiExceptionFormat createDocument(@RequestBody @Validated DocumentWrapper wrapper, BindingResult bindingResult) {
 
         // case: http 400
         if (bindingResult.hasErrors()) 
-            return ApiExceptionHandler.returnPretty(HttpStatus.BAD_REQUEST, bindingResult);
+            return ApiExceptionHandler.returnPretty(BAD_REQUEST, bindingResult);
 
         // build and write document
         DocumentBuilder documentBuilder;
@@ -81,19 +82,20 @@ public class TestController {
         this.fileName = documentBuilder.getDocxFileName();
 
         // case: http 200
-        return ApiExceptionHandler.returnPrettySuccess(HttpStatus.OK);
+        return ApiExceptionHandler.returnPrettySuccess(OK);
     }
     
 
     @GetMapping("/clearResourceFolder")
-    public boolean clearResourceFolder() {
+    public ApiExceptionFormat clearResourceFolder() {
 
-        return DocumentBuilder.clearResourceFolder();
+        return DocumentBuilder.clearResourceFolder() ? ApiExceptionHandler.returnPrettySuccess(OK) : 
+                                                       ApiExceptionHandler.returnPretty(INTERNAL_SERVER_ERROR, "Failed to clear resource folder. See logs for more information.");
     }
     
 
     @GetMapping("/convertDocxToPdf")
-    @ResponseStatus(value = HttpStatus.OK, reason = "Converted .docx to .pdf.")
+    @ResponseStatus(value = OK, reason = "Converted .docx to .pdf.")
     public void convertDocxToPdf() throws FileNotFoundException {
 
         DocumentBuilder.convertDocxToPdf(new File(RESOURCE_FOLDER + "/test/test.docx"), "vorspiel.pdf");
@@ -102,7 +104,7 @@ public class TestController {
 
     // TODO: reconsider handling exceptions here
     @GetMapping("/download")
-    public Object download(@RequestParam boolean pdf) {
+    public ResponseEntity<InputStreamResource> download(@RequestParam boolean pdf) {
 
         if (pdf) {
             // TODO: 
@@ -125,7 +127,7 @@ public class TestController {
 
 
     @PostMapping("/uploadFile")
-    public Object uploadFile(@RequestBody @NotNull(message = "Failed to upload picture. Pictures cannot be null.") MultipartFile file,
+    public ApiExceptionFormat uploadFile(@RequestBody @NotNull(message = "Failed to upload picture. Pictures cannot be null.") MultipartFile file,
                              @RequestParam @NotBlank(message = "Failed to upload picture. Picture name cannot be blank or null.") String fileName) {
 
         // write to file
@@ -134,7 +136,7 @@ public class TestController {
                 
             os.write(is.readAllBytes());
 
-            return ApiExceptionHandler.returnPrettySuccess(HttpStatus.OK);
+            return ApiExceptionHandler.returnPrettySuccess(OK);
 
         } catch (IOException e) {
             throw new ApiException("Failed to upload picture.", e);
