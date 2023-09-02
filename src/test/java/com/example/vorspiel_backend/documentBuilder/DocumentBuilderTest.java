@@ -47,7 +47,7 @@ import com.example.vorspiel_backend.documentParts.style.Style;
 @TestInstance(Lifecycle.PER_CLASS)
 public class DocumentBuilderTest {
 
-    public static final String TEST_RESOURCE_FOLDER = "./resources/test";
+    public static final String TEST_RESOURCE_FOLDER = "./src/main/resources/test";
 
     private XWPFDocument document;
 
@@ -542,7 +542,7 @@ public class DocumentBuilderTest {
 
         // important files should still exist
         assertTrue(new File(RESOURCE_FOLDER + "/EmptyDocument_2Columns.docx").exists());
-        assertTrue(new File(RESOURCE_FOLDER + "/logo.png").exists());
+        assertTrue(new File(TEST_RESOURCE_FOLDER + "/logo.png").exists());
 
         // should not exist
         assertFalse(docxFile.exists());
@@ -561,7 +561,7 @@ public class DocumentBuilderTest {
 
         // important files should still exist
         assertTrue(new File(RESOURCE_FOLDER + "/EmptyDocument_2Columns.docx").exists());
-        assertTrue(new File(RESOURCE_FOLDER + "/logo.png").exists());
+        assertTrue(new File(TEST_RESOURCE_FOLDER + "/logo.png").exists());
 
         // should not exist
         assertFalse(picture.exists());

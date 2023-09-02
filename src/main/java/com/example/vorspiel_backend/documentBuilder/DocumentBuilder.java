@@ -52,7 +52,7 @@ import lombok.extern.log4j.Log4j2;
 @Setter
 public class DocumentBuilder {
 
-    public static final String RESOURCE_FOLDER = "./resources";
+    public static final String RESOURCE_FOLDER = "./src/main/resources";
 
     /** paragraph indentation */
     public static final int INDENT_ONE_THIRD_PORTRAIT = 2000;

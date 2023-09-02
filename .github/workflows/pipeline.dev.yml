@@ -19,3 +19,4 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - run: gradle clean build
+        working-directory: ./
