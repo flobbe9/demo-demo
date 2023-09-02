@@ -1,5 +1,7 @@
 package com.example.vorspiel_backend.documentBuilder;
 
+import static com.example.vorspiel_backend.documentBuilder.PictureUtils.PICTURES_FOLDER;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -468,21 +470,22 @@ public class DocumentBuilder {
     public static boolean clearResourceFolder() {
 
         File[] resources = new File(RESOURCE_FOLDER).listFiles();
+        File[] pictures = new File(PICTURES_FOLDER).listFiles();
         boolean clearedFolder = true;
 
-        if (resources != null && resources.length != 0) {
+        if (resources != null) 
             // iterate files in ./resources
             for (File file : resources) 
                 if (shouldBeRemovedFromResourceFolder(file)) 
                     if (!file.delete()) 
                         clearedFolder = false;
             
+        if (pictures != null)
             // iterate files in ./resources/picture
-            for (File picture : new File(PictureUtils.PICTURES_FOLDER).listFiles())
+            for (File picture : pictures)
                 if (!picture.delete())
                     clearedFolder = false;
-        }
-
+                        
         if (!clearedFolder) 
             log.warn("Failed to clear resourceFolder completely.");
 
