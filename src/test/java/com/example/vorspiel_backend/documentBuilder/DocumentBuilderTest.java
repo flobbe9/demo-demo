@@ -584,15 +584,15 @@ public class DocumentBuilderTest {
     private boolean moveTestPicture() {
 
         // take test.png
-        File testPicture = new File(TEST_RESOURCE_FOLDER + "/" + testPictureName);
+        File testPicture = new File(TEST_RESOURCE_FOLDER + "/" + this.testPictureName);
 
         // write to file located in pictures folder
-        try (OutputStream fos = new FileOutputStream(PICTURES_FOLDER + "/" + testPictureName);
+        try (OutputStream fos = new FileOutputStream(PICTURES_FOLDER + "/" + this.testPictureName);
              InputStream fis = new FileInputStream(testPicture)) {
 
             fos.write(fis.readAllBytes());
 
-            return new File(PictureUtils.PICTURES_FOLDER + "/" + testPictureName).exists();
+            return new File(PictureUtils.PICTURES_FOLDER + "/" + this.testPictureName).exists();
 
         } catch (IOException e) {
             return false;
