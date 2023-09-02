@@ -104,7 +104,7 @@ public class DocumentBuilder {
 
         this.content = content;
         this.docxFileName = prependDateTime(docxFileName);
-        // this.pictureUtils = new PictureUtils();
+        this.pictureUtils = new PictureUtils();
         this.document = readDocxFile("EmptyDocument_2Columns.docx");
     }
 
@@ -123,7 +123,7 @@ public class DocumentBuilder {
 
         this.content = content;
         this.docxFileName = prependDateTime(docxFileName);
-        // this.pictureUtils = new PictureUtils();
+        this.pictureUtils = new PictureUtils();
         this.document = readDocxFile("EmptyDocument_2Columns.docx");
         this.tableUtils = tableConfig != null ? new TableUtils(this.document, tableConfig) : null;
     }

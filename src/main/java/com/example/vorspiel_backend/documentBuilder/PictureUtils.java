@@ -53,7 +53,9 @@ public class PictureUtils {
         this.pictures = new ArrayList<>();
 
         // got through pictures folder
-        Arrays.asList(new File(PICTURES_FOLDER).listFiles()).forEach(picture -> pictures.add(picture));
+        File[] uploadedPictures = new File(PICTURES_FOLDER).listFiles();
+        if (uploadedPictures != null && uploadedPictures.length != 0)
+            Arrays.asList(uploadedPictures).forEach(picture -> pictures.add(picture));
     }
 
 
