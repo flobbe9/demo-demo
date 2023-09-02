@@ -28,6 +28,9 @@ import com.example.vorspiel_backend.documentParts.TableConfig;
 import com.example.vorspiel_backend.documentParts.style.Style;
 import com.example.vorspiel_backend.exception.ApiException;
 import com.example.vorspiel_backend.exception.ApiExceptionHandler;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfWriter;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -122,7 +125,7 @@ public class DocumentBuilder {
         this.docxFileName = prependDateTime(docxFileName);
         this.pictureUtils = new PictureUtils();
         this.document = readDocxFile("EmptyDocument_2Columns.docx");
-        this.tableUtils = new TableUtils(this.document, tableConfig);
+        this.tableUtils = tableConfig != null ? new TableUtils(this.document, tableConfig) : null;
     }
 
 
@@ -132,7 +135,7 @@ public class DocumentBuilder {
      * 
      * @return true if document was successfully written to a .docx file
      */
-    public boolean build() {
+    public void build() {
         
         log.info("Starting to build document...");
         
@@ -142,7 +145,12 @@ public class DocumentBuilder {
         
         setDocumentMargins(MINIMUM_MARGIN_TOP_BOTTOM, null, MINIMUM_MARGIN_TOP_BOTTOM, null);
         
-        return writeDocxFile();
+        boolean buildSuccessful = writeDocxFile();
+
+        if (buildSuccessful)
+            log.info("Finished building document without errors.");
+        else
+            log.error("Finished building document with errors.");
     }
     
 
@@ -483,17 +491,55 @@ public class DocumentBuilder {
 
 
     /**
+     * Convert any .docx file to .pdf file and store in {@link #RESOURCE_FOLDER}.
+
+     * @param docxInputStream inputStream of .docx file
+     * @param pdfFileName name and suffix of pdf file (no relative path, file is expected to be located inside {@link #RESOURCE_FOLDER})
+     * @return pdf file if conversion was successful
+     * @throws ApiException
+     */
+    public static File docxToPdfIText(InputStream docxInputStream, String pdfFileName) {
+
+        log.info("Converting .docx to .pdf...");
+
+        try (XWPFDocument document = new XWPFDocument(docxInputStream);
+            OutputStream pdfOutputStream = new FileOutputStream(pdfFileName = RESOURCE_FOLDER + prependSlash(pdfFileName))) {
+
+            Document pdfDocument = new Document();
+            PdfWriter.getInstance(pdfDocument, pdfOutputStream);
+            pdfDocument.open();
+
+            List<XWPFParagraph> paragraphs = document.getParagraphs();
+            for (XWPFParagraph paragraph : paragraphs) {
+                Paragraph pdfParagraph = new Paragraph(paragraph.getText());
+                pdfParagraph.cloneShallow(false);
+                
+                pdfDocument.add(pdfParagraph);
+            }
+            
+            pdfDocument.close();
+
+            return new File(pdfFileName);
+
+        } catch (Exception e) {
+            throw new ApiException("Failed to convert .docx to .pdf.", e);
+        }
+    }
+
+
+    /**
      * Convert any .docx file to .pdf file and store in {@link #RESOURCE_FOLDER}.<p>
      * 
      * @param docxInputStream inputStream of .docx file
-     * @param pdfFileName name and suffix of pdf file
-     * @return true if conversion was successful
+     * @param pdfFileName name and suffix of pdf file (no relative path, file is expected to be located inside {@link #RESOURCE_FOLDER})
+     * @return pdf file if conversion was successful
+     * @throws ApiException
      */
-    public static boolean convertDocxToPdf(InputStream docxInputStream, String pdfFileName) {
+    public static File docxToPdfDocx4j(InputStream docxInputStream, String pdfFileName) {
 
         log.info("Converting .docx to .pdf...");
         
-        try (OutputStream os = new FileOutputStream(RESOURCE_FOLDER + prependSlash(pdfFileName))) {
+        try (OutputStream os = new FileOutputStream(pdfFileName = RESOURCE_FOLDER + prependSlash(pdfFileName))) {
             IConverter converter = LocalConverter.builder().build();
             
             converter.convert(docxInputStream)
@@ -504,7 +550,7 @@ public class DocumentBuilder {
 
             converter.shutDown();
 
-            return true;
+            return new File((pdfFileName));
                 
         } catch (Exception e) {
             throw new ApiException("Failed to convert .docx to .pdf.", e);
@@ -513,16 +559,17 @@ public class DocumentBuilder {
 
 
     /**
-     * Overloading {@link #convertDocxToPdf(InputStream, String)}.
+     * Overloading {@link #docxToPdfDocx4j(InputStream, String)}.
      * 
      * @param docxFile
      * @param pdfFileName
      * @return
+     * @throws ApiException if docxFile cannot be found
      */
-    public static boolean convertDocxToPdf(File docxFile, String pdfFileName) {
+    public static File docxToPdfDocx4j(File docxFile, String pdfFileName) {
 
         try {
-            return convertDocxToPdf(new FileInputStream(docxFile), pdfFileName);
+            return docxToPdfDocx4j(new FileInputStream(docxFile), pdfFileName);
 
         } catch (IOException e) {
             throw new ApiException("Failed to convert .docx to .pdf.", e);

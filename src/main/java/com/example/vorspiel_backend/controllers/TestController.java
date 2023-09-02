@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -37,13 +38,15 @@ import com.example.vorspiel_backend.exception.ApiExceptionHandler;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.log4j.Log4j2;
 
 
 // TODO: add picture upload endpoint
 @RestController
 @RequestMapping("/test")
 @Validated
-@CrossOrigin
+@CrossOrigin("http://localhost:3000")
+@Log4j2
 public class TestController {
 
     private String fileName;
@@ -65,17 +68,7 @@ public class TestController {
             return ApiExceptionHandler.returnPretty(BAD_REQUEST, bindingResult);
 
         // build and write document
-        DocumentBuilder documentBuilder;
-        // case: with table
-        if (wrapper.getTableConfig() != null) {
-             documentBuilder = new DocumentBuilder(wrapper.getContent(), 
-                                                    "vorspiel.docx", 
-                                                    wrapper.getTableConfig());
-
-        // case: without table
-        } else 
-            documentBuilder = new DocumentBuilder(wrapper.getContent(), "vorspiel.docx");
-
+        DocumentBuilder documentBuilder = new DocumentBuilder(wrapper.getContent(), "vorspiel.docx", wrapper.getTableConfig() != null ? wrapper.getTableConfig() : null);
         documentBuilder.build();
 
         // set file name for download
@@ -98,22 +91,27 @@ public class TestController {
     @ResponseStatus(value = OK, reason = "Converted .docx to .pdf.")
     public void convertDocxToPdf() throws FileNotFoundException {
 
-        DocumentBuilder.convertDocxToPdf(new File(RESOURCE_FOLDER + "/test/test.docx"), "vorspiel.pdf");
+        DocumentBuilder.docxToPdfDocx4j(new File(RESOURCE_FOLDER + "/test/test.docx"), "vorspiel.pdf");
     }
 
 
-    // TODO: reconsider handling exceptions here
     @GetMapping("/download")
     public ResponseEntity<InputStreamResource> download(@RequestParam boolean pdf) {
 
-        if (pdf) {
-            // TODO: 
-        }
-        
+        log.info("Downloading file...");
+
         try {
+            // docxFile
             File file = new File(RESOURCE_FOLDER + DocumentBuilder.prependSlash(this.fileName));
-            InputStreamResource isr = new InputStreamResource(new FileInputStream(file));
             
+            // case: convert to pdf
+            if (pdf) 
+                file = DocumentBuilder.docxToPdfDocx4j(file, "test.pdf");
+                // file = DocumentBuilder.docxToPdfIText(new FileInputStream(file), "test.pdf");
+            
+            InputStreamResource isr = new InputStreamResource(new FileInputStream(file));
+
+            // download
             return ResponseEntity.ok()
                                 .headers(getHttpHeaders(file.getName()))
                                 .contentLength(file.length())
@@ -121,14 +119,16 @@ public class TestController {
                                 .body(isr);
 
         } catch (IOException e) {
-            throw new ApiException("Failed to download document.", e);
+            throw new ApiException("Failed to download file.", e);
         }
     }
 
 
     @PostMapping("/uploadFile")
     public ApiExceptionFormat uploadFile(@RequestBody @NotNull(message = "Failed to upload picture. Pictures cannot be null.") MultipartFile file,
-                             @RequestParam @NotBlank(message = "Failed to upload picture. Picture name cannot be blank or null.") String fileName) {
+                                         @RequestParam @NotBlank(message = "Failed to upload picture. Picture name cannot be blank or null.") String fileName) {
+
+        log.info("Starting to upload files...");
 
         // write to file
         try (OutputStream os = new FileOutputStream(PictureUtils.PICTURES_FOLDER + DocumentBuilder.prependSlash(fileName));
@@ -136,9 +136,13 @@ public class TestController {
                 
             os.write(is.readAllBytes());
 
-            return ApiExceptionHandler.returnPrettySuccess(OK);
+            if (new File(PictureUtils.PICTURES_FOLDER + DocumentBuilder.prependSlash(fileName)).exists())
+                return ApiExceptionHandler.returnPrettySuccess(OK);
+                
+            else
+                throw new ApiException("Failed to write stream to file.");
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new ApiException("Failed to upload picture.", e);
         }
     }
