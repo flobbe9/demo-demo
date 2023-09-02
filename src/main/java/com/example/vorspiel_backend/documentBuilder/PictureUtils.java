@@ -8,13 +8,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import java.awt.image.BufferedImage;
+
+import javax.imageio.ImageIO;
+
 import org.apache.poi.common.usermodel.PictureType;
+import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 
 import com.example.vorspiel_backend.exception.ApiException;
 
-import jakarta.validation.constraints.DecimalMin;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
@@ -77,13 +81,17 @@ public class PictureUtils {
                                                       .findFirst();
 
         // add picture
-        try (InputStream fis = new FileInputStream(optionalPicture.get())) {
+        File picture;
+        try (InputStream fis = new FileInputStream(picture = optionalPicture.get())) {
+
+            // for dimensions
+            BufferedImage bimg = ImageIO.read(picture);
 
             run.addPicture(fis, 
                            pictureType.ordinal(),
                            fileName, 
-                           cmToEMUs(DocumentBuilder.PICTURE_WIDTH_LANDSCAPE_HALF),
-                           cmToEMUs(DocumentBuilder.PICTURE_HEIGHT_LANDSCAPE_HALF));
+                           dxaToEMUs(bimg.getWidth()),
+                           dxaToEMUs(bimg.getHeight()));
 
         } catch (Exception e) {
             throw new ApiException("Failed to add picture.", e);
@@ -107,7 +115,7 @@ public class PictureUtils {
         // check file extension for matching picture extension
         for (PictureType pictureType : PictureType.values()) {
 
-            if (fileName.endsWith(pictureType.getExtension()))
+            if (fileName.toLowerCase().endsWith(pictureType.getExtension()))
                 return pictureType;
         };
 
@@ -128,9 +136,20 @@ public class PictureUtils {
      * @param centimeters to convert
      * @return EMUs as int
      */
-    private int cmToEMUs(@DecimalMin("0.0") double centimeters) {
+    private int cmToEMUs(double centimeters) {
 
         return (int) Math.round(EMU_PER_CENTIMETER * centimeters);
     }
 
+    /**
+     * I have no idea what unit this is, but it works, when multiplying by 2.
+     * 
+     * @see org.apache.poi.util.Units
+     * @param dxa to convert
+     * @return EMUs as int
+     */
+    private int dxaToEMUs(double dxa) {
+
+        return (int) Math.round(Units.EMU_PER_DXA * dxa) * 2;
+    }
 }
