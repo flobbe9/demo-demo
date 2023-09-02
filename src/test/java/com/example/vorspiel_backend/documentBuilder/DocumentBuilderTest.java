@@ -78,6 +78,11 @@ public class DocumentBuilderTest {
 
     @BeforeEach
     void setup() {
+        
+        // picture
+        this.testPictureName = "test.png";
+        this.pictureUtils = new PictureUtils();
+        this.pictureUtils.setPictures(List.of(new File(TEST_RESOURCE_FOLDER + "/" + testPictureName)));
 
         // content
         this.style = new Style(11, 
@@ -108,11 +113,6 @@ public class DocumentBuilderTest {
         this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", this.tableConfig);
         this.docxFileName = this.documentBuilder.getDocxFileName();
         this.document = this.documentBuilder.getDocument();
-
-        // picture
-        this.testPictureName = "test.png";
-        this.pictureUtils = new PictureUtils();
-        this.pictureUtils.setPictures(List.of(new File(TEST_RESOURCE_FOLDER + "/" + testPictureName)));
         this.documentBuilder.setPictureUtils(this.pictureUtils);
     }
 
@@ -556,6 +556,7 @@ public class DocumentBuilderTest {
         assertTrue(moveTestPicture());
 
         File picture = new File(PICTURES_FOLDER + "/" + this.testPictureName);
+        assertTrue(picture.exists());
 
         DocumentBuilder.clearResourceFolder();
 

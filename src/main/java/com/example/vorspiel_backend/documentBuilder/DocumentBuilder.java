@@ -467,14 +467,14 @@ public class DocumentBuilder {
      */
     public static boolean clearResourceFolder() {
 
-        File resources = new File(RESOURCE_FOLDER);
+        File[] resources = new File(RESOURCE_FOLDER).listFiles();
         boolean clearedFolder = true;
 
-        if (resources.exists()) {
+        if (resources != null && resources.length != 0) {
             // iterate files in ./resources
-            for (File docxFile : resources.listFiles()) 
-                if (shouldBeRemovedFromResourceFolder(docxFile)) 
-                    if (!docxFile.delete()) 
+            for (File file : resources) 
+                if (shouldBeRemovedFromResourceFolder(file)) 
+                    if (!file.delete()) 
                         clearedFolder = false;
             
             // iterate files in ./resources/picture
