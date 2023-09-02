@@ -52,8 +52,13 @@ public class PictureUtils {
 
         this.pictures = new ArrayList<>();
 
+        // create pictures folder if not exists
+        File picutresFolder = new File(PICTURES_FOLDER);
+        if (!picutresFolder.exists())
+            picutresFolder.mkdir();
+        
         // got through pictures folder
-        File[] uploadedPictures = new File(PICTURES_FOLDER).listFiles();
+        File[] uploadedPictures = picutresFolder.listFiles();
         Arrays.asList(uploadedPictures).forEach(picture -> pictures.add(picture));
     }
 
