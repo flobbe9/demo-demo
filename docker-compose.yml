@@ -3,7 +3,7 @@ version: "3.9"
 services:
     api:
         build: .
-        image: flobbe9/vorspiel_backend:${API_VERSION}
+        image: flobbe9/vorspiel_backend:latest
         container_name: vorspiel_backend
         ports: 
             - 4001:4001

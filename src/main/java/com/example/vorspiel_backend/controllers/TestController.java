@@ -45,7 +45,7 @@ import lombok.extern.log4j.Log4j2;
 @RestController
 @RequestMapping("/test")
 @Validated
-@CrossOrigin("http://localhost:3000")
+// @CrossOrigin
 @Log4j2
 public class TestController {
 
