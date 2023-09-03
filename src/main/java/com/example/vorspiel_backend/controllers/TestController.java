@@ -41,11 +41,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.extern.log4j.Log4j2;
 
 
-// TODO: add picture upload endpoint
 @RestController
 @RequestMapping("/test")
 @Validated
-// @CrossOrigin
+@CrossOrigin
 @Log4j2
 public class TestController {
 
