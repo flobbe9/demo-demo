@@ -538,7 +538,7 @@ public class DocumentBuilder {
      * @return pdf file if conversion was successful
      * @throws ApiException
      */
-    public static File docxToPdfDocx4j(InputStream docxInputStream, String pdfFileName) {
+    public static File docxToPdfDocuments4j(InputStream docxInputStream, String pdfFileName) {
 
         log.info("Converting .docx to .pdf...");
         
@@ -562,17 +562,17 @@ public class DocumentBuilder {
 
 
     /**
-     * Overloading {@link #docxToPdfDocx4j(InputStream, String)}.
+     * Overloading {@link #docxToPdfDocuments4j(InputStream, String)}.
      * 
      * @param docxFile
      * @param pdfFileName
      * @return
      * @throws ApiException if docxFile cannot be found
      */
-    public static File docxToPdfDocx4j(File docxFile, String pdfFileName) {
+    public static File docxToPdfDocuments4j(File docxFile, String pdfFileName) {
 
         try {
-            return docxToPdfDocx4j(new FileInputStream(docxFile), pdfFileName);
+            return docxToPdfDocuments4j(new FileInputStream(docxFile), pdfFileName);
 
         } catch (IOException e) {
             throw new ApiException("Failed to convert .docx to .pdf.", e);

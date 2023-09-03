@@ -91,7 +91,7 @@ public class TestController {
     @ResponseStatus(value = OK, reason = "Converted .docx to .pdf.")
     public void convertDocxToPdf() throws FileNotFoundException {
 
-        DocumentBuilder.docxToPdfDocx4j(new File(RESOURCE_FOLDER + "/test/test.docx"), "vorspiel.pdf");
+        DocumentBuilder.docxToPdfDocuments4j(new File(RESOURCE_FOLDER + "/test/test.docx"), "vorspiel.pdf");
     }
 
 
@@ -106,7 +106,7 @@ public class TestController {
             
             // case: convert to pdf
             if (pdf) 
-                file = DocumentBuilder.docxToPdfDocx4j(file, "test.pdf");
+                file = DocumentBuilder.docxToPdfDocuments4j(file, "test.pdf");
                 // file = DocumentBuilder.docxToPdfIText(new FileInputStream(file), "test.pdf");
             
             InputStreamResource isr = new InputStreamResource(new FileInputStream(file));
@@ -125,8 +125,8 @@ public class TestController {
 
 
     @PostMapping("/uploadFile")
-    public ApiExceptionFormat uploadFile(@RequestBody @NotNull(message = "Failed to upload picture. Pictures cannot be null.") MultipartFile file,
-                                         @RequestParam @NotBlank(message = "Failed to upload picture. Picture name cannot be blank or null.") String fileName) {
+    public ApiExceptionFormat uploadFile(@RequestBody @NotNull(message = "Failed to upload picture. 'file' cannot be null.") MultipartFile file,
+                                         @RequestParam @NotBlank(message = "Failed to upload picture. 'fileName' cannot be blank or null.") String fileName) {
 
         log.info("Starting to upload files...");
 
