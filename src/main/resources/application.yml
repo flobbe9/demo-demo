@@ -9,6 +9,10 @@ spring:
             max-file-size: 10MB
             max-request-size: 10MB
 
+    config:
+        # include .env file
+        import: optional:file:.env[.properties]
+
 ## h2
 # spring:
 #     datasource:

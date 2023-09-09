@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.example'
-version = '${API_VERSION}-SNAPSHOT'
+version = '0.0.3-SNAPSHOT'
 
 java {
 	sourceCompatibility = '17'
