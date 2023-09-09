@@ -39,23 +39,18 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME}}
+          password: ${{ secrets.DOCKERHUB_TOKEN}}
 
       - name: Tag image with old version
-        run: docker tag docker.io/flobbe9/vorspiel_backend:latest docker.io/flobbe9/vorspiel_backend:$API_VERSION
+        uses: docker/metadata-action@v4.6.0
+        with: 
+            images: flobbe9/vorspiel_backend:latest
+            tags: | 
+                type=semver,pattern={{raw}},value=$API_VERSION
 
-      - name: Push image with old version
-        run: docker image push flobbe9/$PROJECT_NAME:$API_VERSION
-    
       - name: Build and push to Docker Hub
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: flobbe9/$PROJECT_NAME:latest
-
-      - name: Tag Google Cloud image 
-        run: docker tag flobbe9/$PROJECT_NAME:latest gcr.io/$GOOGLE_CLOUD_PROJECT_NAME/$PROJECT_NAME:latest
-
-      - name: Push Google Cloud image
-        run: docker image push gcr.io/$GOOGLE_CLOUD_PROJECT_NAME/$PROJECT_NAME:latest
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/$PROJECT_NAME:latest
