@@ -45,7 +45,7 @@ jobs:
       - name: Tag image with old version
         uses: docker/metadata-action@v4.6.0
         with: 
-            images: ${{secrets.DOCKERHUB_USERNAME}}/vorspiel_backend:latest
+            images: ${{secrets.DOCKERHUB_USERNAME}}/vorspiel_backend
             tags: | 
                 type=semver,pattern={{raw}},value=0.0.3
 
@@ -53,4 +53,5 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: ${{secrets.DOCKERHUB_USERNAME}}/vorspiel_backend:latest
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/vorspiel_backend:0.0.3,
+                ${{secrets.DOCKERHUB_USERNAME}}/vorspiel_backend:latest,
