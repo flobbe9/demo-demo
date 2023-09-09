@@ -6,11 +6,6 @@ on:
     branches:
       - main
 
-env: 
-    API_VERSION: 0.0.3
-    PROJECT_NAME: vorspiel_backend
-    GOOGLE_CLOUD_PROJECT_NAME: vorspiel-939791
-
 jobs:
 #   build:
     # runs-on: ubuntu-latest
@@ -42,18 +37,8 @@ jobs:
           username: ${{secrets.DOCKERHUB_USERNAME}}
           password: ${{secrets.DOCKERHUB_TOKEN}}
 
-      - name: Tag image with old version
-        uses: docker/metadata-action@v4.6.0
-        with: 
-            images: ${{secrets.DOCKERHUB_USERNAME}}/vorspiel_backend
-            tags: | 
-                type=semver,pattern={{raw}},value=0.0.3
-
-      - name: 
-        run: docker image push ${{secrets.DOCKERHUB_USERNAME}}/vorspiel_backend:0.0.3
-
       - name: Build and push to Docker Hub
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: ${{secrets.DOCKERHUB_USERNAME}}/vorspiel_backend:latest,
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/vorspiel_backend:latest
