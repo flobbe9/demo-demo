@@ -43,7 +43,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Tag image with old version
-        run: docker tag flobbe9/vorspiel_backend:latest flobbe9/vorspiel_backend:$API_VERSION
+        run: docker tag docker.io/flobbe9/vorspiel_backend:latest docker.io/flobbe9/vorspiel_backend:$API_VERSION
 
       - name: Push image with old version
         run: docker image push flobbe9/$PROJECT_NAME:$API_VERSION
