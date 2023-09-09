@@ -12,22 +12,22 @@ env:
     GOOGLE_CLOUD_PROJECT_NAME: vorspiel-939791
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+#   build:
+    # runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository 
-        uses: actions/checkout@v3
-      - name: Setup JDK
-        uses: actions/setup-java@v3
-        with: 
-          distribution: 'temurin'
-          java-version: '17'
-      - run: gradle clean build
+    # steps:
+    #   - name: Checkout repository 
+    #     uses: actions/checkout@v3
+    #   - name: Setup JDK
+    #     uses: actions/setup-java@v3
+    #     with: 
+    #       distribution: 'temurin'
+    #       java-version: '17'
+    #   - run: gradle clean build
   
   push_to_DockerHub_and_Google_Cloud:
     runs-on: ubuntu-latest
-    needs: build
+    # needs: build
 
     steps:
       - name: Set up QEMU
@@ -43,7 +43,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Tag image with old version
-        run: docker tag flobbe9/$PROJECT_NAME:latest flobbe9/$PROJECT_NAME:$API_VERSION
+        run: docker tag flobbe9/vorspiel_backend:latest flobbe9/vorspiel_backend:$API_VERSION
 
       - name: Push image with old version
         run: docker image push flobbe9/$PROJECT_NAME:$API_VERSION
