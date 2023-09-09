@@ -6,11 +6,6 @@ on:
     branches:
       - main
 
-env: 
-    API_VERSION: 0.0.3
-    PROJECT_NAME: vorspiel_backend
-    GOOGLE_CLOUD_PROJECT_NAME: vorspiel-939791
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -42,20 +37,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Tag image with old version
-        run: docker tag flobbe9/$PROJECT_NAME:latest flobbe9/$PROJECT_NAME:$API_VERSION
-
-      - name: Push image with old version
-        run: docker image push flobbe9/$PROJECT_NAME:$API_VERSION
-    
       - name: Build and push to Docker Hub
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: flobbe9/$PROJECT_NAME:latest
-
-      - name: Tag Google Cloud image 
-        run: docker tag flobbe9/$PROJECT_NAME:latest gcr.io/$GOOGLE_CLOUD_PROJECT_NAME/$PROJECT_NAME:latest
-
-      - name: Push Google Cloud image
-        run: docker image push gcr.io/$GOOGLE_CLOUD_PROJECT_NAME/$PROJECT_NAME:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/vorspiel_backend:latest
