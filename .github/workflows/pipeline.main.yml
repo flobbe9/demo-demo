@@ -7,22 +7,22 @@ on:
       - main
 
 jobs:
-#   build:
-    # runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
 
-    # steps:
-    #   - name: Checkout repository 
-    #     uses: actions/checkout@v3
-    #   - name: Setup JDK
-    #     uses: actions/setup-java@v3
-    #     with: 
-    #       distribution: 'temurin'
-    #       java-version: '17'
-    #   - run: gradle clean build
+    steps:
+      - name: Checkout repository 
+        uses: actions/checkout@v3
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with: 
+          distribution: 'temurin'
+          java-version: '17'
+      - run: gradle clean build
   
   push_to_DockerHub_and_Google_Cloud:
     runs-on: ubuntu-latest
-    # needs: build
+    needs: build
 
     steps:
       - name: Set up QEMU
