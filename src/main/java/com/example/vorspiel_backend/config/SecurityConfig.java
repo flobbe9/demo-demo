@@ -7,12 +7,13 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 
 /**
- * Configuration class to authentiacate requests.
+ * Configuration class to authentiacate requests.<p>
  * 
  * @since 0.0.1
  */
@@ -24,15 +25,23 @@ public class SecurityConfig {
     @Value("${FRONTEND_BASE_URL}")
     private String frontendBaseUrl;
 
+    @Value("${CSRF_ENABLED}")
+    private String csrfEnabled;
+
     
     @Bean
+    // TODO: set to true in prod, as soon as login is added
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
+        // enable csrf in prod only
+        if (csrfEnabled.equalsIgnoreCase("true"))
+            http.csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
+        else
+            http.csrf(csrf -> csrf.disable());
+        
         // security
-        http
-            .csrf(csrf -> csrf
-                .disable())
-			.authorizeHttpRequests(authorize -> authorize
+		http.authorizeHttpRequests(authorize -> authorize
                 .anyRequest()
                     .permitAll()
             );
