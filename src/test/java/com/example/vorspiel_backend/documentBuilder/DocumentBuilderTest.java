@@ -1,5 +1,6 @@
 package com.example.vorspiel_backend.documentBuilder;
 
+import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.DOCX_FOLDER;
 import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.INDENT_ONE_THIRD_PORTRAIT;
 import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.RESOURCE_FOLDER;
 import static com.example.vorspiel_backend.documentBuilder.PictureUtils.PICTURES_FOLDER;
@@ -541,7 +542,7 @@ public class DocumentBuilderTest {
         DocumentBuilder.clearResourceFolder();
 
         // important files should still exist
-        assertTrue(new File(RESOURCE_FOLDER + "/EmptyDocument_2Columns.docx").exists());
+        assertTrue(new File(DOCX_FOLDER + "/EmptyDocument_2Columns.docx").exists());
         assertTrue(new File(TEST_RESOURCE_FOLDER + "/logo.png").exists());
 
         // should not exist
@@ -561,7 +562,7 @@ public class DocumentBuilderTest {
         DocumentBuilder.clearResourceFolder();
 
         // important files should still exist
-        assertTrue(new File(RESOURCE_FOLDER + "/EmptyDocument_2Columns.docx").exists());
+        assertTrue(new File(DOCX_FOLDER + "/EmptyDocument_2Columns.docx").exists());
         assertTrue(new File(TEST_RESOURCE_FOLDER + "/logo.png").exists());
 
         // should not exist
@@ -572,7 +573,7 @@ public class DocumentBuilderTest {
     @AfterEach
     void cleanUp() throws IOException {
 
-        new File(RESOURCE_FOLDER + "/" + this.docxFileName).delete();
+        // new File(RESOURCE_FOLDER + "/" + this.docxFileName).delete();
     }
 
 
