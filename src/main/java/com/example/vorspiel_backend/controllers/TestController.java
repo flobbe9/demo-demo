@@ -65,7 +65,11 @@ public class TestController {
             return ApiExceptionHandler.returnPretty(BAD_REQUEST, bindingResult);
 
         // build and write document
-        DocumentBuilder documentBuilder = new DocumentBuilder(wrapper.getContent(), "vorspiel.docx", wrapper.getTableConfig() != null ? wrapper.getTableConfig() : null);
+        DocumentBuilder documentBuilder = new DocumentBuilder(wrapper.getContent(), 
+                                                             "vorspiel.docx", 
+                                                             wrapper.getNumColumns(),
+                                                             wrapper.isLandscape(),
+                                                             wrapper.getTableConfig());
         documentBuilder.build();
 
         // set file name for download

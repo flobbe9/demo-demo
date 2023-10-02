@@ -3,6 +3,8 @@ package com.example.vorspiel_backend.documentParts;
 import java.util.List;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,4 +24,9 @@ public class DocumentWrapper {
 
     @Valid
     private TableConfig tableConfig;
+
+    private boolean landscape = false;
+
+    @Min(1) @Max(3)
+    private int numColumns = 1;
 }
