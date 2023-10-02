@@ -44,12 +44,6 @@ public class Style {
     @NotNull(message = "'underline' cannot be null.")
     private Boolean underline;
 
-    @NotNull(message = "'indentFirstLine' cannot be null.")
-    private Boolean indentFirstLine;
-
-    @NotNull(message = "'indentParagraph' cannot be null.")
-    private Boolean indentParagraph;
-
     @NotNull(message = "'textAlign' cannot be null.")
     private ParagraphAlignment textAlign;
 

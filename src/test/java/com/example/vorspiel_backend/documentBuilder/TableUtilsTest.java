@@ -58,8 +58,6 @@ public class TableUtilsTest {
                                     false, 
                                     true,
                                     false, 
-                                    false, 
-                                    false,
                                     ParagraphAlignment.CENTER, 
                                     null);
         this.numColumns = 3;

@@ -1,8 +1,8 @@
 package com.example.vorspiel_backend.documentBuilder;
 
 import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.DOCX_FOLDER;
-import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.INDENT_ONE_THIRD_PORTRAIT;
 import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.RESOURCE_FOLDER;
+import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.getDocumentTemplateFileName;
 import static com.example.vorspiel_backend.documentBuilder.PictureUtils.PICTURES_FOLDER;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -55,6 +56,7 @@ public class DocumentBuilderTest {
     private String testDocxFileName;
 
     private String docxFileName;
+    private boolean landscape;
     
     private Style style;
     
@@ -92,8 +94,6 @@ public class DocumentBuilderTest {
                                     true, 
                                     true, 
                                     true,
-                                    false,
-                                    false,
                                     ParagraphAlignment.CENTER, 
                                     null);        
         this.header = new BasicParagraph("This is the header", this.style);
@@ -111,7 +111,8 @@ public class DocumentBuilderTest {
         
         // document
         this.testDocxFileName = "test/test.docx";
-        this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", this.tableConfig);
+        this.landscape = true;
+        this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", 2, this.landscape, this.tableConfig);
         this.docxFileName = this.documentBuilder.getDocxFileName();
         this.document = this.documentBuilder.getDocument();
         this.documentBuilder.setPictureUtils(this.pictureUtils);
@@ -135,6 +136,8 @@ public class DocumentBuilderTest {
 
         // should have written to file
         assertTrue(new File(DocumentBuilder.RESOURCE_FOLDER + "/" + this.docxFileName).exists());
+
+        assertEquals(this.landscape ? STPageOrientation.LANDSCAPE : STPageOrientation.PORTRAIT, this.documentBuilder.getPageSz().getOrient());
     }
 
 
@@ -407,36 +410,6 @@ public class DocumentBuilderTest {
     }
 
 
-    @Test
-    void addStyle_souldApplyIndentFirstLineCorrectly() {
-
-        XWPFParagraph paragraph = this.document.createParagraph();
-
-        this.style.setIndentFirstLine(false);
-        DocumentBuilder.addStyle(paragraph, style);
-        assertTrue(paragraph.getIndentationFirstLine() == -1);
-
-        this.style.setIndentFirstLine(true);
-        DocumentBuilder.addStyle(paragraph, style);
-        assertTrue(paragraph.getIndentationFirstLine() == INDENT_ONE_THIRD_PORTRAIT);
-    }
-
-
-    @Test
-    void addStyle_souldApplyIndentParagraphCorrectly() {
-
-        XWPFParagraph paragraph = this.document.createParagraph();
-
-        this.style.setIndentParagraph(false);
-        DocumentBuilder.addStyle(paragraph, style);
-        assertTrue(paragraph.getIndentFromLeft() == -1);
-
-        this.style.setIndentParagraph(true);
-        DocumentBuilder.addStyle(paragraph, style);
-        assertTrue(paragraph.getIndentFromLeft() == INDENT_ONE_THIRD_PORTRAIT);
-    }
-
-
     @Test 
     void addStyle_breakTypeNull_shouldNotThrow() {
 
@@ -542,7 +515,7 @@ public class DocumentBuilderTest {
         DocumentBuilder.clearResourceFolder();
 
         // important files should still exist
-        assertTrue(new File(DOCX_FOLDER + "/EmptyDocument_2Columns.docx").exists());
+        assertTrue(new File(DOCX_FOLDER + "/" + getDocumentTemplateFileName(2)).exists());
         assertTrue(new File(TEST_RESOURCE_FOLDER + "/logo.png").exists());
 
         // should not exist
@@ -562,7 +535,7 @@ public class DocumentBuilderTest {
         DocumentBuilder.clearResourceFolder();
 
         // important files should still exist
-        assertTrue(new File(DOCX_FOLDER + "/EmptyDocument_2Columns.docx").exists());
+        assertTrue(new File(DOCX_FOLDER + "/" + getDocumentTemplateFileName(2)).exists());
         assertTrue(new File(TEST_RESOURCE_FOLDER + "/logo.png").exists());
 
         // should not exist
@@ -570,10 +543,19 @@ public class DocumentBuilderTest {
     }
 
 
+//----------- getDocumentTemplateFileName()
+    @Test
+    void getDocumentTemplateFileName_shouldExist() {
+
+        assertTrue(new File(DOCX_FOLDER + "/" + getDocumentTemplateFileName(2)).exists());
+        assertTrue(new File(DOCX_FOLDER + "/" + getDocumentTemplateFileName(3)).exists());
+    }
+
+
     @AfterEach
     void cleanUp() throws IOException {
 
-        // new File(RESOURCE_FOLDER + "/" + this.docxFileName).delete();
+        new File(RESOURCE_FOLDER + "/" + this.docxFileName).delete();
     }
 
 

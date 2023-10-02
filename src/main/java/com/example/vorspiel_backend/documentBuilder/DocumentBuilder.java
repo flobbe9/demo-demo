@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.wp.usermodel.HeaderFooterType;
@@ -52,9 +53,11 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Getter
 @Setter
+// TODO: column break not working after table
 public class DocumentBuilder {
 
     public static final String RESOURCE_FOLDER = "./src/main/resources";
+    public static final String DOCX_FOLDER = RESOURCE_FOLDER + "/docx";
 
     /** paragraph indentation */
     public static final int INDENT_ONE_THIRD_PORTRAIT = 2000;
@@ -76,6 +79,9 @@ public class DocumentBuilder {
 
     /** minimum line space (Zeilenabstand) */
     public static final int NO_LINE_SPACE = 1;
+
+    /** declares that a tab should be added here instead of the actual text */
+    public static final String TAB_SYMBOL = "//TAB";
     
     @NotNull(message = "'content' cannot be null.")
     private List<BasicParagraph> content;
@@ -92,6 +98,8 @@ public class DocumentBuilder {
 
     private XWPFDocument document;
 
+    private boolean landscape;
+
     
     /**
      * Reading the an empty document from an existing file.<p>
@@ -100,14 +108,17 @@ public class DocumentBuilder {
      * 
      * @param content list of {@link BasicParagraph}s
      * @param docxFileName file name to write the .docx file to
+     * @param numColumns number of columns a page will be devided in
+     * @param landscape true if document should be in landscape mode, else portrait is used
      * @see PictureType for allowed formats
      */
-    public DocumentBuilder(List<BasicParagraph> content, String docxFileName) {
+    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape) {
 
         this.content = content;
         this.docxFileName = prependDateTime(docxFileName);
         this.pictureUtils = new PictureUtils();
-        this.document = readDocxFile("EmptyDocument_2Columns.docx");
+        this.landscape = landscape;
+        this.document = readDocxFile(getDocumentTemplateFileName(numColumns));
     }
 
 
@@ -118,15 +129,18 @@ public class DocumentBuilder {
      * 
      * @param content list of {@link BasicParagraph}s
      * @param docxFileName file name to write the .docx file to
+     * @param numColumns number of columns a page will be devided in
+     * @param landscape true if document should be in landscape mode, else portrait is used
      * @param tableConfig wrapper with configuration data for the table to insert
      * @see PictureType for allowed formats    
      */
-    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, TableConfig tableConfig) {
+    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape, TableConfig tableConfig) {
 
         this.content = content;
         this.docxFileName = prependDateTime(docxFileName);
         this.pictureUtils = new PictureUtils();
-        this.document = readDocxFile("EmptyDocument_2Columns.docx");
+        this.landscape = landscape;
+        this.document = readDocxFile(getDocumentTemplateFileName(numColumns));
         this.tableUtils = tableConfig != null ? new TableUtils(this.document, tableConfig) : null;
     }
 
@@ -134,14 +148,12 @@ public class DocumentBuilder {
     /**
      * Builds a the document with given list of {@link BasicParagraph}s and writes it to a .docx file which will
      * be located in the {@link #RESOURCE_FOLDER}.
-     * 
-     * @return true if document was successfully written to a .docx file
      */
     public void build() {
         
         log.info("Starting to build document...");
         
-        setOrientation(STPageOrientation.LANDSCAPE);
+        setOrientation(this.landscape ? STPageOrientation.LANDSCAPE : STPageOrientation.PORTRAIT);
 
         addContent();
         
@@ -265,7 +277,36 @@ public class DocumentBuilder {
             
         // case: plain text
         } else
-            paragraph.createRun().setText(text);
+            addPlainTextToRun(paragraph.createRun(), text);
+    }
+
+
+    /**
+     * Add plain text to given {@link XWPFRun}. <p>
+     * 
+     * For adding tabs, the text is expected to be formatted like: <p>
+     * - HelloTABthis is aTAB test <p>
+     * 
+     * Any TAB would be replaced with an actual tab here.
+     * 
+     * @param run to add the text to
+     * @param text to add
+     */
+    private void addPlainTextToRun(XWPFRun run, String text) {
+
+        String[] textArr = text.split(TAB_SYMBOL);
+
+        for (int i = 0; i < textArr.length; i++) {
+            run.setText(textArr[i]);
+
+            // case: is not last element
+            if (i != textArr.length - 1) 
+                run.addTab();
+        }
+
+        // case: text ends with tab
+        if (text.endsWith(TAB_SYMBOL))
+            run.addTab();
     }
 
 
@@ -298,12 +339,6 @@ public class DocumentBuilder {
             if (style.getUnderline()) 
                 run.setUnderline(UnderlinePatterns.SINGLE);
         });
-
-        if (style.getIndentFirstLine()) 
-            paragraph.setIndentationFirstLine(INDENT_ONE_THIRD_PORTRAIT);
-
-        if (style.getIndentParagraph()) 
-            paragraph.setIndentFromLeft(INDENT_ONE_THIRD_PORTRAIT);
 
         paragraph.setAlignment(style.getTextAlign());
 
@@ -387,7 +422,7 @@ public class DocumentBuilder {
      * 
      * @return pageSz object of document
      */
-    private CTPageSz getPageSz() {
+    public CTPageSz getPageSz() {
 
         CTSectPr sectPr = getSectPr();
 
@@ -411,7 +446,7 @@ public class DocumentBuilder {
     /**
      * Reads given .docx file to an {@link XWPFDocument} and cleans up any content. <p>
      * 
-     * File is expected to be located in {@link #RESOURCE_FOLDER}. <p>
+     * File is expected to be located in {@link #DOCX_FOLDER}. <p>
      * 
      * Creates and returns a new document if exception is caught.
      * 
@@ -425,7 +460,7 @@ public class DocumentBuilder {
         try {
             fileName = prependSlash(fileName);
 
-            XWPFDocument document = new XWPFDocument(new FileInputStream(RESOURCE_FOLDER + fileName));
+            XWPFDocument document = new XWPFDocument(new FileInputStream(DOCX_FOLDER + fileName));
 
             // clean up document
             document.removeBodyElement(0);
@@ -592,6 +627,12 @@ public class DocumentBuilder {
             return "/";
 
         return str.charAt(0) == '/' ? str : "/" + str;
+    }
+    
+
+    public static String getDocumentTemplateFileName(int numColumns) {
+
+        return "Empty_" + numColumns + "Columns.docx";
     }
 
 
