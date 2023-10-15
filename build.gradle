@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.example'
-version = '0.0.4-SNAPSHOT'
+version = '0.0.5-SNAPSHOT'
 
 java {
 	sourceCompatibility = '17'
@@ -34,6 +34,9 @@ dependencies {
     implementation 'com.documents4j:documents4j-server-standalone:1.1.12'
 	implementation 'com.documents4j:documents4j-client:1.1.12'
     implementation 'com.itextpdf:itextpdf:5.5.13.3'
+
+    // openAPI
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 
     // docxBuilder
 	implementation 'fr.opensagres.xdocreport:fr.opensagres.poi.xwpf.converter.pdf:2.0.4'
