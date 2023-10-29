@@ -1,5 +1,7 @@
 package com.example.vorspiel_backend.documentBuilder;
 
+import static com.example.vorspiel_backend.documentBuilder.DocumentBuilderTest.TEST_RESOURCE_FOLDER;
+import static com.example.vorspiel_backend.utils.Utils.PICTURES_FOLDER;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,7 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -20,6 +23,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import com.example.vorspiel_backend.exception.ApiException;
+import com.example.vorspiel_backend.utils.Utils;
 
 
 /**
@@ -38,6 +42,8 @@ public class PictureUtilsTest {
     
     private PictureUtils pictureUtils;
 
+    private Map<String, byte[]> pictures = new HashMap<>();
+
 
     @BeforeEach
     void init() {
@@ -46,14 +52,14 @@ public class PictureUtilsTest {
         this.document = new XWPFDocument();
         this.run = document.createParagraph().createRun();
         this.testPictureName = "test.png";
-        this.pictureUtils = new PictureUtils();
-        this.pictureUtils.setPictures(List.of(new File(DocumentBuilderTest.TEST_RESOURCE_FOLDER + "/" + testPictureName)));
+        this.pictures.put(this.testPictureName, Utils.fileToByteArray(new File(TEST_RESOURCE_FOLDER + Utils.prependSlash(testPictureName))));
+        this.pictureUtils = new PictureUtils(this.pictures);
     }
 
 
 //------------ addPicture()
     @Test
-    void addPicture_picturesNull_shouldThrow() {
+    void addPicture_picturesNull_shouldNotThrow() {
 
         // set pictures null
         this.pictureUtils.setPictures(null);
@@ -64,13 +70,10 @@ public class PictureUtilsTest {
 
 
     @Test
-    void addPicture_picturesEmpty_shouldThrow() {
+    void addPicture_picturesEmpty_shouldNotThrow() {
 
-        // clear pictures
-        this.pictureUtils.setPictures(List.of());
+        this.pictureUtils.setPictures(Map.of());
 
-        // should not throw
-        // assertThrows(ApiException.class, () -> this.pictureUtils.addPicture(run, testPictureName));
         assertDoesNotThrow(() -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
@@ -78,10 +81,8 @@ public class PictureUtilsTest {
     @Test
     void addPicture_fielNameNotInList_shouldThrow() {
 
-        // set mock fileName
-        this.testPictureName = "mockName";
+        this.testPictureName = "mockName.png";
         
-        // should not throw
         assertThrows(ApiException.class, () -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
@@ -89,10 +90,8 @@ public class PictureUtilsTest {
     @Test
     void addPicture_runNull_shouldThrow() {
 
-        // set run null
         this.run = null;
         
-        // should not throw
         assertThrows(ApiException.class, () -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
@@ -103,7 +102,15 @@ public class PictureUtilsTest {
         // set fileName null
         this.testPictureName = null;
         
-        // should not throw
+        assertThrows(ApiException.class, () -> this.pictureUtils.addPicture(run, testPictureName));
+    }
+
+
+    @Test 
+    void addPicture_notAPicture_shouldThrow() {
+
+        this.testPictureName = "mockName.pdf";
+
         assertThrows(ApiException.class, () -> this.pictureUtils.addPicture(run, testPictureName));
     }
 
@@ -126,32 +133,32 @@ public class PictureUtilsTest {
     @Test
     void getPictureType_fileNameNull_shouldReturnNull() {
 
-        assertEquals(null, this.pictureUtils.getPictureType(null));
+        assertEquals(null, PictureUtils.getPictureType(null));
     }
 
 
     @Test
     void getPictureType_invalidFileName_shouldReturnNull() {
 
-        assertEquals(null, this.pictureUtils.getPictureType(""));
+        assertEquals(null, PictureUtils.getPictureType(""));
 
-        assertEquals(null, this.pictureUtils.getPictureType("mockName"));
+        assertEquals(null, PictureUtils.getPictureType("mockName"));
 
-        assertEquals(null, this.pictureUtils.getPictureType("mockName.xyz"));
+        assertEquals(null, PictureUtils.getPictureType("mockName.xyz"));
 
-        assertEquals(null, this.pictureUtils.getPictureType("mockName.pdf"));
+        assertEquals(null, PictureUtils.getPictureType("mockName.pdf"));
 
         // .jpeg not supported, only .jpg
-        assertEquals(null, this.pictureUtils.getPictureType("mockName.jpeg"));
+        assertEquals(null, PictureUtils.getPictureType("mockName.jpeg"));
     }
 
 
     @Test
     void getPictureType_shouldReturnCorrectType() {
 
-        assertEquals(PictureType.PNG, this.pictureUtils.getPictureType(testPictureName));
+        assertEquals(PictureType.PNG, PictureUtils.getPictureType(testPictureName));
 
-        assertEquals(PictureType.JPEG, this.pictureUtils.getPictureType("test.jpg"));
+        assertEquals(PictureType.JPEG, PictureUtils.getPictureType("test.jpg"));
     }
 
 
@@ -159,5 +166,6 @@ public class PictureUtilsTest {
     void cleanUp() throws IOException {
 
         this.document.close();
+        Utils.clearFolder(PICTURES_FOLDER, null);
     }
 }

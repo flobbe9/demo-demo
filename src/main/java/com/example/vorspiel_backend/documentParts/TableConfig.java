@@ -1,5 +1,6 @@
 package com.example.vorspiel_backend.documentParts;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -31,11 +32,13 @@ public class TableConfig {
     /** The index in content list with the first table element. */
     @NotNull(message = "'startIndex' cannot be null.")
     @Min(value = 0, message = "'startIndex' has to be greater than equal 0.")
+    @Schema(defaultValue = "1")
     private Integer startIndex;
     
     /** The index in content list with the last table element. */
     @NotNull(message = "'endIndex' cannot be null.")
     @Min(value = 0, message = "'endIndex' has to be greater than equal 0.")
+    @Schema(defaultValue = "1")
     private Integer endIndex;
     
     

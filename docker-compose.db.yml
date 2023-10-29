@@ -16,11 +16,3 @@ services:
     #     ports:
     #         - 1080:1080
     #         - 1025:1025
-    api:
-      depends_on: 
-        - db
-        # - mailserver
-      build: .
-      container_name: vorspiel_backend
-      ports: 
-          - 4001:4001

@@ -4,7 +4,10 @@ import java.util.Arrays;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -12,6 +15,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.example.vorspiel_backend.VorspielApplication;
 
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.log4j.Log4j2;
 
@@ -30,13 +34,66 @@ public class ApiExceptionHandler {
      * logs neccessary stackTrace information.
      * 
      * @param exception ConstraintViolationException that was thrown
-     * @param request request object that caused the exception
-     * @return ResponseEntity with internalServerError status and an ApiExceptionFormat object
+     * @return ResponseEntity with badRequest status and an ApiExceptionFormat object
      */
     @ExceptionHandler(value = ConstraintViolationException.class) 
     public static ResponseEntity<ApiExceptionFormat> handleBadRequest(ConstraintViolationException exception) {
 
-        // log message
+        String message = exception.getMessage();
+
+        // log all violations
+        for (ConstraintViolation<?> violation : exception.getConstraintViolations()) {
+            String messageTemplate = violation.getMessageTemplate();
+            message = messageTemplate != null ? messageTemplate : violation.getMessage();
+
+            log.error(message);
+        }
+
+        // log relevant stackTrace parts
+        logPackageStackTrace(exception.getStackTrace());
+
+        return ResponseEntity.badRequest().body(returnPretty(HttpStatus.BAD_REQUEST, message));
+    }
+
+
+    /**
+     * Catches any {@link MethodArgumentNotValidException}. Returns a {@link ResponseEntity} object with an {@link ApiExceptionFormat} and 
+     * logs neccessary stackTrace information.
+     * 
+     * @param exception MethodArgumentNotValidException that was thrown
+     * @return ResponseEntity with badRequest status and an ApiExceptionFormat object
+     */
+    @ExceptionHandler(value = MethodArgumentNotValidException.class) 
+    public static ResponseEntity<ApiExceptionFormat> handleBadRequest(MethodArgumentNotValidException exception) {
+
+        String message = exception.getMessage();
+
+        // log all errors from binding result
+        for (ObjectError error : exception.getBindingResult().getAllErrors()) {
+            String defaultMessage = error.getDefaultMessage();
+            if (defaultMessage != null)
+                message = defaultMessage;
+
+            log.error(message);
+        }
+
+        // log relevant stackTrace parts
+        logPackageStackTrace(exception.getStackTrace());
+
+        return ResponseEntity.badRequest().body(returnPretty(HttpStatus.BAD_REQUEST, message));
+    }
+
+
+    /**
+     * Catches any {@link HttpMessageNotReadableException}. Returns a {@link ResponseEntity} object with an {@link ApiExceptionFormat} and 
+     * logs neccessary stackTrace information.
+     * 
+     * @param exception HttpMessageNotReadableException that was thrown
+     * @return ResponseEntity with badRequest status and an ApiExceptionFormat object
+     */
+    @ExceptionHandler(value = HttpMessageNotReadableException.class) 
+    public static ResponseEntity<ApiExceptionFormat> handleBadRequest(HttpMessageNotReadableException exception) {
+
         log.error(exception.getMessage());
 
         // log relevant stackTrace parts
@@ -44,6 +101,7 @@ public class ApiExceptionHandler {
 
         return ResponseEntity.badRequest().body(returnPretty(HttpStatus.BAD_REQUEST, exception.getMessage()));
     }
+    
 
     /**
      * Catches any {@link ApiException}. Returns a {@link ResponseEntity} object with an {@link ApiExceptionFormat} and 
@@ -70,7 +128,8 @@ public class ApiExceptionHandler {
         // log relevant stackTrace parts
         logPackageStackTrace(exception.getStackTrace());
 
-        return ResponseEntity.internalServerError().body(returnPretty(exception.getStatus(), exception.getMessage()));
+        return ResponseEntity.status(exception.getStatus())
+                             .body(returnPretty(exception.getStatus(), exception.getMessage()));
     }
 
 
