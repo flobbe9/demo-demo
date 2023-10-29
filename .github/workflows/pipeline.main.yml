@@ -18,6 +18,8 @@ jobs:
         with: 
           distribution: 'temurin'
           java-version: '17'
+      - name: Start db and mail server
+        run: docker-compose -f 'docker-compose.db.yml' up -d
       - run: gradle clean build
   
   push_to_DockerHub_and_Google_Cloud:
