@@ -1,6 +1,10 @@
 package com.example.vorspiel_backend.documentBuilder;
 
-import static com.example.vorspiel_backend.documentBuilder.PictureUtils.PICTURES_FOLDER;
+import static com.example.vorspiel_backend.utils.Utils.DOCX_FOLDER;
+import static com.example.vorspiel_backend.utils.Utils.PDF_FOLDER;
+import static com.example.vorspiel_backend.utils.Utils.STATIC_FOLDER;
+import static com.example.vorspiel_backend.utils.Utils.RESOURCE_FOLDER;
+import static com.example.vorspiel_backend.utils.Utils.prependSlash;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,9 +13,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+
 import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.wp.usermodel.HeaderFooterType;
 import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
@@ -31,6 +35,7 @@ import com.example.vorspiel_backend.documentParts.TableConfig;
 import com.example.vorspiel_backend.documentParts.style.Style;
 import com.example.vorspiel_backend.exception.ApiException;
 import com.example.vorspiel_backend.exception.ApiExceptionHandler;
+import com.example.vorspiel_backend.utils.Utils;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -53,11 +58,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Getter
 @Setter
-// TODO: column break not working after table
 public class DocumentBuilder {
-
-    public static final String RESOURCE_FOLDER = "./src/main/resources";
-    public static final String DOCX_FOLDER = RESOURCE_FOLDER + "/docx";
 
     /** paragraph indentation */
     public static final int INDENT_ONE_THIRD_PORTRAIT = 2000;
@@ -110,15 +111,17 @@ public class DocumentBuilder {
      * @param docxFileName file name to write the .docx file to
      * @param numColumns number of columns a page will be devided in
      * @param landscape true if document should be in landscape mode, else portrait is used
+     * @param pictures map of filename and bytes of pictures in the document
      * @see PictureType for allowed formats
      */
-    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape) {
+    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape, Map<String, byte[]> pictures) {
 
         this.content = content;
-        this.docxFileName = prependDateTime(docxFileName);
-        this.pictureUtils = new PictureUtils();
+        this.docxFileName = Utils.prependDateTime(docxFileName);
+        this.pictureUtils = new PictureUtils(pictures);
         this.landscape = landscape;
-        this.document = readDocxFile(getDocumentTemplateFileName(numColumns));
+        this.document = numColumns == 1 ? new XWPFDocument() : 
+                                          readDocxFile(STATIC_FOLDER + prependSlash(getDocumentTemplateFileName(numColumns)));
     }
 
 
@@ -132,22 +135,24 @@ public class DocumentBuilder {
      * @param numColumns number of columns a page will be devided in
      * @param landscape true if document should be in landscape mode, else portrait is used
      * @param tableConfig wrapper with configuration data for the table to insert
+     * @param pictures map of filename and bytes of pictures in the document
      * @see PictureType for allowed formats    
      */
-    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape, TableConfig tableConfig) {
+    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape, TableConfig tableConfig, Map<String, byte[]> pictures) {
 
         this.content = content;
-        this.docxFileName = prependDateTime(docxFileName);
-        this.pictureUtils = new PictureUtils();
+        this.docxFileName = Utils.prependDateTime(docxFileName);
+        this.pictureUtils = new PictureUtils(pictures);
         this.landscape = landscape;
-        this.document = readDocxFile(getDocumentTemplateFileName(numColumns));
+        this.document = numColumns == 1 ? new XWPFDocument() : 
+                                          readDocxFile(STATIC_FOLDER + prependSlash(getDocumentTemplateFileName(numColumns)));
         this.tableUtils = tableConfig != null ? new TableUtils(this.document, tableConfig) : null;
     }
 
 
     /**
      * Builds a the document with given list of {@link BasicParagraph}s and writes it to a .docx file which will
-     * be located in the {@link #RESOURCE_FOLDER}.
+     * be located in the {@link #DOCX_FOLDER}.
      */
     public void build() {
         
@@ -159,12 +164,7 @@ public class DocumentBuilder {
         
         setDocumentMargins(MINIMUM_MARGIN_TOP_BOTTOM, null, MINIMUM_MARGIN_TOP_BOTTOM, null);
         
-        boolean buildSuccessful = writeDocxFile();
-
-        if (buildSuccessful)
-            log.info("Finished building document without errors.");
-        else
-            log.error("Finished building document with errors.");
+        log.info("Finished building document");
     }
     
 
@@ -172,8 +172,6 @@ public class DocumentBuilder {
      * Iterates {@link #content} list and adds all paragraphs to the document.
      */
     void addContent() {
-
-        log.info("Adding content...");
 
         int numParagraphs = this.content.size();
 
@@ -202,6 +200,12 @@ public class DocumentBuilder {
         XWPFParagraph paragraph = createParagraphByContentIndex(currentContentIndex);
 
         if (basicParagraph != null) {
+            // case: inside table and is picture
+            if (paragraph == null && PictureUtils.isPicture(basicParagraph.getText())) {
+                log.warn("Failed to picture " + basicParagraph.getText() + ". Cannot add picture inside table.");
+                return;    
+            }
+
             // add text
             addText(paragraph, basicParagraph, currentContentIndex);
 
@@ -223,7 +227,7 @@ public class DocumentBuilder {
      * Any other element gets a normal paragraph.
      * 
      * @param currentContentIndex index of the {@link #content} element currently processed
-     * @return created paragraph
+     * @return created paragraph or null if is table
      */
     XWPFParagraph createParagraphByContentIndex(int currentContentIndex) {
 
@@ -231,23 +235,13 @@ public class DocumentBuilder {
         if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex))
             return null;
 
-        BasicParagraph basicParagraph = this.content.get(currentContentIndex);
-
         // case: header
-        if (currentContentIndex == 0) {
-            if (basicParagraph != null)
-                return this.document.createHeader(HeaderFooterType.DEFAULT).createParagraph();
-
-            return null;
-        }
+        if (currentContentIndex == 0) 
+            return this.document.createHeader(HeaderFooterType.DEFAULT).createParagraph();
 
         // case: footer
-        if (currentContentIndex == this.content.size() - 1) {
-            if (basicParagraph != null)
-                return this.document.createFooter(HeaderFooterType.DEFAULT).createParagraph();
-
-            return null;
-        }
+        if (currentContentIndex == this.content.size() - 1)
+            return this.document.createFooter(HeaderFooterType.DEFAULT).createParagraph();
 
         // case: any other
         return this.document.createParagraph();
@@ -268,15 +262,15 @@ public class DocumentBuilder {
         String text = basicParagraph.getText();
 
         // case: picture
-        if (this.pictureUtils != null && this.pictureUtils.isPicture(text)) {
+        if (this.pictureUtils != null && PictureUtils.isPicture(text))
             this.pictureUtils.addPicture(paragraph.createRun(), text);
         
         // case: table cell
-        } else if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex)) {
+        else if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex))
             this.tableUtils.addTableCell(currentContentIndex, text, basicParagraph.getStyle());
             
         // case: plain text
-        } else
+        else
             addPlainTextToRun(paragraph.createRun(), text);
     }
 
@@ -446,8 +440,6 @@ public class DocumentBuilder {
     /**
      * Reads given .docx file to an {@link XWPFDocument} and cleans up any content. <p>
      * 
-     * File is expected to be located in {@link #DOCX_FOLDER}. <p>
-     * 
      * Creates and returns a new document if exception is caught.
      * 
      * @param fileName name and suffix of the .docx file
@@ -458,9 +450,7 @@ public class DocumentBuilder {
         log.info("Starting to read .docx file...");
 
         try {
-            fileName = prependSlash(fileName);
-
-            XWPFDocument document = new XWPFDocument(new FileInputStream(DOCX_FOLDER + fileName));
+            XWPFDocument document = new XWPFDocument(new FileInputStream(fileName));
 
             // clean up document
             document.removeBodyElement(0);
@@ -476,20 +466,29 @@ public class DocumentBuilder {
     
 
     /**
-     * Writes the {@link XWPFDocument} to a .docx file. Stores it in {@link #RESOURCE_FOLDER}.
+     * Writes the {@link XWPFDocument} to a .docx file. Checks if exists and stores it in {@link #DOCX_FOLDER}.
      * 
-     * @return true if conversion was successful
+     * @return the .docx file
      */
-    boolean writeDocxFile() {
+    public File writeDocxFile() {
 
         log.info("Writing .docx file...");
 
-        try (OutputStream os = new FileOutputStream(RESOURCE_FOLDER + prependSlash(this.docxFileName))) {
+        String completeFileName = DOCX_FOLDER + prependSlash(this.docxFileName);
+
+        try (OutputStream os = new FileOutputStream(completeFileName)) {
 
             this.document.write(os);
             this.document.close();
 
-            return true;
+            File docxFile = new File(completeFileName);
+
+            if (!docxFile.exists())
+                throw new ApiException("Failed to create document. 'docxFile' does not exist.");
+
+            log.info("Finished writing .docx file");
+
+            return docxFile;
 
         } catch (IOException e) {
             throw new ApiException("Failed to write .docx file.", e);
@@ -498,41 +497,10 @@ public class DocumentBuilder {
 
 
     /**
-     * Deletes any file in {@link RESOURCE_FOLDER} that fulfills the conditions of {@link #shouldBeRemovedFromResources(File)}.
-     * 
-     * @return false if a deletion attempt has failed, else true
-     */
-    public static boolean clearResourceFolder() {
-
-        File[] resources = new File(RESOURCE_FOLDER).listFiles();
-        File[] pictures = new File(PICTURES_FOLDER).listFiles();
-        boolean clearedFolder = true;
-
-        if (resources != null) 
-            // iterate files in ./resources
-            for (File file : resources) 
-                if (shouldBeRemovedFromResourceFolder(file)) 
-                    if (!file.delete()) 
-                        clearedFolder = false;
-            
-        if (pictures != null)
-            // iterate files in ./resources/picture
-            for (File picture : pictures)
-                if (!picture.delete())
-                    clearedFolder = false;
-                        
-        if (!clearedFolder) 
-            log.warn("Failed to clear resourceFolder completely.");
-
-        return clearedFolder;
-    }
-
-
-    /**
-     * Convert any .docx file to .pdf file and store in {@link #RESOURCE_FOLDER}.
+     * Convert any .docx file to .pdf file and store in {@link #PDF_FOLDER}.
 
      * @param docxInputStream inputStream of .docx file
-     * @param pdfFileName name and suffix of pdf file (no relative path, file is expected to be located inside {@link #RESOURCE_FOLDER})
+     * @param pdfFileName name and suffix of pdf file (no relative path, file is expected to be located inside {@link #PDF_FOLDER})
      * @return pdf file if conversion was successful
      * @throws ApiException
      */
@@ -566,10 +534,10 @@ public class DocumentBuilder {
 
 
     /**
-     * Convert any .docx file to .pdf file and store in {@link #RESOURCE_FOLDER}.<p>
+     * Convert any .docx file to .pdf file and store in {@link #PDF_FOLDER}.<p>
      * 
      * @param docxInputStream inputStream of .docx file
-     * @param pdfFileName name and suffix of pdf file (no relative path, file is expected to be located inside {@link #RESOURCE_FOLDER})
+     * @param pdfFileName name and suffix of pdf file (no relative path, file is expected to be located inside {@link #PDF_FOLDER})
      * @return pdf file if conversion was successful
      * @throws ApiException
      */
@@ -577,7 +545,7 @@ public class DocumentBuilder {
 
         log.info("Converting .docx to .pdf...");
         
-        try (OutputStream os = new FileOutputStream(pdfFileName = RESOURCE_FOLDER + prependSlash(pdfFileName))) {
+        try (OutputStream os = new FileOutputStream(pdfFileName = PDF_FOLDER + prependSlash(pdfFileName))) {
             IConverter converter = LocalConverter.builder().build();
             
             converter.convert(docxInputStream)
@@ -589,9 +557,12 @@ public class DocumentBuilder {
             converter.shutDown();
 
             return new File((pdfFileName));
-                
+
         } catch (Exception e) {
             throw new ApiException("Failed to convert .docx to .pdf.", e);
+            
+        } finally {
+            log.info("Finished converting .docx to .pdf");
         }
     }
 
@@ -613,72 +584,10 @@ public class DocumentBuilder {
             throw new ApiException("Failed to convert .docx to .pdf.", e);
         }
     }
-
-
-    /**
-     * Prepends a '/' to given String if there isn't already one.
-     * 
-     * @param str String to prepend the slash to
-     * @return the altered (or not altered) string or "/" if given str is null
-     */
-    public static String prependSlash(String str) {
-
-        if (str == null || str.equals(""))
-            return "/";
-
-        return str.charAt(0) == '/' ? str : "/" + str;
-    }
     
 
     public static String getDocumentTemplateFileName(int numColumns) {
 
         return "Empty_" + numColumns + "Columns.docx";
-    }
-
-
-    /**
-     * Prepends current date and time to given string. Replace ':' with '-' due to
-     * .docx naming conditions.
-     * 
-     * @param str String to format
-     * @return current date and time plus str
-     */
-    private static String prependDateTime(String str) {
-
-        return LocalDateTime.now().toString().replace(":", "-") + "_" + str;
-    }
-
-
-    /**
-     * Checks if given file is user generated and hence should be deleted after beeing used.
-     * 
-     * @param file to check
-     * @return true true for user generated files
-     */
-    private static boolean shouldBeRemovedFromResourceFolder(File file) {
-
-        String fileName = file.getName();
-
-        return isInteger(Character.toString(fileName.charAt(0))) && 
-               fileName.endsWith(".docx");
-    }
-
-
-    /**
-     * Checks if given string is an integer.
-     * 
-     * @param str to check
-     * @return true if str is integer, else false (even in case it's a double)
-     */
-    private static boolean isInteger(String str) {
-
-        try {
-            Integer.parseInt(str);
-
-            return true;
-
-        } catch (NumberFormatException e) {
-            return false;
-        }
     }
 }

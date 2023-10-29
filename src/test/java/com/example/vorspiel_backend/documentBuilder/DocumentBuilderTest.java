@@ -1,9 +1,10 @@
 package com.example.vorspiel_backend.documentBuilder;
 
-import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.DOCX_FOLDER;
-import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.RESOURCE_FOLDER;
 import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.getDocumentTemplateFileName;
-import static com.example.vorspiel_backend.documentBuilder.PictureUtils.PICTURES_FOLDER;
+import static com.example.vorspiel_backend.utils.Utils.STATIC_FOLDER;
+import static com.example.vorspiel_backend.utils.Utils.RESOURCE_FOLDER;
+import static com.example.vorspiel_backend.utils.Utils.DOCX_FOLDER;
+import static com.example.vorspiel_backend.utils.Utils.prependSlash;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -12,14 +13,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
@@ -39,6 +38,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import com.example.vorspiel_backend.documentParts.BasicParagraph;
 import com.example.vorspiel_backend.documentParts.TableConfig;
 import com.example.vorspiel_backend.documentParts.style.Style;
+import com.example.vorspiel_backend.utils.Utils;
 
 
 /**
@@ -49,7 +49,7 @@ import com.example.vorspiel_backend.documentParts.style.Style;
 @TestInstance(Lifecycle.PER_CLASS)
 public class DocumentBuilderTest {
 
-    public static final String TEST_RESOURCE_FOLDER = "./src/main/resources/test";
+    public static final String TEST_RESOURCE_FOLDER = "./src/main/resources/static/test";
 
     private XWPFDocument document;
 
@@ -75,6 +75,7 @@ public class DocumentBuilderTest {
 
     private PictureUtils pictureUtils;
     private String testPictureName;
+    private Map<String, byte[]> pictures = new HashMap<>();
 
     private DocumentBuilder documentBuilder;
 
@@ -84,8 +85,8 @@ public class DocumentBuilderTest {
         
         // picture
         this.testPictureName = "test.png";
-        this.pictureUtils = new PictureUtils();
-        this.pictureUtils.setPictures(List.of(new File(TEST_RESOURCE_FOLDER + "/" + testPictureName)));
+        this.pictures.put(this.testPictureName, Utils.fileToByteArray(new File(TEST_RESOURCE_FOLDER + Utils.prependSlash(testPictureName))));
+        this.pictureUtils = new PictureUtils(this.pictures);
 
         // content
         this.style = new Style(11, 
@@ -112,7 +113,7 @@ public class DocumentBuilderTest {
         // document
         this.testDocxFileName = "test/test.docx";
         this.landscape = true;
-        this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", 2, this.landscape, this.tableConfig);
+        this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", 2, this.landscape, this.tableConfig, this.pictures);
         this.docxFileName = this.documentBuilder.getDocxFileName();
         this.document = this.documentBuilder.getDocument();
         this.documentBuilder.setPictureUtils(this.pictureUtils);
@@ -121,21 +122,18 @@ public class DocumentBuilderTest {
 
 //----------- build()
     @Test
-    void build_paragarphAndFileShouldExist() {
+    void build_paragarphShouldExist() {
 
         // should have no paragraphs
         assertTrue(this.document.getParagraphs().size() == 0);
 
         // file should not exist
-        assertFalse(new File(DocumentBuilder.RESOURCE_FOLDER + "/" + this.docxFileName).exists());
+        assertFalse(new File(RESOURCE_FOLDER + "/" + this.docxFileName).exists());
 
         this.documentBuilder.build();
 
         // should have number of paragraphs minus header, footer and table
         assertEquals(this.content.size() - 3, this.document.getParagraphs().size());        
-
-        // should have written to file
-        assertTrue(new File(DocumentBuilder.RESOURCE_FOLDER + "/" + this.docxFileName).exists());
 
         assertEquals(this.landscape ? STPageOrientation.LANDSCAPE : STPageOrientation.PORTRAIT, this.documentBuilder.getPageSz().getOrient());
     }
@@ -170,6 +168,22 @@ public class DocumentBuilderTest {
 
 
 //----------- addParagraph()
+    @Test
+    void addParagraph_pictureInsideTable_shouldDoNothing() {
+        
+        this.tableCell.setText("picture.png");
+        int currentContentIndex = this.content.indexOf(this.tableCell);
+
+        // should have no paragraphs
+        assertTrue(this.document.getParagraphs().size() == 0);
+
+        this.documentBuilder.addParagraph(currentContentIndex);
+
+        // should still have no paragraph
+        assertTrue(this.document.getParagraphs().isEmpty());
+    }
+
+
     @Test
     void addParagraph_basicParagraphNull_shouldNotThrow_shouldAddParagraph() {
 
@@ -221,20 +235,6 @@ public class DocumentBuilderTest {
 
         // expect no null
         assertFalse(this.documentBuilder.createParagraphByContentIndex(titleIndex) == null);
-    }
-
-
-    @Test
-    void createParagraphByContentIndex_basicParagraphNull_shouldReturnNull() {
-
-        // header
-        this.content.set(0, null);
-        assertNull(this.documentBuilder.createParagraphByContentIndex(0));
-
-        // footer
-        int endIndex = this.content.size() - 1;
-        this.content.set(endIndex, null);
-        assertNull(this.documentBuilder.createParagraphByContentIndex(endIndex));
     }
 
     
@@ -436,7 +436,7 @@ public class DocumentBuilderTest {
     @Test
     void readDocxFile_shouldWorkWithTruthyInput() {
 
-        XWPFDocument document = this.documentBuilder.readDocxFile(this.testDocxFileName);
+        XWPFDocument document = this.documentBuilder.readDocxFile(STATIC_FOLDER + prependSlash(this.testDocxFileName));
 
         // expect clean document
         assertEquals(0, document.getParagraphs().size());
@@ -448,13 +448,13 @@ public class DocumentBuilderTest {
     void writeToDocxFile_fileNameWithoutSlash_shouldBeTrue() {
 
         // file should not exist yet
-        assertFalse(new File(RESOURCE_FOLDER + "/" + this.docxFileName).exists());
+        assertFalse(new File(DOCX_FOLDER + "/" + this.docxFileName).exists());
 
         // should return true
-        assertTrue(this.documentBuilder.writeDocxFile());
+        this.documentBuilder.writeDocxFile();
 
         // file should exist
-        assertTrue(new File(RESOURCE_FOLDER + "/" + this.docxFileName).exists());
+        assertTrue(new File(DOCX_FOLDER + "/" + this.docxFileName).exists());
     }
 
 
@@ -462,84 +462,13 @@ public class DocumentBuilderTest {
     void writeToDocxFile_fileNameWithSlash_shouldBeTrue() {
 
         // file should not exist yet
-        assertFalse(new File(RESOURCE_FOLDER + "/" + this.docxFileName).exists());
+        assertFalse(new File(DOCX_FOLDER + "/" + this.docxFileName).exists());
 
         this.documentBuilder.setDocxFileName("/" + this.docxFileName);
-        assertTrue(this.documentBuilder.writeDocxFile());
+        this.documentBuilder.writeDocxFile();
 
         // file should exist
-        assertTrue(new File(RESOURCE_FOLDER + "/" + this.docxFileName).exists());
-    }
-
-
-//----------- prependSlash()
-    @Test
-    void prependSlash_strNull_shouldReturnSlash() {
-        
-        assertEquals("/", DocumentBuilder.prependSlash(null));
-    }
-
-
-    @Test
-    void prependSlash_emptyStr_shouldReturnSlash() {
-
-        assertEquals("/", DocumentBuilder.prependSlash(""));
-    }
-
-
-    @Test 
-    void prependSlash_strWithSlash_shouldReturnSameStr() {
-
-        assertEquals("/" + this.testDocxFileName, DocumentBuilder.prependSlash("/" + this.testDocxFileName));
-    }
-
-
-    @Test 
-    void prependSlash_strWithoutSlash_shouldReturnStrWithSlash() {
-
-        assertEquals("/" + this.testDocxFileName, DocumentBuilder.prependSlash(this.testDocxFileName));
-    }
-
-
-//----------- clearResourceFolder()
-    @Test
-    void clearResourceFolder_shouldDeleteCorrectDocxFiles() {
-
-        // create test docx file
-        this.documentBuilder.writeDocxFile();
-        File docxFile = new File(RESOURCE_FOLDER + "/" + this.docxFileName);
-
-        // should exist
-        assertTrue(docxFile.exists());
-
-        DocumentBuilder.clearResourceFolder();
-
-        // important files should still exist
-        assertTrue(new File(DOCX_FOLDER + "/" + getDocumentTemplateFileName(2)).exists());
-        assertTrue(new File(TEST_RESOURCE_FOLDER + "/logo.png").exists());
-
-        // should not exist
-        assertFalse(docxFile.exists());
-    }
-
-
-    @Test
-    void clearResourceFolder_shouldDeletePictures() {
-
-        // should move test picture to PICTURES_FOLDER
-        assertTrue(moveTestPicture());
-
-        File picture = new File(PICTURES_FOLDER + "/" + this.testPictureName);
-        assertTrue(picture.exists());
-
-        DocumentBuilder.clearResourceFolder();
-
-        // important files should still exist
-        assertTrue(new File(DOCX_FOLDER + "/" + getDocumentTemplateFileName(2)).exists());
-        assertTrue(new File(TEST_RESOURCE_FOLDER + "/logo.png").exists());
-
-        // should not exist
-        assertFalse(picture.exists());
+        assertTrue(new File(DOCX_FOLDER + "/" + this.docxFileName).exists());
     }
 
 
@@ -547,38 +476,14 @@ public class DocumentBuilderTest {
     @Test
     void getDocumentTemplateFileName_shouldExist() {
 
-        assertTrue(new File(DOCX_FOLDER + "/" + getDocumentTemplateFileName(2)).exists());
-        assertTrue(new File(DOCX_FOLDER + "/" + getDocumentTemplateFileName(3)).exists());
+        assertTrue(new File(STATIC_FOLDER + "/" + getDocumentTemplateFileName(2)).exists());
+        assertTrue(new File(STATIC_FOLDER + "/" + getDocumentTemplateFileName(3)).exists());
     }
 
 
     @AfterEach
     void cleanUp() throws IOException {
 
-        new File(RESOURCE_FOLDER + "/" + this.docxFileName).delete();
-    }
-
-
-    /**
-     * Attempts to move {@link #testPictureName} from {@link #TEST_RESOURCE_FOLDER} to {@link #PICTURES_FOLDER}.
-     * 
-     * @return true if test picture exists in pictures folder, else false
-     */
-    private boolean moveTestPicture() {
-
-        // take test.png
-        File testPicture = new File(TEST_RESOURCE_FOLDER + "/" + this.testPictureName);
-
-        // write to file located in pictures folder
-        try (OutputStream fos = new FileOutputStream(PICTURES_FOLDER + "/" + this.testPictureName);
-             InputStream fis = new FileInputStream(testPicture)) {
-
-            fos.write(fis.readAllBytes());
-
-            return new File(PictureUtils.PICTURES_FOLDER + "/" + this.testPictureName).exists();
-
-        } catch (IOException e) {
-            return false;
-        }
+        Utils.clearFolder(DOCX_FOLDER, null);
     }
 }

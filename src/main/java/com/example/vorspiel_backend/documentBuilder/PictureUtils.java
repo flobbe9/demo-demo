@@ -3,11 +3,7 @@ package com.example.vorspiel_backend.documentBuilder;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
+import java.util.Map;
 import java.awt.image.BufferedImage;
 
 import javax.imageio.ImageIO;
@@ -18,6 +14,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 
 import com.example.vorspiel_backend.exception.ApiException;
+import com.example.vorspiel_backend.utils.Utils;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -39,33 +36,21 @@ public class PictureUtils {
      * @see org.apache.poi.util.Units
      */
     public static final Integer EMU_PER_CENTIMETER = 360000;   
-
-    public static final String PICTURES_FOLDER = DocumentBuilder.RESOURCE_FOLDER + "/pictures";
      
-    private List<File> pictures;
+    private Map<String, byte[]> pictures;
 
 
-    /**
-     * Reads all files in {@link #PICTURES_FOLDER} and adds them to {@link #pictures}.
-     */
-    public PictureUtils() {
+    public PictureUtils(Map<String, byte[]> pictures) {
 
-        this.pictures = new ArrayList<>();
-
-        // create pictures folder if not exists
-        File picutresFolder = new File(PICTURES_FOLDER);
-        if (!picutresFolder.exists())
-            picutresFolder.mkdir();
-        
-        // got through pictures folder
-        File[] uploadedPictures = picutresFolder.listFiles();
-        Arrays.asList(uploadedPictures).forEach(picture -> pictures.add(picture));
+        this.pictures = pictures;
     }
 
 
     /**
-     * Adds any picture to given {@link XWPFRun} if fileName param is found in {@link #pictures} list. <p>
-     * Dimensions are hard coded.
+     * Adds picture to given {@link XWPFRun} if {@code fileName} is found in {@link #pictures} list. 
+     * If {@code this.pictures} is empty do nothing. <p>
+     * 
+     * Dimensions should fit the original.
      * 
      * @param run to add the picture to
      * @param fileName of the picture. Has to match at least one file name from {@link #pictures}.
@@ -75,20 +60,20 @@ public class PictureUtils {
     void addPicture(XWPFRun run, String fileName) {
 
         PictureType pictureType = getPictureType(fileName);
+
+        if (pictureType == null)
+            throw new ApiException("Did not add pictures. " + fileName + " is not of a valid picture type.");
         
-        if (this.pictures == null || this.pictures.size() == 0) {
+        
+        if (this.pictures == null || this.pictures.isEmpty()) {
             log.warn("Did not add pictures. 'pictures' list is either null or empty.");
             return;
         }
         
-        // find picture in list
-        Optional<File> optionalPicture = this.pictures.stream()
-                                                      .filter(picture -> picture.getName().equals(fileName))
-                                                      .findFirst();
+        File picture = Utils.byteArrayToFile(this.pictures.get(fileName), fileName);
 
         // add picture
-        File picture;
-        try (InputStream fis = new FileInputStream(picture = optionalPicture.get())) {
+        try (InputStream fis = new FileInputStream(picture)) {
 
             // for dimensions
             BufferedImage bimg = ImageIO.read(picture);
@@ -101,6 +86,9 @@ public class PictureUtils {
 
         } catch (Exception e) {
             throw new ApiException("Failed to add picture.", e);
+        
+        } finally {
+            picture.delete();
         }
     }
 
@@ -113,7 +101,7 @@ public class PictureUtils {
      * @param fileName to find the pictureType of
      * @return the pictureType if fileName ends on an extension from {@link PictureType} or null
      */
-    PictureType getPictureType(String fileName) {
+    static PictureType getPictureType(String fileName) {
 
         if (fileName == null)
             return null;
@@ -129,7 +117,7 @@ public class PictureUtils {
     }
 
 
-    boolean isPicture(String text) {
+    public static boolean isPicture(String text) {
 
         return getPictureType(text) != null;
     }

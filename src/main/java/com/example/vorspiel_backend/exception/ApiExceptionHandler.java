@@ -101,6 +101,7 @@ public class ApiExceptionHandler {
 
         return ResponseEntity.badRequest().body(returnPretty(HttpStatus.BAD_REQUEST, exception.getMessage()));
     }
+    
 
     /**
      * Catches any {@link ApiException}. Returns a {@link ResponseEntity} object with an {@link ApiExceptionFormat} and 
@@ -127,11 +128,8 @@ public class ApiExceptionHandler {
         // log relevant stackTrace parts
         logPackageStackTrace(exception.getStackTrace());
 
-        // case: bad request
-        if (exception.getStatus().equals(HttpStatus.BAD_REQUEST))
-            return ResponseEntity.badRequest().body(returnPretty(exception.getStatus(), exception.getMessage()));
-
-        return ResponseEntity.internalServerError().body(returnPretty(exception.getStatus(), exception.getMessage()));
+        return ResponseEntity.status(exception.getStatus())
+                             .body(returnPretty(exception.getStatus(), exception.getMessage()));
     }
 
 
