@@ -15,6 +15,11 @@ import jakarta.validation.constraints.NotNull;
 
 // TODO: add more methods
 // TODO: add tests
+/**
+ * Class handling {@link Document} logic.
+ * 
+ * @since 0.0.5
+ */
 @Service
 @Validated
 public class DocumentService extends AbstractService<Document, DocumentRepository> {

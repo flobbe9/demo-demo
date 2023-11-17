@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +26,7 @@ import lombok.Setter;
 public class DocumentWrapper {
     
     @NotEmpty(message = "'content' cannot be null or empty.")
-    private List<@Valid BasicParagraph> content;
+    private List<@Valid @NotNull(message = "'basicParagraph' cannot be null") BasicParagraph> content;
 
     @Valid
     private TableConfig tableConfig;

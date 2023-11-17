@@ -22,12 +22,10 @@ import com.example.vorspiel_backend.documentParts.TableConfig;
 import com.example.vorspiel_backend.documentParts.style.Style;
 import com.example.vorspiel_backend.exception.ApiException;
 import com.example.vorspiel_backend.exception.ApiExceptionFormat;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.example.vorspiel_backend.utils.Utils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.ObjectWriter;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -41,6 +39,7 @@ import java.util.List;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 
 
+// TODO: don't use spring boot test, mock session and service
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @TestMethodOrder(OrderAnnotation.class)
@@ -165,6 +164,7 @@ public class DocumentControllerTest {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("pdf", "false");
+        params.add("fileName", "test.docx");
 
         MvcResult response = performGet("/download", params)
                             .andExpect(status().isInternalServerError())
@@ -178,7 +178,7 @@ public class DocumentControllerTest {
 
         return this.mockMvc.perform(post(this.requestMapping + path)
                                     .contentType(APPLICATION_JSON)
-                                    .content(objectToJson(body)));
+                                    .content(Utils.objectToJson(body)));
     }
     
 
@@ -227,20 +227,6 @@ public class DocumentControllerTest {
         // modify response for the sake of check method
         jsonResponse = jsonResponse.replace("null", "\"" + status.name() + "\"");
         checkJsonApiExceptionFormat(jsonResponse, OK);
-    }
-    
-
-    private String objectToJson(Object object) {
-
-        ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
-
-        try {
-            return objectWriter.writeValueAsString(object);
-
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new ApiException("Failed to convert object to json String.", e);
-        }
     }
 
 

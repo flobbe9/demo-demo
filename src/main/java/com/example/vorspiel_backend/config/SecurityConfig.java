@@ -1,5 +1,7 @@
 package com.example.vorspiel_backend.config;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,8 +10,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 
 /**
@@ -21,7 +24,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @EnableMethodSecurity // for @PreAuthorize
 @EnableWebSecurity
 public class SecurityConfig {
-
+    
     @Value("${FRONTEND_BASE_URL}")
     private String frontendBaseUrl;
 
@@ -40,31 +43,33 @@ public class SecurityConfig {
         else
             http.csrf(csrf -> csrf.disable());
         
-        // security
-		http.authorizeHttpRequests(authorize -> authorize
+        http.authorizeHttpRequests(request -> request
                 .anyRequest()
-                    .permitAll()
-            );
+                .permitAll())
+            .cors(cors -> cors
+                .configurationSource(corsConfig()));
 
         return http.build();
     }
 
 
     /**
-     * Allow frontend url with any pattern.
+     * Allow methods {@code GET, POST, UPDATE, DELETE}, origins {@code frontendBaseUrl}, headers {@code "*"}, credentials and
+     * only mappings for {@code /api/documentBuilder/**}.
      * 
-     * @return
+     * @return the configured {@link CorsConfigurationSource}
      */
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
+    private CorsConfigurationSource corsConfig() {
 
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOrigins(frontendBaseUrl)
-                        .allowedMethods("GET", "POST", "UPDATE", "DELETE");
-            }
-        };
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of(frontendBaseUrl));
+        configuration.setAllowedMethods(List.of("GET", "POST", "UPDATE", "DELETE"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/documentBuilder/**", configuration);
+
+        return source;
     }
 }

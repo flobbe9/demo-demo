@@ -38,6 +38,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import com.example.vorspiel_backend.documentParts.BasicParagraph;
 import com.example.vorspiel_backend.documentParts.TableConfig;
 import com.example.vorspiel_backend.documentParts.style.Style;
+import com.example.vorspiel_backend.exception.ApiException;
 import com.example.vorspiel_backend.utils.Utils;
 
 
@@ -46,6 +47,7 @@ import com.example.vorspiel_backend.utils.Utils;
  * 
  * @since 0.0.1
  */
+// TODO: adjust
 @TestInstance(Lifecycle.PER_CLASS)
 public class DocumentBuilderTest {
 
@@ -185,19 +187,13 @@ public class DocumentBuilderTest {
 
 
     @Test
-    void addParagraph_basicParagraphNull_shouldNotThrow_shouldAddParagraph() {
-
-        int currentContentIndex = this.content.indexOf(this.title);
-
-        // should have no paragraphs
-        assertTrue(this.document.getParagraphs().size() == 0);
+    void addParagraph_basicParagraphNull_shouldThrow() {
 
         // set basicParagraph null
+        int currentContentIndex = this.content.indexOf(this.title);
         this.content.set(currentContentIndex, null);
-        assertDoesNotThrow(() -> this.documentBuilder.addParagraph(currentContentIndex));
-
-        // should still have created paragraph
-        assertTrue(this.document.getParagraphs().size() == 1);
+        
+        assertThrows(ApiException.class, () -> this.documentBuilder.addParagraph(currentContentIndex));
     }
 
 
@@ -236,6 +232,20 @@ public class DocumentBuilderTest {
         // expect no null
         assertFalse(this.documentBuilder.createParagraphByContentIndex(titleIndex) == null);
     }
+    
+
+    @Test
+    void createParagraphByContentIndex_blankText_shouldNotAddHeaderParagraph() {
+
+        // should not have header yet
+        assertThrows(NullPointerException.class, () -> this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultHeader().getParagraphs());
+
+        // set blank text (not empty)
+        this.content.get(0).setText(" ");
+
+        this.documentBuilder.createParagraphByContentIndex(0);
+        assertThrows(NullPointerException.class, () -> this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultHeader().getParagraphs());
+    }
 
     
     @Test
@@ -245,7 +255,21 @@ public class DocumentBuilderTest {
         assertThrows(NullPointerException.class, () -> this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultHeader().getParagraphs());
 
         this.documentBuilder.createParagraphByContentIndex(0);
-        assertTrue(this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultHeader().getParagraphs().size() == 1);
+        assertEquals(1, this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultHeader().getParagraphs().size());
+    }
+
+
+    @Test
+    void createParagraphByContentIndex_blankText_shouldNotAddFooterParagraph() {
+
+        // should not have header yet
+        assertThrows(NullPointerException.class, () -> this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultFooter().getParagraphs());
+
+        // set blank text (not empty)
+        this.content.get(this.content.size() - 1).setText(" ");
+
+        this.documentBuilder.createParagraphByContentIndex(this.content.size() - 1);
+        assertThrows(NullPointerException.class, () -> this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultFooter().getParagraphs());
     }
 
 
@@ -256,7 +280,7 @@ public class DocumentBuilderTest {
         assertThrows(NullPointerException.class, () -> this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultFooter().getParagraphs());
 
         this.documentBuilder.createParagraphByContentIndex(this.content.size() - 1);
-        assertTrue(this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultFooter().getParagraphs().size() == 1);
+        assertEquals(1, this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultFooter().getParagraphs().size());
     }
 
 
@@ -267,7 +291,7 @@ public class DocumentBuilderTest {
         assertTrue(this.documentBuilder.getDocument().getParagraphs().size() == 0);
 
         this.documentBuilder.createParagraphByContentIndex(1);
-        assertTrue(this.documentBuilder.getDocument().getParagraphs().size() == 1);
+        assertEquals(1, this.documentBuilder.getDocument().getParagraphs().size());
     }
 
 

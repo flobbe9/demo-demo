@@ -48,6 +48,7 @@ public class TableConfig {
      * @return true if all fields are valid
      */
     @AssertTrue(message = "Invalid 'tableConfig'. Not enough cells for content.")
+    @Schema(hidden = true)
     public boolean isValid() {
         
         return isTableBigEnough();

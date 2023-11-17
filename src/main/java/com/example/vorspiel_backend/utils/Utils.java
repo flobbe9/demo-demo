@@ -17,6 +17,9 @@ import org.springframework.lang.Nullable;
 
 import com.example.vorspiel_backend.abstracts.FileDeletionCondition;
 import com.example.vorspiel_backend.exception.ApiException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -239,7 +242,7 @@ public class Utils {
         String completeFileName = STATIC_FOLDER + prependSlash(fileName);
 
         if (bytes == null) 
-            throw new ApiException("Failed to write byte array to file. 'bytes' is empty");
+            throw new ApiException("Failed to write byte array to file. 'bytes' is null");
         
         try (OutputStream fos = new FileOutputStream(completeFileName)) {
             fos.write(bytes);
@@ -284,6 +287,24 @@ public class Utils {
 
         } catch (NumberFormatException e) {
             return false;
+        }
+    }
+
+
+    /**
+     * @param object to convert to json string
+     * @return given object as json string
+     */
+    public static String objectToJson(Object object) {
+
+        ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
+
+        try {
+            return objectWriter.writeValueAsString(object);
+
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new ApiException("Failed to convert object to json String.", e);
         }
     }
 }

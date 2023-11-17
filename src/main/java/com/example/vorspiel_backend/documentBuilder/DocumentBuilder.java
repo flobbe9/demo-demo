@@ -58,6 +58,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Getter
 @Setter
+// TODO: reconsider table size for multiple columns
 public class DocumentBuilder {
 
     /** paragraph indentation */
@@ -194,27 +195,29 @@ public class DocumentBuilder {
      */
     void addParagraph(int currentContentIndex) {
 
-        // get content
+        // get line
         BasicParagraph basicParagraph = this.content.get(currentContentIndex);
+        if (basicParagraph == null)
+            throw new ApiException("Failed to add paragraph. 'basicParagraph' cannot be null");
     
         XWPFParagraph paragraph = createParagraphByContentIndex(currentContentIndex);
 
-        if (basicParagraph != null) {
-            // case: inside table and is picture
-            if (paragraph == null && PictureUtils.isPicture(basicParagraph.getText())) {
-                log.warn("Failed to picture " + basicParagraph.getText() + ". Cannot add picture inside table.");
-                return;    
-            }
+        // case: inside table and is picture
+        if (paragraph == null && PictureUtils.isPicture(basicParagraph.getText())) {
+            log.warn("Failed to picture " + basicParagraph.getText() + ". Cannot add picture inside table.");
+            return;    
+        }
 
-            // add text
-            addText(paragraph, basicParagraph, currentContentIndex);
+        // add text
+        addText(paragraph, basicParagraph, currentContentIndex);
 
-            // add style
-            addStyle(paragraph, basicParagraph.getStyle());
+        // add style
+        addStyle(paragraph, basicParagraph.getStyle());
 
         // case: break intended
-        } else if (paragraph != null) 
-            paragraph.setSpacingAfter(NO_LINE_SPACE);
+        // TODO: not sure if this is necessary
+        // if (paragraph != null)
+        //     paragraph.setSpacingAfter(NO_LINE_SPACE);
     }
 
 
@@ -235,12 +238,12 @@ public class DocumentBuilder {
         if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex))
             return null;
 
-        // case: header
-        if (currentContentIndex == 0) 
+        // case: header (not blank)
+        if (currentContentIndex == 0 && !this.content.get(currentContentIndex).getText().isBlank())
             return this.document.createHeader(HeaderFooterType.DEFAULT).createParagraph();
 
-        // case: footer
-        if (currentContentIndex == this.content.size() - 1)
+        // case: footer (not blank)
+        if (currentContentIndex == this.content.size() - 1 && !this.content.get(currentContentIndex).getText().isBlank())
             return this.document.createFooter(HeaderFooterType.DEFAULT).createParagraph();
 
         // case: any other
@@ -278,10 +281,7 @@ public class DocumentBuilder {
     /**
      * Add plain text to given {@link XWPFRun}. <p>
      * 
-     * For adding tabs, the text is expected to be formatted like: <p>
-     * - HelloTABthis is aTAB test <p>
-     * 
-     * Any TAB would be replaced with an actual tab here.
+     * Any {@link #TAB_SYMBOL} will be replaced with an actual tab.
      * 
      * @param run to add the text to
      * @param text to add
