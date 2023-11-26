@@ -40,7 +40,6 @@ public class TableUtilsTest {
     private TableConfig tableConfig;
     private int numColumns;
     private int startIndex;
-    private int endIndex;
     private int currentContentIndex;
 
     private TableUtils tableUtils;
@@ -63,8 +62,7 @@ public class TableUtilsTest {
         this.numColumns = 3;
         this.currentContentIndex = 1; /** Add table after header. */
         this.startIndex = this.currentContentIndex;
-        this.endIndex = 9;
-        this.tableConfig = new TableConfig(this.numColumns, this.numColumns, this.startIndex, this.endIndex);
+        this.tableConfig = new TableConfig(this.numColumns, this.numColumns, this.startIndex);
         this.tableUtils = new TableUtils(document, tableConfig);
     }
     
@@ -162,8 +160,8 @@ public class TableUtilsTest {
     @Test
     void isTableIndex_tableEnded_shouldBeFalse() {
 
-        // set table finished
-        this.currentContentIndex = this.endIndex + 1;
+        // set table not started
+        this.currentContentIndex = this.startIndex - 1;
 
         assertFalse(this.tableUtils.isTableIndex(this.currentContentIndex));
     }
@@ -178,10 +176,6 @@ public class TableUtilsTest {
         // set table starts here
         this.currentContentIndex = this.startIndex;
         assertTrue(this.tableUtils.isTableIndex(this.currentContentIndex));
-
-        // set table ends here
-        this.currentContentIndex = this.endIndex;
-        assertTrue(this.tableUtils.isTableIndex(this.currentContentIndex));    
     }
 
 

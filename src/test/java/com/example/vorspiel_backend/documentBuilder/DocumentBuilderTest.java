@@ -1,6 +1,5 @@
 package com.example.vorspiel_backend.documentBuilder;
 
-import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.getDocumentTemplateFileName;
 import static com.example.vorspiel_backend.utils.Utils.STATIC_FOLDER;
 import static com.example.vorspiel_backend.utils.Utils.RESOURCE_FOLDER;
 import static com.example.vorspiel_backend.utils.Utils.DOCX_FOLDER;
@@ -72,8 +71,8 @@ public class DocumentBuilderTest {
 
     private TableConfig tableConfig;
     private int numColumns;
+    private int numRows;
     private int startIndex;
-    private int endIndex;
 
     private PictureUtils pictureUtils;
     private String testPictureName;
@@ -107,15 +106,15 @@ public class DocumentBuilderTest {
         this.content = Arrays.asList(this.header, this.title, this.tableCell, this.picture, this.footer);
         
         // table
-        this.numColumns = 3;
+        this.numColumns = 1;
+        this.numRows = 1;
         this.startIndex = 2;
-        this.endIndex = 2;
-        this.tableConfig = new TableConfig(this.numColumns, this.numColumns, this.startIndex, this.endIndex);
+        this.tableConfig = new TableConfig(this.numColumns, this.numColumns, this.startIndex);
         
         // document
         this.testDocxFileName = "test/test.docx";
         this.landscape = true;
-        this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", 2, this.landscape, this.tableConfig, this.pictures);
+        this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", 2, this.landscape, this.pictures, this.tableConfig);
         this.docxFileName = this.documentBuilder.getDocxFileName();
         this.document = this.documentBuilder.getDocument();
         this.documentBuilder.setPictureUtils(this.pictureUtils);
@@ -493,15 +492,6 @@ public class DocumentBuilderTest {
 
         // file should exist
         assertTrue(new File(DOCX_FOLDER + "/" + this.docxFileName).exists());
-    }
-
-
-//----------- getDocumentTemplateFileName()
-    @Test
-    void getDocumentTemplateFileName_shouldExist() {
-
-        assertTrue(new File(STATIC_FOLDER + "/" + getDocumentTemplateFileName(2)).exists());
-        assertTrue(new File(STATIC_FOLDER + "/" + getDocumentTemplateFileName(3)).exists());
     }
 
 

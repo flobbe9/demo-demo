@@ -65,7 +65,7 @@ public class DocumentControllerTest {
         this.requestMapping = this.baseUrl + "/api/documentBuilder";
         this.style = new Style(8, "Calibri", "000000", true, true, true, ParagraphAlignment.LEFT, null);
         this.basicParagraph = new BasicParagraph("text", this.style);
-        this.tableConfig = new TableConfig(2, 1, 0, 1);
+        this.tableConfig = new TableConfig(2, 1, 0);
         this.documentWrapper = new DocumentWrapper(List.of(basicParagraph), tableConfig, false, 1);
     }
 
@@ -116,22 +116,6 @@ public class DocumentControllerTest {
     void createDocument_shouldBeStatus400_invalidContent() throws Exception {
 
         this.documentWrapper.getContent().get(0).setText(null);
-        
-        MvcResult response = performPost("/createDocument", this.documentWrapper)
-                            .andExpect(status().isBadRequest())
-                            .andReturn();
-
-        String jsonResponse = response.getResponse().getContentAsString();
-
-        checkJsonApiExceptionFormat(jsonResponse, HttpStatus.BAD_REQUEST);
-    }
-    
-
-    @Test 
-    @Order(3)
-    void createDocument_shouldBeStatus400_invalidTableConfig() throws Exception {
-
-        this.documentWrapper.getTableConfig().setEndIndex(-1);
         
         MvcResult response = performPost("/createDocument", this.documentWrapper)
                             .andExpect(status().isBadRequest())
