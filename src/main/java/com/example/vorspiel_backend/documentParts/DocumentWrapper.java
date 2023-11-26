@@ -33,6 +33,7 @@ public class DocumentWrapper {
 
     private boolean landscape = false;
 
+    /** Refers to 'Columns' in MS Word */
     @Min(1) @Max(3)
     @Schema(defaultValue = "1")
     private int numColumns = 1;

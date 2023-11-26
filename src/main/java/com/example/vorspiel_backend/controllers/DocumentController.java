@@ -89,8 +89,8 @@ public class DocumentController {
                                                              "document.docx", 
                                                              documentWrapper.getNumColumns(),
                                                              documentWrapper.isLandscape(),
-                                                             documentWrapper.getTableConfig(),
-                                                             this.document.getPictures());
+                                                             this.document.getPictures(),
+                                                             documentWrapper.getTableConfig());
         // build
         documentBuilder.build();
 

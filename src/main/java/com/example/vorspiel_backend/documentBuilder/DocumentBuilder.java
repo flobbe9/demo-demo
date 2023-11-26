@@ -2,7 +2,6 @@ package com.example.vorspiel_backend.documentBuilder;
 
 import static com.example.vorspiel_backend.utils.Utils.DOCX_FOLDER;
 import static com.example.vorspiel_backend.utils.Utils.PDF_FOLDER;
-import static com.example.vorspiel_backend.utils.Utils.STATIC_FOLDER;
 import static com.example.vorspiel_backend.utils.Utils.RESOURCE_FOLDER;
 import static com.example.vorspiel_backend.utils.Utils.prependSlash;
 
@@ -102,6 +101,8 @@ public class DocumentBuilder {
 
     private boolean landscape;
 
+    private int numColumns;
+
     
     /**
      * Reading the an empty document from an existing file.<p>
@@ -121,8 +122,8 @@ public class DocumentBuilder {
         this.docxFileName = Utils.prependDateTime(docxFileName);
         this.pictureUtils = new PictureUtils(pictures);
         this.landscape = landscape;
-        this.document = numColumns == 1 ? new XWPFDocument() : 
-                                          readDocxFile(STATIC_FOLDER + prependSlash(getDocumentTemplateFileName(numColumns)));
+        this.numColumns = numColumns;
+        this.document = new XWPFDocument();
     }
 
 
@@ -139,14 +140,14 @@ public class DocumentBuilder {
      * @param pictures map of filename and bytes of pictures in the document
      * @see PictureType for allowed formats    
      */
-    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape, TableConfig tableConfig, Map<String, byte[]> pictures) {
+    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape, Map<String, byte[]> pictures, TableConfig tableConfig) {
 
         this.content = content;
         this.docxFileName = Utils.prependDateTime(docxFileName);
         this.pictureUtils = new PictureUtils(pictures);
         this.landscape = landscape;
-        this.document = numColumns == 1 ? new XWPFDocument() : 
-                                          readDocxFile(STATIC_FOLDER + prependSlash(getDocumentTemplateFileName(numColumns)));
+        this.numColumns = numColumns;
+        this.document = new XWPFDocument();
         this.tableUtils = tableConfig != null ? new TableUtils(this.document, tableConfig) : null;
     }
 
@@ -160,6 +161,8 @@ public class DocumentBuilder {
         log.info("Starting to build document...");
         
         setOrientation(this.landscape ? STPageOrientation.LANDSCAPE : STPageOrientation.PORTRAIT);
+
+        addDocumentColumns(this.numColumns);
 
         addContent();
         
@@ -213,11 +216,6 @@ public class DocumentBuilder {
 
         // add style
         addStyle(paragraph, basicParagraph.getStyle());
-
-        // case: break intended
-        // TODO: not sure if this is necessary
-        // if (paragraph != null)
-        //     paragraph.setSpacingAfter(NO_LINE_SPACE);
     }
 
 
@@ -463,7 +461,7 @@ public class DocumentBuilder {
             return new XWPFDocument();
         }
     }
-    
+
 
     /**
      * Writes the {@link XWPFDocument} to a .docx file. Checks if exists and stores it in {@link #DOCX_FOLDER}.
@@ -586,8 +584,29 @@ public class DocumentBuilder {
     }
     
 
-    public static String getDocumentTemplateFileName(int numColumns) {
+    String getDocumentTemplateFileName(int numColumns, boolean headingIndependent) {
 
-        return "Empty_" + numColumns + "Columns.docx";
+        String headingString = headingIndependent ? "_headingIndependent" : "";
+
+        return "Empty_" + numColumns + "Columns" + headingString + ".docx";
+    }
+
+
+    /**
+     * Add MS Word columns (min 1, max 3) to {@code this.document}.
+     * 
+     * @param numColumns number of columns to add (min 1, max 3)
+     */
+    void addDocumentColumns(int numColumns) {
+
+        if (numColumns < 1 || numColumns > 3) {
+            log.warn("'addDocumentColumns()' parameter 'numColumns' must be less than equal 3 and greater than equal 1 but is: " + numColumns + ". Using 1 as default");
+            numColumns = 1;
+        }
+
+        CTSectPr ctSectPr = getSectPr();
+
+        for (int i = 0; i < numColumns; i++) 
+            ctSectPr.addNewCols().setNum(BigInteger.valueOf(i + 1));
     }
 }
