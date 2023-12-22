@@ -82,7 +82,7 @@ public class DocumentBuilder {
     public static final int NO_LINE_SPACE = 1;
 
     /** declares that a tab should be added here instead of the actual text */
-    public static final String TAB_SYMBOL = "//TAB";
+    public static final String TAB_SYMBOL = "\\t\\t";
     
     @NotNull(message = "'content' cannot be null.")
     private List<BasicParagraph> content;
@@ -140,7 +140,7 @@ public class DocumentBuilder {
      * @param pictures map of filename and bytes of pictures in the document
      * @see PictureType for allowed formats    
      */
-    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape, Map<String, byte[]> pictures, TableConfig tableConfig) {
+    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape, Map<String, byte[]> pictures, List<TableConfig> tableConfigs) {
 
         this.content = content;
         this.docxFileName = Utils.prependDateTime(docxFileName);
@@ -148,7 +148,7 @@ public class DocumentBuilder {
         this.landscape = landscape;
         this.numColumns = numColumns;
         this.document = new XWPFDocument();
-        this.tableUtils = tableConfig != null ? new TableUtils(this.document, tableConfig) : null;
+        this.tableUtils = !tableConfigs.isEmpty() ? new TableUtils(this.document, tableConfigs) : null;
     }
 
 
@@ -203,13 +203,7 @@ public class DocumentBuilder {
         if (basicParagraph == null)
             throw new ApiException("Failed to add paragraph. 'basicParagraph' cannot be null");
     
-        XWPFParagraph paragraph = createParagraphByContentIndex(currentContentIndex);
-
-        // case: inside table and is picture
-        if (paragraph == null && PictureUtils.isPicture(basicParagraph.getText())) {
-            log.warn("Failed to picture " + basicParagraph.getText() + ". Cannot add picture inside table.");
-            return;    
-        }
+        XWPFParagraph paragraph = createParagraphByContentIndex(currentContentIndex, basicParagraph.getStyle());
 
         // add text
         addText(paragraph, basicParagraph, currentContentIndex);
@@ -228,13 +222,14 @@ public class DocumentBuilder {
      * Any other element gets a normal paragraph.
      * 
      * @param currentContentIndex index of the {@link #content} element currently processed
+     * @param style style of {@link BasicParagraph}
      * @return created paragraph or null if is table
      */
-    XWPFParagraph createParagraphByContentIndex(int currentContentIndex) {
+    XWPFParagraph createParagraphByContentIndex(int currentContentIndex, Style style) {
 
-        // case: table does not need paragrahp from this method
+        // case: table
         if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex))
-            return null;
+            return this.tableUtils.createTableParagraph(currentContentIndex, style);
 
         // case: header (not blank)
         if (currentContentIndex == 0 && !this.content.get(currentContentIndex).getText().isBlank())
@@ -252,7 +247,10 @@ public class DocumentBuilder {
     /**
      * Adds the "text" class variable of {@link BasicParagraph} to given {@link XWPFRun}. <p>
      * 
-     * "text" will be added as plain string, as picture or inside a table.
+     * "text" will be added as plain string, as picture or inside a table.<p>
+     * 
+     * A picture cannot be added inside a table, the plain text of the {@link  BasicParagraph} plus an 
+     * error message will be added instead.
      * 
      * @param paragraph to add text and style to
      * @param basicParagraph to use the text and style information from
@@ -262,13 +260,20 @@ public class DocumentBuilder {
 
         String text = basicParagraph.getText();
 
+        // case: picture inside table
+        if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex) && PictureUtils.isPicture(text)) {
+            log.warn("Failed to picture " + text + ". Cannot add picture inside table. Adding plain text instead.");
+            addPlainTextToRun(paragraph.createRun(), text + "(Cannot add picture inside table)");
+            return;
+        }
+
         // case: picture
-        if (this.pictureUtils != null && PictureUtils.isPicture(text))
+        if (PictureUtils.isPicture(text))
             this.pictureUtils.addPicture(paragraph.createRun(), text);
         
         // case: table cell
         else if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex))
-            this.tableUtils.addTableCell(currentContentIndex, text, basicParagraph.getStyle());
+            this.tableUtils.fillTableCell(paragraph, currentContentIndex, text, basicParagraph.getStyle());
             
         // case: plain text
         else

@@ -34,6 +34,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
@@ -55,7 +56,7 @@ public class DocumentControllerTest {
 
     private Style style;
     private BasicParagraph basicParagraph;
-    private TableConfig tableConfig;
+    private List<TableConfig> tableConfigs;
     private DocumentWrapper documentWrapper;
 
 
@@ -65,8 +66,8 @@ public class DocumentControllerTest {
         this.requestMapping = this.baseUrl + "/api/documentBuilder";
         this.style = new Style(8, "Calibri", "000000", true, true, true, ParagraphAlignment.LEFT, null);
         this.basicParagraph = new BasicParagraph("text", this.style);
-        this.tableConfig = new TableConfig(2, 1, 0);
-        this.documentWrapper = new DocumentWrapper(List.of(basicParagraph), tableConfig, false, 1);
+        this.tableConfigs = new ArrayList<>(List.of(new TableConfig(2, 1, 0)));
+        this.documentWrapper = new DocumentWrapper(List.of(basicParagraph), tableConfigs, false, 1);
     }
 
 

@@ -90,7 +90,7 @@ public class DocumentController {
                                                              documentWrapper.getNumColumns(),
                                                              documentWrapper.isLandscape(),
                                                              this.document.getPictures(),
-                                                             documentWrapper.getTableConfig());
+                                                             documentWrapper.getTableConfigs());
         // build
         documentBuilder.build();
 
