@@ -22,12 +22,10 @@ import com.example.vorspiel_backend.documentParts.TableConfig;
 import com.example.vorspiel_backend.documentParts.style.Style;
 import com.example.vorspiel_backend.exception.ApiException;
 import com.example.vorspiel_backend.exception.ApiExceptionFormat;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.example.vorspiel_backend.utils.Utils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.ObjectWriter;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -36,11 +34,13 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 
 
+// TODO: don't use spring boot test, mock session and service
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @TestMethodOrder(OrderAnnotation.class)
@@ -56,7 +56,7 @@ public class DocumentControllerTest {
 
     private Style style;
     private BasicParagraph basicParagraph;
-    private TableConfig tableConfig;
+    private List<TableConfig> tableConfigs;
     private DocumentWrapper documentWrapper;
 
 
@@ -66,8 +66,8 @@ public class DocumentControllerTest {
         this.requestMapping = this.baseUrl + "/api/documentBuilder";
         this.style = new Style(8, "Calibri", "000000", true, true, true, ParagraphAlignment.LEFT, null);
         this.basicParagraph = new BasicParagraph("text", this.style);
-        this.tableConfig = new TableConfig(2, 1, 0, 1);
-        this.documentWrapper = new DocumentWrapper(List.of(basicParagraph), tableConfig, false, 1);
+        this.tableConfigs = new ArrayList<>(List.of(new TableConfig(2, 1, 0)));
+        this.documentWrapper = new DocumentWrapper(List.of(basicParagraph), tableConfigs, false, 1);
     }
 
 
@@ -126,22 +126,6 @@ public class DocumentControllerTest {
 
         checkJsonApiExceptionFormat(jsonResponse, HttpStatus.BAD_REQUEST);
     }
-    
-
-    @Test 
-    @Order(3)
-    void createDocument_shouldBeStatus400_invalidTableConfig() throws Exception {
-
-        this.documentWrapper.getTableConfig().setEndIndex(-1);
-        
-        MvcResult response = performPost("/createDocument", this.documentWrapper)
-                            .andExpect(status().isBadRequest())
-                            .andReturn();
-
-        String jsonResponse = response.getResponse().getContentAsString();
-
-        checkJsonApiExceptionFormat(jsonResponse, HttpStatus.BAD_REQUEST);
-    }
 
 
     @Test
@@ -165,6 +149,7 @@ public class DocumentControllerTest {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("pdf", "false");
+        params.add("fileName", "test.docx");
 
         MvcResult response = performGet("/download", params)
                             .andExpect(status().isInternalServerError())
@@ -178,7 +163,7 @@ public class DocumentControllerTest {
 
         return this.mockMvc.perform(post(this.requestMapping + path)
                                     .contentType(APPLICATION_JSON)
-                                    .content(objectToJson(body)));
+                                    .content(Utils.objectToJson(body)));
     }
     
 
@@ -227,20 +212,6 @@ public class DocumentControllerTest {
         // modify response for the sake of check method
         jsonResponse = jsonResponse.replace("null", "\"" + status.name() + "\"");
         checkJsonApiExceptionFormat(jsonResponse, OK);
-    }
-    
-
-    private String objectToJson(Object object) {
-
-        ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
-
-        try {
-            return objectWriter.writeValueAsString(object);
-
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new ApiException("Failed to convert object to json String.", e);
-        }
     }
 
 

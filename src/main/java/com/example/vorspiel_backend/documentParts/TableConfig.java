@@ -35,22 +35,26 @@ public class TableConfig {
     @Schema(defaultValue = "1")
     private Integer startIndex;
     
-    /** The index in content list with the last table element. */
-    @NotNull(message = "'endIndex' cannot be null.")
-    @Min(value = 0, message = "'endIndex' has to be greater than equal 0.")
-    @Schema(defaultValue = "1")
-    private Integer endIndex;
-    
-    
+
     /**
      * Calls all neccessary validation methods on fields.
      * 
      * @return true if all fields are valid
      */
     @AssertTrue(message = "Invalid 'tableConfig'. Not enough cells for content.")
+    @Schema(hidden = true)
     public boolean isValid() {
         
         return isTableBigEnough();
+    }
+
+
+    /**
+     * @return the index in content list with the last table element
+     */
+    public int getEndIndex() {
+
+        return this.startIndex + this.numColumns * this.numRows - 1;
     }
     
     
@@ -65,7 +69,7 @@ public class TableConfig {
         int numTableCells = getNumColumns() * getNumRows();
         int numFilledCells = getEndIndex() - getStartIndex() + 1;
         
-        // should at least as many table cells as input cells
+        // should have at least as many table cells as input cells
         return numTableCells >= numFilledCells;
     }
 }

@@ -2,7 +2,6 @@ package com.example.vorspiel_backend.documentBuilder;
 
 import static com.example.vorspiel_backend.utils.Utils.DOCX_FOLDER;
 import static com.example.vorspiel_backend.utils.Utils.PDF_FOLDER;
-import static com.example.vorspiel_backend.utils.Utils.STATIC_FOLDER;
 import static com.example.vorspiel_backend.utils.Utils.RESOURCE_FOLDER;
 import static com.example.vorspiel_backend.utils.Utils.prependSlash;
 
@@ -58,6 +57,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Getter
 @Setter
+// TODO: reconsider table size for multiple columns
 public class DocumentBuilder {
 
     /** paragraph indentation */
@@ -82,7 +82,7 @@ public class DocumentBuilder {
     public static final int NO_LINE_SPACE = 1;
 
     /** declares that a tab should be added here instead of the actual text */
-    public static final String TAB_SYMBOL = "//TAB";
+    public static final String TAB_SYMBOL = "\\t\\t";
     
     @NotNull(message = "'content' cannot be null.")
     private List<BasicParagraph> content;
@@ -100,6 +100,8 @@ public class DocumentBuilder {
     private XWPFDocument document;
 
     private boolean landscape;
+
+    private int numColumns;
 
     
     /**
@@ -120,8 +122,8 @@ public class DocumentBuilder {
         this.docxFileName = Utils.prependDateTime(docxFileName);
         this.pictureUtils = new PictureUtils(pictures);
         this.landscape = landscape;
-        this.document = numColumns == 1 ? new XWPFDocument() : 
-                                          readDocxFile(STATIC_FOLDER + prependSlash(getDocumentTemplateFileName(numColumns)));
+        this.numColumns = numColumns;
+        this.document = new XWPFDocument();
     }
 
 
@@ -138,15 +140,15 @@ public class DocumentBuilder {
      * @param pictures map of filename and bytes of pictures in the document
      * @see PictureType for allowed formats    
      */
-    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape, TableConfig tableConfig, Map<String, byte[]> pictures) {
+    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape, Map<String, byte[]> pictures, List<TableConfig> tableConfigs) {
 
         this.content = content;
         this.docxFileName = Utils.prependDateTime(docxFileName);
         this.pictureUtils = new PictureUtils(pictures);
         this.landscape = landscape;
-        this.document = numColumns == 1 ? new XWPFDocument() : 
-                                          readDocxFile(STATIC_FOLDER + prependSlash(getDocumentTemplateFileName(numColumns)));
-        this.tableUtils = tableConfig != null ? new TableUtils(this.document, tableConfig) : null;
+        this.numColumns = numColumns;
+        this.document = new XWPFDocument();
+        this.tableUtils = !tableConfigs.isEmpty() ? new TableUtils(this.document, tableConfigs) : null;
     }
 
 
@@ -159,6 +161,8 @@ public class DocumentBuilder {
         log.info("Starting to build document...");
         
         setOrientation(this.landscape ? STPageOrientation.LANDSCAPE : STPageOrientation.PORTRAIT);
+
+        addDocumentColumns(this.numColumns);
 
         addContent();
         
@@ -194,27 +198,18 @@ public class DocumentBuilder {
      */
     void addParagraph(int currentContentIndex) {
 
-        // get content
+        // get line
         BasicParagraph basicParagraph = this.content.get(currentContentIndex);
+        if (basicParagraph == null)
+            throw new ApiException("Failed to add paragraph. 'basicParagraph' cannot be null");
     
-        XWPFParagraph paragraph = createParagraphByContentIndex(currentContentIndex);
+        XWPFParagraph paragraph = createParagraphByContentIndex(currentContentIndex, basicParagraph.getStyle());
 
-        if (basicParagraph != null) {
-            // case: inside table and is picture
-            if (paragraph == null && PictureUtils.isPicture(basicParagraph.getText())) {
-                log.warn("Failed to picture " + basicParagraph.getText() + ". Cannot add picture inside table.");
-                return;    
-            }
+        // add text
+        addText(paragraph, basicParagraph, currentContentIndex);
 
-            // add text
-            addText(paragraph, basicParagraph, currentContentIndex);
-
-            // add style
-            addStyle(paragraph, basicParagraph.getStyle());
-
-        // case: break intended
-        } else if (paragraph != null) 
-            paragraph.setSpacingAfter(NO_LINE_SPACE);
+        // add style
+        addStyle(paragraph, basicParagraph.getStyle());
     }
 
 
@@ -227,20 +222,21 @@ public class DocumentBuilder {
      * Any other element gets a normal paragraph.
      * 
      * @param currentContentIndex index of the {@link #content} element currently processed
+     * @param style style of {@link BasicParagraph}
      * @return created paragraph or null if is table
      */
-    XWPFParagraph createParagraphByContentIndex(int currentContentIndex) {
+    XWPFParagraph createParagraphByContentIndex(int currentContentIndex, Style style) {
 
-        // case: table does not need paragrahp from this method
+        // case: table
         if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex))
-            return null;
+            return this.tableUtils.createTableParagraph(currentContentIndex, style);
 
-        // case: header
-        if (currentContentIndex == 0) 
+        // case: header (not blank)
+        if (currentContentIndex == 0 && !this.content.get(currentContentIndex).getText().isBlank())
             return this.document.createHeader(HeaderFooterType.DEFAULT).createParagraph();
 
-        // case: footer
-        if (currentContentIndex == this.content.size() - 1)
+        // case: footer (not blank)
+        if (currentContentIndex == this.content.size() - 1 && !this.content.get(currentContentIndex).getText().isBlank())
             return this.document.createFooter(HeaderFooterType.DEFAULT).createParagraph();
 
         // case: any other
@@ -251,7 +247,10 @@ public class DocumentBuilder {
     /**
      * Adds the "text" class variable of {@link BasicParagraph} to given {@link XWPFRun}. <p>
      * 
-     * "text" will be added as plain string, as picture or inside a table.
+     * "text" will be added as plain string, as picture or inside a table.<p>
+     * 
+     * A picture cannot be added inside a table, the plain text of the {@link  BasicParagraph} plus an 
+     * error message will be added instead.
      * 
      * @param paragraph to add text and style to
      * @param basicParagraph to use the text and style information from
@@ -261,13 +260,20 @@ public class DocumentBuilder {
 
         String text = basicParagraph.getText();
 
+        // case: picture inside table
+        if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex) && PictureUtils.isPicture(text)) {
+            log.warn("Failed to picture " + text + ". Cannot add picture inside table. Adding plain text instead.");
+            addPlainTextToRun(paragraph.createRun(), text + "(Cannot add picture inside table)");
+            return;
+        }
+
         // case: picture
-        if (this.pictureUtils != null && PictureUtils.isPicture(text))
+        if (PictureUtils.isPicture(text))
             this.pictureUtils.addPicture(paragraph.createRun(), text);
         
         // case: table cell
         else if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex))
-            this.tableUtils.addTableCell(currentContentIndex, text, basicParagraph.getStyle());
+            this.tableUtils.fillTableCell(paragraph, currentContentIndex, text, basicParagraph.getStyle());
             
         // case: plain text
         else
@@ -278,10 +284,7 @@ public class DocumentBuilder {
     /**
      * Add plain text to given {@link XWPFRun}. <p>
      * 
-     * For adding tabs, the text is expected to be formatted like: <p>
-     * - HelloTABthis is aTAB test <p>
-     * 
-     * Any TAB would be replaced with an actual tab here.
+     * Any {@link #TAB_SYMBOL} will be replaced with an actual tab.
      * 
      * @param run to add the text to
      * @param text to add
@@ -463,7 +466,7 @@ public class DocumentBuilder {
             return new XWPFDocument();
         }
     }
-    
+
 
     /**
      * Writes the {@link XWPFDocument} to a .docx file. Checks if exists and stores it in {@link #DOCX_FOLDER}.
@@ -586,8 +589,29 @@ public class DocumentBuilder {
     }
     
 
-    public static String getDocumentTemplateFileName(int numColumns) {
+    String getDocumentTemplateFileName(int numColumns, boolean headingIndependent) {
 
-        return "Empty_" + numColumns + "Columns.docx";
+        String headingString = headingIndependent ? "_headingIndependent" : "";
+
+        return "Empty_" + numColumns + "Columns" + headingString + ".docx";
+    }
+
+
+    /**
+     * Add MS Word columns (min 1, max 3) to {@code this.document}.
+     * 
+     * @param numColumns number of columns to add (min 1, max 3)
+     */
+    void addDocumentColumns(int numColumns) {
+
+        if (numColumns < 1 || numColumns > 3) {
+            log.warn("'addDocumentColumns()' parameter 'numColumns' must be less than equal 3 and greater than equal 1 but is: " + numColumns + ". Using 1 as default");
+            numColumns = 1;
+        }
+
+        CTSectPr ctSectPr = getSectPr();
+
+        for (int i = 0; i < numColumns; i++) 
+            ctSectPr.addNewCols().setNum(BigInteger.valueOf(i + 1));
     }
 }

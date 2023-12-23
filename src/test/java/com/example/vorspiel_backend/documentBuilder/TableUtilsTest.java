@@ -1,13 +1,12 @@
 package com.example.vorspiel_backend.documentBuilder;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
@@ -33,15 +32,14 @@ public class TableUtilsTest {
 
     private XWPFDocument document;
 
-    private List<String> tableContent;
-
     private Style style;
 
-    private TableConfig tableConfig;
+    private List<TableConfig> tableConfigs;
     private int numColumns;
     private int startIndex;
-    private int endIndex;
     private int currentContentIndex;
+
+    private String cellText;
 
     private TableUtils tableUtils;
 
@@ -51,7 +49,6 @@ public class TableUtilsTest {
 
         // initialize fields
         this.document = new XWPFDocument();
-        this.tableContent = Arrays.asList("cell1", "cell2", "cell3", "cell4", "cell5", "cell6", "cell7", "cell8", "cell9"); /** Don't change size!! */
         this.style = new Style(14, 
                                     "sans serif", 
                                     "2B01FF", // blue
@@ -63,125 +60,91 @@ public class TableUtilsTest {
         this.numColumns = 3;
         this.currentContentIndex = 1; /** Add table after header. */
         this.startIndex = this.currentContentIndex;
-        this.endIndex = 9;
-        this.tableConfig = new TableConfig(this.numColumns, this.numColumns, this.startIndex, this.endIndex);
-        this.tableUtils = new TableUtils(document, tableConfig);
+        this.tableConfigs = List.of(new TableConfig(this.numColumns, this.numColumns, this.startIndex));
+
+        this.cellText = "cellText";
+
+        this.tableUtils = new TableUtils(document, this.tableConfigs);
+    }
+
+
+//---------- createTableParagraph()
+// not a table index, return null
+// 
+    @Test
+    void createTableParagraph_notATableIndex_returnNull() {
+
+        assertNull(this.tableUtils.createTableParagraph(this.startIndex - 1, this.style));
+    }
+
+
+    @Test
+    void createTableParagraph_shouldCreateNewTable() {
+
+        assertTrue(this.document.getTables().isEmpty());
+
+        assertNotNull(this.tableUtils.createTableParagraph(this.currentContentIndex, this.style));
+
+        assertFalse(this.document.getTables().isEmpty());
     }
     
-
-//---------- addTableCell()
     @Test
-    void addTableCell_textNull_shouldNotThrow() {
+    void createTableParagraph_shouldUseExistingTable() {
 
-        assertDoesNotThrow(() -> this.tableUtils.addTableCell(this.currentContentIndex, null, style));
+        assertTrue(this.document.getTables().isEmpty());
+
+        assertNotNull(this.tableUtils.createTableParagraph(this.currentContentIndex, this.style));
+        assertNotNull(this.tableUtils.createTableParagraph(this.currentContentIndex, this.style));
+
+        assertEquals(1, this.document.getTables().size());
     }
 
-
-    @Test
-    void addTableCell_styleNull_shouldNotThrow() {
-
-        assertDoesNotThrow(() -> this.tableUtils.addTableCell(this.currentContentIndex, "some irrelevant text", null));
-    }
-
-
+//---------- fillTableCell()
     @Test
     void addTableCell_shouldAddText() {
 
-        String text = "some irrelevant text";
+        XWPFParagraph tableParagraph = this.document.createTable().createRow().createCell().addParagraph();
 
-        // add cell content
-        XWPFParagraph paragraph = this.tableUtils.addTableCell(this.currentContentIndex, text, style);
+        // should be blank text
+        assertTrue(tableParagraph.getText().isBlank());
 
-        // should have been added
-        int lastRunIndex = paragraph.getRuns().size() - 1;
-        String actualText = paragraph.getRuns().get(lastRunIndex).text();
-        assertEquals(text, actualText);
+        this.tableUtils.fillTableCell(tableParagraph, this.currentContentIndex, this.cellText, this.style);
+
+        // should be cell text
+        assertEquals(this.cellText, tableParagraph.getText());
     }
 
 
     @Test
-    void addTableCell_addMoreContentThanCells_shouldThrow() {
+    void addTableCell_shouldAddStyle() {
 
-        // more content than there actually is
-        int contentSize = this.tableContent.size() + 1;
+        XWPFParagraph tableParagraph = this.document.createTable().createRow().createCell().addParagraph();
 
-        // iterate longer than there are cells
-        assertThrows(NullPointerException.class, () -> {
-            for (int i = 0; i < contentSize; i++)
-                this.tableUtils.addTableCell(i + 1, "some irrelevant text", style);  
-        }); 
-    }
+        // should have no paragraphs yet
+        assertTrue(tableParagraph.getRuns().isEmpty());
 
+        this.tableUtils.fillTableCell(tableParagraph, this.currentContentIndex, this.cellText, this.style);
 
-    @Test
-    void addTableCell_makeTableTooSmall_shouldThrow() {
-
-        // make table too small
-        this.tableConfig.setNumColumns(this.numColumns - 1);
-
-        // iterate longer than there are cells
-        assertThrows(NullPointerException.class, () -> {
-            for (int i = 0; i < this.tableContent.size(); i++)
-                this.tableUtils.addTableCell(i + 1, "some irrelevant text", style);  
-        });
-    }
-
-
-    @Test
-    void addTableCell_shouldNotThrow() {
-
-        // add as much content as there are cells
-        assertDoesNotThrow(() -> {
-            for (int i = 0; i < this.tableContent.size(); i++) 
-                this.tableUtils.addTableCell(i + 1, this.tableContent.get(i), style);
-        });
+        // should be correct style
+        assertEquals(this.style.getFontSize(), tableParagraph.getRuns().get(0).getFontSizeAsDouble().intValue());
+        assertEquals(this.style.getFontFamily(), tableParagraph.getRuns().get(0).getFontFamily());
     }
 
 
 //---------- isTableIndex()
     @Test
-    void isTableIndex_tableConfigNull_shouldBeFalse() {
-
-        // set tableConfig null
-        this.tableUtils.setTableConfig(null);
-
-        assertFalse(this.tableUtils.isTableIndex(this.currentContentIndex));
-    }
-
-
-    @Test
     void isTableIndex_tableNotStarted_shouldBeFalse() {
 
-        // set not started yet
-        this.tableConfig.setStartIndex(this.currentContentIndex + 1);
-
-        assertFalse(this.tableUtils.isTableIndex(this.currentContentIndex));
+        assertTrue(this.tableUtils.isTableIndex(this.startIndex));
+        assertFalse(this.tableUtils.isTableIndex(this.startIndex - 1));
     }
 
 
     @Test
     void isTableIndex_tableEnded_shouldBeFalse() {
 
-        // set table finished
-        this.currentContentIndex = this.endIndex + 1;
-
-        assertFalse(this.tableUtils.isTableIndex(this.currentContentIndex));
-    }
-
-
-    @Test
-    void isTableIndex_shouldBeTrue() {
-
-        // given values should work
-        assertTrue(this.tableUtils.isTableIndex(this.currentContentIndex));
-
-        // set table starts here
-        this.currentContentIndex = this.startIndex;
-        assertTrue(this.tableUtils.isTableIndex(this.currentContentIndex));
-
-        // set table ends here
-        this.currentContentIndex = this.endIndex;
-        assertTrue(this.tableUtils.isTableIndex(this.currentContentIndex));    
+        assertTrue(this.tableUtils.isTableIndex(this.startIndex + 8));
+        assertFalse(this.tableUtils.isTableIndex(this.startIndex + 9));
     }
 
 

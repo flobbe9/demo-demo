@@ -45,6 +45,7 @@ import com.example.vorspiel_backend.utils.Utils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.log4j.Log4j2;
 
@@ -88,8 +89,8 @@ public class DocumentController {
                                                              "document.docx", 
                                                              documentWrapper.getNumColumns(),
                                                              documentWrapper.isLandscape(),
-                                                             documentWrapper.getTableConfig(),
-                                                             this.document.getPictures());
+                                                             this.document.getPictures(),
+                                                             documentWrapper.getTableConfigs());
         // build
         documentBuilder.build();
 
@@ -184,12 +185,14 @@ public class DocumentController {
      * Download {@code this.document} as .docx or pdf.
      * 
      * @param pdf if true, {@code this.document} is converted to pdf before download
+     * @param fileName the name of the file that will be downloaded (wont change file name in db)
      * @return {@link StreamingResponseBody} triggering a download in the browser
      * @throws FileNotFoundException
      */
-    @GetMapping("/download")
-    @Operation(summary = "Download existing .docx or .pdf file. Needs  to call '/createDocument' before.")
-    public ResponseEntity<StreamingResponseBody> download(@RequestParam boolean pdf) throws FileNotFoundException {
+    @GetMapping(path = "/download", produces = "application/octet-stream")
+    @Operation(summary = "Download existing .docx or .pdf file. Needs to call '/createDocument' before.")
+    public ResponseEntity<StreamingResponseBody> download(@RequestParam boolean pdf, 
+                                                          @RequestParam @NotBlank(message = "Failed to download file. 'fileName' cannot be blank") String fileName) throws FileNotFoundException {
 
         log.info("Downloading document...");
 
@@ -198,7 +201,7 @@ public class DocumentController {
 
             // download
             return ResponseEntity.ok()
-                                .headers(getHttpHeaders(file.getName()))
+                                .headers(getDownloadHeaders(fileName))
                                 .contentLength(file.length())
                                 .contentType(MediaType.parseMediaType("application/octet-stream"))
                                 .body(os -> {
@@ -222,7 +225,7 @@ public class DocumentController {
      * @param fileName to use for the downloaded file.
      * @return {@link HttpHeaders} object.
      */
-    private HttpHeaders getHttpHeaders(String fileName) {
+    private HttpHeaders getDownloadHeaders(String fileName) {
 
         HttpHeaders header = new HttpHeaders();
 

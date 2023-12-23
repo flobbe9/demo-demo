@@ -2,6 +2,9 @@ server:
     port: 4001
     error:
         include-message: always
+    servlet:
+        session:
+            timeout: 15m
 
 spring:
     servlet:

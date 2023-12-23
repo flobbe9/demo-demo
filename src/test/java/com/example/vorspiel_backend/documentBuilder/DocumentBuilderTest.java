@@ -1,6 +1,5 @@
 package com.example.vorspiel_backend.documentBuilder;
 
-import static com.example.vorspiel_backend.documentBuilder.DocumentBuilder.getDocumentTemplateFileName;
 import static com.example.vorspiel_backend.utils.Utils.STATIC_FOLDER;
 import static com.example.vorspiel_backend.utils.Utils.RESOURCE_FOLDER;
 import static com.example.vorspiel_backend.utils.Utils.DOCX_FOLDER;
@@ -8,7 +7,6 @@ import static com.example.vorspiel_backend.utils.Utils.prependSlash;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,6 +27,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -38,6 +38,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import com.example.vorspiel_backend.documentParts.BasicParagraph;
 import com.example.vorspiel_backend.documentParts.TableConfig;
 import com.example.vorspiel_backend.documentParts.style.Style;
+import com.example.vorspiel_backend.exception.ApiException;
 import com.example.vorspiel_backend.utils.Utils;
 
 
@@ -47,6 +48,7 @@ import com.example.vorspiel_backend.utils.Utils;
  * @since 0.0.1
  */
 @TestInstance(Lifecycle.PER_CLASS)
+@TestMethodOrder(OrderAnnotation.class)
 public class DocumentBuilderTest {
 
     public static final String TEST_RESOURCE_FOLDER = "./src/main/resources/static/test";
@@ -68,10 +70,10 @@ public class DocumentBuilderTest {
     
     private List<BasicParagraph> content;
 
-    private TableConfig tableConfig;
+    private List<TableConfig> tableConfigs = new ArrayList<>();
     private int numColumns;
+    private int numRows;
     private int startIndex;
-    private int endIndex;
 
     private PictureUtils pictureUtils;
     private String testPictureName;
@@ -105,15 +107,15 @@ public class DocumentBuilderTest {
         this.content = Arrays.asList(this.header, this.title, this.tableCell, this.picture, this.footer);
         
         // table
-        this.numColumns = 3;
+        this.numColumns = 1;
+        this.numRows = 1;
         this.startIndex = 2;
-        this.endIndex = 2;
-        this.tableConfig = new TableConfig(this.numColumns, this.numColumns, this.startIndex, this.endIndex);
+        this.tableConfigs.add(new TableConfig(this.numColumns, this.numRows, this.startIndex));
         
         // document
         this.testDocxFileName = "test/test.docx";
         this.landscape = true;
-        this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", 2, this.landscape, this.tableConfig, this.pictures);
+        this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", 2, this.landscape, this.pictures, this.tableConfigs);
         this.docxFileName = this.documentBuilder.getDocxFileName();
         this.document = this.documentBuilder.getDocument();
         this.documentBuilder.setPictureUtils(this.pictureUtils);
@@ -170,7 +172,7 @@ public class DocumentBuilderTest {
 //----------- addParagraph()
     @Test
     void addParagraph_pictureInsideTable_shouldDoNothing() {
-        
+
         this.tableCell.setText("picture.png");
         int currentContentIndex = this.content.indexOf(this.tableCell);
 
@@ -185,19 +187,13 @@ public class DocumentBuilderTest {
 
 
     @Test
-    void addParagraph_basicParagraphNull_shouldNotThrow_shouldAddParagraph() {
-
-        int currentContentIndex = this.content.indexOf(this.title);
-
-        // should have no paragraphs
-        assertTrue(this.document.getParagraphs().size() == 0);
+    void addParagraph_basicParagraphNull_shouldThrow() {
 
         // set basicParagraph null
+        int currentContentIndex = this.content.indexOf(this.title);
         this.content.set(currentContentIndex, null);
-        assertDoesNotThrow(() -> this.documentBuilder.addParagraph(currentContentIndex));
-
-        // should still have created paragraph
-        assertTrue(this.document.getParagraphs().size() == 1);
+        
+        assertThrows(ApiException.class, () -> this.documentBuilder.addParagraph(currentContentIndex));
     }
 
 
@@ -222,19 +218,56 @@ public class DocumentBuilderTest {
 
 //----------- createParagraphByContentIndex()
     @Test
-    void createParagraphByContentIndex_isTableIndex_shouldReturnNull() {
+    void createParagraphByContentIndex_isTableIndex_shouldReturnTableParagraph() {
 
-        // use tableIndex
-        int tableIndex = this.startIndex;
+        // should not have tables
+        assertEquals(0, this.documentBuilder.getDocument().getTables().size());
+        
+        this.documentBuilder.createParagraphByContentIndex(this.startIndex, this.style);
 
-        // expect null
-        assertNull(this.documentBuilder.createParagraphByContentIndex(tableIndex));
+        // should have one cell
+        assertEquals(1, this.documentBuilder.getDocument().getTables().get(0).getRows().get(0).getTableCells().size());
+    }
 
-        // no tableIndex
-        int titleIndex = this.content.indexOf(this.title);
 
-        // expect no null
-        assertFalse(this.documentBuilder.createParagraphByContentIndex(titleIndex) == null);
+    @Test
+    void createParagraphByContentIndex_isTableIndex_shouldNotCreateParagraph() {
+
+        // should not have tables
+        assertEquals(0, this.documentBuilder.getDocument().getTables().size());
+        
+        this.documentBuilder.setTableUtils(null);
+        this.documentBuilder.createParagraphByContentIndex(this.startIndex, this.style);
+
+        // should still have no tables
+        assertEquals(0, this.documentBuilder.getDocument().getTables().size());
+    }
+
+
+    @Test
+    void createParagraphByContentIndex_isNoTableIndex_shouldNotAddTable() {
+
+        // should not have tables
+        assertEquals(0, this.documentBuilder.getDocument().getTables().size());
+
+        this.documentBuilder.createParagraphByContentIndex(this.startIndex - 1, this.style);
+
+        // should still have no tables
+        assertEquals(0, this.documentBuilder.getDocument().getTables().size());
+    }
+    
+
+    @Test
+    void createParagraphByContentIndex_blankText_shouldNotAddHeaderParagraph() {
+
+        // should not have header yet
+        assertThrows(NullPointerException.class, () -> this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultHeader().getParagraphs());
+
+        // set blank text (not empty)
+        this.content.get(0).setText(" ");
+
+        this.documentBuilder.createParagraphByContentIndex(0, this.style);
+        assertThrows(NullPointerException.class, () -> this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultHeader().getParagraphs());
     }
 
     
@@ -244,8 +277,22 @@ public class DocumentBuilderTest {
         // should not have header yet
         assertThrows(NullPointerException.class, () -> this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultHeader().getParagraphs());
 
-        this.documentBuilder.createParagraphByContentIndex(0);
-        assertTrue(this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultHeader().getParagraphs().size() == 1);
+        this.documentBuilder.createParagraphByContentIndex(0, this.style);
+        assertEquals(1, this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultHeader().getParagraphs().size());
+    }
+
+
+    @Test
+    void createParagraphByContentIndex_blankText_shouldNotAddFooterParagraph() {
+
+        // should not have header yet
+        assertThrows(NullPointerException.class, () -> this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultFooter().getParagraphs());
+
+        // set blank text (not empty)
+        this.content.get(this.content.size() - 1).setText(" ");
+
+        this.documentBuilder.createParagraphByContentIndex(this.content.size() - 1, this.style);
+        assertThrows(NullPointerException.class, () -> this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultFooter().getParagraphs());
     }
 
 
@@ -255,8 +302,8 @@ public class DocumentBuilderTest {
         // should not have header yet
         assertThrows(NullPointerException.class, () -> this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultFooter().getParagraphs());
 
-        this.documentBuilder.createParagraphByContentIndex(this.content.size() - 1);
-        assertTrue(this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultFooter().getParagraphs().size() == 1);
+        this.documentBuilder.createParagraphByContentIndex(this.content.size() - 1, this.style);
+        assertEquals(1, this.documentBuilder.getDocument().getHeaderFooterPolicy().getDefaultFooter().getParagraphs().size());
     }
 
 
@@ -266,27 +313,12 @@ public class DocumentBuilderTest {
         // should not have paragraphs yet
         assertTrue(this.documentBuilder.getDocument().getParagraphs().size() == 0);
 
-        this.documentBuilder.createParagraphByContentIndex(1);
-        assertTrue(this.documentBuilder.getDocument().getParagraphs().size() == 1);
+        this.documentBuilder.createParagraphByContentIndex(1, this.style);
+        assertEquals(1, this.documentBuilder.getDocument().getParagraphs().size());
     }
 
 
 //----------- addText() 
-    @Test
-    void addText_pictureUtilsNull_shouldNotAddPicture() {
-
-        int pictureIndex = this.content.indexOf(this.picture);
-
-        // set pictureUtils null
-        this.documentBuilder.setPictureUtils(null);
-
-        this.documentBuilder.addText(this.document.createParagraph(), this.picture, pictureIndex);
-        
-        // expect no picture
-        assertEquals(0, this.document.getAllPictures().size());
-    }
-
-
     @Test
     void addText_notAPicture_shouldNotAddPicture() {
 
@@ -340,21 +372,6 @@ public class DocumentBuilderTest {
 
         // expect no table
         assertEquals(0, this.document.getAllPictures().size());
-    }
-
-
-    @Test
-    void addText_shouldAddTableCell() {
-
-        int tableCellIndex = this.content.indexOf(this.tableCell);
-
-        this.documentBuilder.addText(this.document.createParagraph(), this.tableCell, tableCellIndex);
-
-        // expect table
-        assertEquals(1, this.document.getTables().size());
-
-        // expect tableCell text
-        assertEquals(this.tableCell.getText(), this.document.getTables().get(0).getRow(0).getCell(0).getText());
     }
 
 
@@ -469,15 +486,6 @@ public class DocumentBuilderTest {
 
         // file should exist
         assertTrue(new File(DOCX_FOLDER + "/" + this.docxFileName).exists());
-    }
-
-
-//----------- getDocumentTemplateFileName()
-    @Test
-    void getDocumentTemplateFileName_shouldExist() {
-
-        assertTrue(new File(STATIC_FOLDER + "/" + getDocumentTemplateFileName(2)).exists());
-        assertTrue(new File(STATIC_FOLDER + "/" + getDocumentTemplateFileName(3)).exists());
     }
 
 

@@ -115,13 +115,16 @@ public class ApiExceptionHandler {
     public static ResponseEntity<ApiExceptionFormat> handleApiException(ApiException exception) {
 
         Exception originalException = exception.getOriginalException();
+        String errorMessage = "";
 
         // log messages
         if (originalException == null) {
-            log.error(exception.getMessage());
+            errorMessage = exception.getMessage();
+            log.error(errorMessage);
 
         } else {
-            log.error(exception.getMessage() + " Cause: " + originalException.getMessage());
+            errorMessage = exception.getMessage() + " Cause: " + originalException.getMessage();
+            log.error(errorMessage);
             log.error("     " + originalException.getClass());
         }
         
@@ -129,7 +132,7 @@ public class ApiExceptionHandler {
         logPackageStackTrace(exception.getStackTrace());
 
         return ResponseEntity.status(exception.getStatus())
-                             .body(returnPretty(exception.getStatus(), exception.getMessage()));
+                             .body(returnPretty(exception.getStatus(), errorMessage));
     }
 
 

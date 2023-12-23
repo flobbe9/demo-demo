@@ -117,6 +117,7 @@ public class PictureUtils {
     }
 
 
+    // TODO: make condition more complex
     public static boolean isPicture(String text) {
 
         return getPictureType(text) != null;
