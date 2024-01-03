@@ -1,15 +1,28 @@
 package com.example.vorspiel_backend.documentParts;
 
 import java.util.List;
+import java.util.Map;
+
+import org.springframework.lang.Nullable;
+
+import com.example.vorspiel_backend.entites.AbstractEntity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.MapKeyColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,18 +33,36 @@ import lombok.Setter;
  * 
  * @since 0.0.1
  */
+@Entity
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class DocumentWrapper {
+public class DocumentWrapper extends AbstractEntity {
     
     @NotEmpty(message = "'content' cannot be null or empty.")
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinTable(
+        name = "document_wrapper_basic_paragraphs",
+        inverseJoinColumns = @JoinColumn(name = "basic_paragraph_id"))
     private List<@Valid @NotNull(message = "'basicParagraph' cannot be null") BasicParagraph> content;
 
     @Valid
     @NotNull(message = "'tableConfigs' cannot be null.")
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinTable(
+        name = "document_wrapper_table_configs",
+        inverseJoinColumns = @JoinColumn(name = "table_config_id"))
     private List<@Valid @NotNull(message = "'tableConfig cannot be null") TableConfig> tableConfigs;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @MapKeyColumn(name = "picture_file_name", unique = true)
+    @Column(name = "picture_bytes", length = 16777215)
+    @Nullable
+    @Schema(hidden = true)
+    private Map<String, byte[]> pictures;
+
+    @NotEmpty(message = "'fileName' cannot be empty.")
+    private String fileName;
 
     private boolean landscape = false;
 
@@ -41,7 +72,23 @@ public class DocumentWrapper {
     private int numColumns = 1;
 
 
+    public DocumentWrapper(
+            @NotEmpty(message = "'content' cannot be null or empty.") List<@Valid @NotNull(message = "'basicParagraph' cannot be null") BasicParagraph> content,
+            @Valid @NotNull(message = "'tableConfigs' cannot be null.") List<@Valid @NotNull(message = "'tableConfig cannot be null") TableConfig> tableConfigs,
+            @NotEmpty(message = "'fileName' cannot be empty.") String fileName, 
+            boolean landscape,
+            @Min(1) @Max(3) int numColumns) {
+
+        this.content = content;
+        this.tableConfigs = tableConfigs;
+        this.fileName = fileName;
+        this.landscape = landscape;
+        this.numColumns = numColumns;
+    }
+
+
     @AssertTrue(message = "'tableConfigs' invalid. Start and end indices cannot overlap.")
+    @Schema(hidden = true)
     public boolean isTableConfigsValid() {
 
         // sort by startIndex

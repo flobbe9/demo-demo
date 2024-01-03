@@ -39,6 +39,7 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -58,6 +59,7 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Setter
 // TODO: reconsider table size for multiple columns
+// TODO: remove columns for certain line only, read prepared document
 public class DocumentBuilder {
 
     /** paragraph indentation */
@@ -91,10 +93,10 @@ public class DocumentBuilder {
     @Pattern(regexp = ".*\\.docx$", message = "Wrong format of 'docxFileName'. Only '.docx' permitted.")
     private String docxFileName;
 
-    /** may be null */
+    @Nullable
     private PictureUtils pictureUtils;
 
-    /** may be null */
+    @Nullable
     private TableUtils tableUtils;  
 
     private XWPFDocument document;
@@ -156,7 +158,7 @@ public class DocumentBuilder {
      * Builds a the document with given list of {@link BasicParagraph}s and writes it to a .docx file which will
      * be located in the {@link #DOCX_FOLDER}.
      */
-    public void build() {
+    public DocumentBuilder build() {
         
         log.info("Starting to build document...");
         
@@ -169,6 +171,8 @@ public class DocumentBuilder {
         setDocumentMargins(MINIMUM_MARGIN_TOP_BOTTOM, null, MINIMUM_MARGIN_TOP_BOTTOM, null);
         
         log.info("Finished building document");
+
+        return this;
     }
     
 

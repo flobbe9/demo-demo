@@ -1,7 +1,12 @@
 package com.example.vorspiel_backend.documentParts;
 
 import com.example.vorspiel_backend.documentParts.style.Style;
+import com.example.vorspiel_backend.entites.AbstractEntity;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -18,16 +23,19 @@ import lombok.Setter;
  * @since 0.0.1
  * @see Style
  */
+@Entity
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class BasicParagraph {
+@AllArgsConstructor
+public class BasicParagraph extends AbstractEntity {
     
     @NotNull(message = "'text' cannot be null.")
     private String text;
     
     @NotNull(message = "'style' cannot be null.")
     @Valid
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn
     private Style style;
 }

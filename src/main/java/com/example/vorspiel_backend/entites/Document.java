@@ -25,7 +25,7 @@ import lombok.Setter;
  * 
  * @since 0.0.5
  */
-@Entity
+// @Entity
 @Getter
 @Setter
 @AllArgsConstructor
@@ -95,7 +95,7 @@ public class Document extends AbstractEntity {
      */
     public File getDocxFile() {
 
-        return Utils.byteArrayToFile(this.docxBytes, this.docxFileName);        
+        return Utils.byteArrayToFile(this.docxBytes, this.docxFileName);    
     }
 
 
@@ -106,6 +106,6 @@ public class Document extends AbstractEntity {
      */
     public File getPdfFile() {
 
-        return Utils.byteArrayToFile(this.pdfBytes, this.pdfFileName);        
+        return Utils.byteArrayToFile(this.pdfBytes, this.pdfFileName);   
     }
 }

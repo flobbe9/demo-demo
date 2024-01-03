@@ -6,9 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
+import com.example.vorspiel_backend.documentParts.DocumentWrapper;
 import com.example.vorspiel_backend.entites.Document;
 import com.example.vorspiel_backend.exception.ApiException;
-import com.example.vorspiel_backend.repositories.DocumentRepository;
+import com.example.vorspiel_backend.repositories.DocumentWrapperRepository;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -22,15 +23,15 @@ import jakarta.validation.constraints.NotNull;
  */
 @Service
 @Validated
-public class DocumentService extends AbstractService<Document, DocumentRepository> {
+public class DocumentWrapperService extends AbstractService<DocumentWrapper, DocumentWrapperRepository> {
 
     @Autowired
-    private DocumentRepository repository;
+    private DocumentWrapperRepository repository;
     
 
     public byte[] getPictureByFileName(@NotBlank(message = "'fileName' cannot be blank or null") String fileName, @NotNull(message = "'documentId' cannot be null") Long documentId) {
 
-        Document document = getById(documentId);
+        DocumentWrapper document = getById(documentId);
 
         Map<String, byte[]> pictures = document.getPictures();
         if (pictures == null || pictures.isEmpty())

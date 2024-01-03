@@ -1,22 +1,18 @@
 package com.example.vorspiel_backend.controllers;
 
-import static com.example.vorspiel_backend.utils.Utils.DOCX_FOLDER;
-import static com.example.vorspiel_backend.utils.Utils.PDF_FOLDER;
 import static com.example.vorspiel_backend.utils.Utils.PICTURES_FOLDER;
-import static com.example.vorspiel_backend.utils.Utils.STATIC_FOLDER;
 import static com.example.vorspiel_backend.utils.Utils.prependSlash;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -35,17 +31,15 @@ import com.example.vorspiel_backend.documentBuilder.DocumentBuilder;
 import com.example.vorspiel_backend.documentBuilder.PictureUtils;
 import com.example.vorspiel_backend.documentParts.BasicParagraph;
 import com.example.vorspiel_backend.documentParts.DocumentWrapper;
-import com.example.vorspiel_backend.entites.Document;
 import com.example.vorspiel_backend.exception.ApiException;
 import com.example.vorspiel_backend.exception.ApiExceptionFormat;
 import com.example.vorspiel_backend.exception.ApiExceptionHandler;
-import com.example.vorspiel_backend.services.DocumentService;
+import com.example.vorspiel_backend.services.DocumentWrapperService;
 import com.example.vorspiel_backend.utils.Utils;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.log4j.Log4j2;
 
@@ -56,87 +50,87 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Tag(name = "Document builder logic")
 @SessionScope
+// TODO: adjust tests
+// TODO: run cron job to clear resource folders, deletion is not reliable
 public class DocumentController {
 
     @Autowired
-    private DocumentService documentService;
+    private DocumentWrapperService documentWrapperService;
 
-    /** Document of current session */
-    private Document document = new Document();
+    private DocumentWrapper documentWrapper = new DocumentWrapper();
+
+    private File file;
 
 
     /**
-     * Builds word document, writes to .docx file and saves it to db. <p>
+     * Builds word document, writes to .docx file. <p>
      * 
      * Assuming that: <p>
      * first {@link BasicParagraph} is the header <p>
-     * second {@link BasicParagraph} is the title <p>
      * last {@link BasicParagraph} is the footer <p>
      * anything in between is main content <p>.
      * 
-     * @param documentWrapper object containing all document information
-     * @throws ApiExceptionFormat
+     * @param documentWrapper wrapper object containing all document information
+     * @param bindingResult for handling bad requests
      */
-    @PostMapping("/createDocument")
+    @PostMapping("/buildAndWrite")
     @Operation(summary = "Build document and write to .docx.")
-    public ApiExceptionFormat createDocument(@RequestBody @Valid DocumentWrapper documentWrapper, BindingResult bindingResult) {
+    public ApiExceptionFormat buildAndWrite(@RequestBody @Valid DocumentWrapper wrapper, BindingResult bindingResult) {
 
-        // case: http 400
-        if (bindingResult.hasErrors()) 
-            return ApiExceptionHandler.returnPretty(BAD_REQUEST, bindingResult);
+        this.documentWrapper = wrapper;
 
-        DocumentBuilder documentBuilder = new DocumentBuilder(documentWrapper.getContent(), 
-                                                             "document.docx", 
-                                                             documentWrapper.getNumColumns(),
-                                                             documentWrapper.isLandscape(),
-                                                             this.document.getPictures(),
-                                                             documentWrapper.getTableConfigs());
-        // build
-        documentBuilder.build();
+        // build docx
+        File file = buildAndWriteDocument();
 
-        // write
-        File docxFile = documentBuilder.writeDocxFile();
-
-        // save
-        this.document = this.documentService.save(new Document(documentBuilder.getDocxFileName(), Utils.fileToByteArray(docxFile)));
-
-        // clean up
-        Utils.clearFolderByFileName(DOCX_FOLDER, this.document.getDocxFileName());
+        this.file = file;
 
         return ApiExceptionHandler.returnPrettySuccess(OK);
     }
-    
+
 
     /**
-     * Convert {@code this.document} to pdf and save pdf to {@code this.document}.
-     *  
-     * @throws FileNotFoundException
+     * Convert given file to stream and delete file afterwards.
+     * 
+     * @param file to download
+     * @param fileName to use for downloaded file
+     * @return {@link StreamingResponseBody} of file with correct headers for download
      */
-    @GetMapping("/docxToPdf")
-    @Operation(summary = "Write existing .docx file to .pdf. Needs to call '/createDocument' before. Currently only works locally.")
-    public ApiExceptionFormat convertDocxToPdf() throws FileNotFoundException {
+    @GetMapping(path = "/download", produces = {"application/octet-stream", "application/json"})
+    @Operation(summary = "Download existing .docx or .pdf file. Needs a call to '/buildAndWrite' first.")
+    public ResponseEntity<StreamingResponseBody> downloadDocument(@RequestParam boolean pdf) {
 
-        File docxFile = this.document.getDocxFile();
+        log.info("Downloading document...");
 
-        // convert
-        String pdfFileName = Utils.prependDateTime("document.pdf");
-        File pdfFile = DocumentBuilder.docxToPdfDocuments4j(docxFile, pdfFileName);
+        // case: no document created yet
+        if (this.documentWrapper == null || this.file == null || !this.file.exists()) 
+            throw new ApiException(HttpStatus.CONFLICT, "Failed to download document. No document created yet.");
+        
+        // case: pdf
+        if (pdf)
+            file = convertDocxToPdf(file);
 
-        // update current document
-        this.document.setPdfFileName(pdfFileName);
-        this.document.setPdfBytes(Utils.fileToByteArray(pdfFile));
-        this.document = this.documentService.save(this.document);
+        try {
+            return ResponseEntity.ok()
+                                .headers(getDownloadHeaders(this.documentWrapper.getFileName()))
+                                .contentLength(file.length())
+                                .contentType(MediaType.parseMediaType("application/octet-stream"))
+                                .body(os -> {
+                                    try {
+                                        Files.copy(file.toPath(), os);
 
-        // clean up
-        Utils.clearFolderByFileName(STATIC_FOLDER, docxFile.getName());
-        Utils.clearFolderByFileName(PDF_FOLDER, pdfFileName);
+                                    } finally {
+                                        file.delete();
+                                    }
+                                });
 
-        return ApiExceptionHandler.returnPrettySuccess(OK);
+        } finally {
+            log.info("Download finished");
+        }
     }
 
 
     /**
-     * Upload a {@link MultipartFile} file and save it to {@code this.document} as picture.
+     * Upload a {@link MultipartFile} file and add it to {@code this.documentWrapper}.
      * 
      * @param picture picture as multipart file
      */
@@ -164,8 +158,7 @@ public class DocumentController {
                 throw new ApiException("Failed to write stream to file.");
 
             // updated document
-            this.document.getPictures().put(fileName, Utils.fileToByteArray(uploadedFile));
-            this.document = this.documentService.save(this.document);
+            this.documentWrapper.getPictures().put(fileName, Utils.fileToByteArray(uploadedFile));
 
         } catch (Exception e) {
             throw new ApiException("Failed to upload picture.", e);
@@ -182,40 +175,34 @@ public class DocumentController {
 
 
     /**
-     * Download {@code this.document} as .docx or pdf.
-     * 
-     * @param pdf if true, {@code this.document} is converted to pdf before download
-     * @param fileName the name of the file that will be downloaded (wont change file name in db)
-     * @return {@link StreamingResponseBody} triggering a download in the browser
-     * @throws FileNotFoundException
+     * Build document with {@code this.documentWrapper} and write to file
+     * @return
      */
-    @GetMapping(path = "/download", produces = "application/octet-stream")
-    @Operation(summary = "Download existing .docx or .pdf file. Needs to call '/createDocument' before.")
-    public ResponseEntity<StreamingResponseBody> download(@RequestParam boolean pdf, 
-                                                          @RequestParam @NotBlank(message = "Failed to download file. 'fileName' cannot be blank") String fileName) throws FileNotFoundException {
+    private File buildAndWriteDocument() {
 
-        log.info("Downloading document...");
+        DocumentBuilder documentBuilder = new DocumentBuilder(this.documentWrapper.getContent(), 
+                                                                this.documentWrapper.getFileName(), 
+                                                                this.documentWrapper.getNumColumns(),
+                                                                this.documentWrapper.isLandscape(),
+                                                                this.documentWrapper.getPictures(),
+                                                                this.documentWrapper.getTableConfigs());
+        
+        // build
+        return documentBuilder.build()
+                              .writeDocxFile();
+    }
 
-        try {
-            File file = pdf ? this.document.getPdfFile() : this.document.getDocxFile();
 
-            // download
-            return ResponseEntity.ok()
-                                .headers(getDownloadHeaders(fileName))
-                                .contentLength(file.length())
-                                .contentType(MediaType.parseMediaType("application/octet-stream"))
-                                .body(os -> {
-                                    // read to stream
-                                    Files.copy(file.toPath(), os);
-                                    file.delete();
-                                });
+    /**
+     * Convert given '.docx' file to pdf.
+     *  
+     * @param docxFile ending on '.docx' to convert to '.pdf'
+     */
+    private File convertDocxToPdf(File docxFile) {
 
-        } catch (Exception e) {
-            throw new ApiException("Failed to download file.", e);
+        String pdfFileName = Utils.prependDateTime(docxFile.getName());
 
-        } finally {
-            log.info("Download finished");
-        }
+        return DocumentBuilder.docxToPdfDocuments4j(docxFile, pdfFileName);
     }
 
 

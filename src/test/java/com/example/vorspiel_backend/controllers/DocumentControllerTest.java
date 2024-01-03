@@ -1,8 +1,11 @@
 package com.example.vorspiel_backend.controllers;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +30,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static com.example.vorspiel_backend.utils.Utils.DOCX_FOLDER;
+import static com.example.vorspiel_backend.utils.Utils.PDF_FOLDER;
+import static com.example.vorspiel_backend.utils.Utils.PICTURES_FOLDER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.HttpStatus.OK;
@@ -40,8 +46,8 @@ import java.util.List;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 
 
-// TODO: don't use spring boot test, mock session and service
 @SpringBootTest
+@TestInstance(Lifecycle.PER_CLASS)
 @AutoConfigureMockMvc(addFilters = false)
 @TestMethodOrder(OrderAnnotation.class)
 public class DocumentControllerTest {
@@ -67,15 +73,15 @@ public class DocumentControllerTest {
         this.style = new Style(8, "Calibri", "000000", true, true, true, ParagraphAlignment.LEFT, null);
         this.basicParagraph = new BasicParagraph("text", this.style);
         this.tableConfigs = new ArrayList<>(List.of(new TableConfig(2, 1, 0)));
-        this.documentWrapper = new DocumentWrapper(List.of(basicParagraph), tableConfigs, false, 1);
+        this.documentWrapper = new DocumentWrapper(List.of(basicParagraph), tableConfigs, "Document_1.docx", false, 1);
     }
 
 
     @Test
     @Order(0)
-    void createDocument_shouldBeStatus200() throws Exception {
+    void buildAndWrite_shouldBeStatus200() throws Exception {
 
-        MvcResult response = performPost("/createDocument", this.documentWrapper)
+        MvcResult response = performPost("/buildAndWrite", this.documentWrapper)
                              .andExpect(status().isOk())
                              .andReturn();
 
@@ -84,9 +90,9 @@ public class DocumentControllerTest {
 
 
     @Test
-    void createDocument_shouldBeStatus400_null() throws Exception {
+    void buildAndWrite_shouldBeStatus400_null() throws Exception {
 
-        MvcResult response = performPost("/createDocument", null)
+        MvcResult response = performPost("/buildAndWrite", null)
                             .andExpect(status().isBadRequest())
                             .andReturn();
 
@@ -98,11 +104,11 @@ public class DocumentControllerTest {
 
     @Test 
     @Order(1)
-    void createDocument_shouldBeStatus400_emptyContent() throws Exception {
+    void buildAndWrite_shouldBeStatus400_emptyContent() throws Exception {
 
         this.documentWrapper.setContent(List.of());
 
-        MvcResult response = performPost("/createDocument", this.documentWrapper)
+        MvcResult response = performPost("/buildAndWrite", this.documentWrapper)
                             .andExpect(status().isBadRequest())
                             .andReturn();
 
@@ -114,11 +120,11 @@ public class DocumentControllerTest {
 
     @Test 
     @Order(2)
-    void createDocument_shouldBeStatus400_invalidContent() throws Exception {
+    void buildAndWrite_shouldBeStatus400_invalidContent() throws Exception {
 
         this.documentWrapper.getContent().get(0).setText(null);
         
-        MvcResult response = performPost("/createDocument", this.documentWrapper)
+        MvcResult response = performPost("/buildAndWrite", this.documentWrapper)
                             .andExpect(status().isBadRequest())
                             .andReturn();
 
@@ -130,11 +136,11 @@ public class DocumentControllerTest {
 
     @Test
     @Order(4)
-    void createDocument_shouldBeStatus400_invalidNumColumns() throws Exception {
+    void buildAndWrite_shouldBeStatus400_invalidNumColumns() throws Exception {
 
         this.documentWrapper.setNumColumns(0);
         
-        MvcResult response = performPost("/createDocument", this.documentWrapper)
+        MvcResult response = performPost("/buildAndWrite", this.documentWrapper)
                             .andExpect(status().isBadRequest())
                             .andReturn();
 
@@ -145,17 +151,16 @@ public class DocumentControllerTest {
 
 
     @Test
-    void download_shouldBeStatus500() throws Exception {
+    void download_shouldBeStatus409_didNotCreateDocument() throws Exception {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("pdf", "false");
-        params.add("fileName", "test.docx");
 
         MvcResult response = performGet("/download", params)
-                            .andExpect(status().isInternalServerError())
+                            .andExpect(status().isConflict())
                             .andReturn();
 
-        checkJsonApiExceptionFormat(response.getResponse().getContentAsString(), HttpStatus.INTERNAL_SERVER_ERROR);
+        checkJsonApiExceptionFormat(response.getResponse().getContentAsString(), HttpStatus.CONFLICT);
     }
 
 
@@ -174,6 +179,14 @@ public class DocumentControllerTest {
                                     .contentType(APPLICATION_JSON));
     }
 
+
+    @AfterAll
+    void cleanUp() {
+
+        Utils.clearFolderByFileName(DOCX_FOLDER);
+        Utils.clearFolderByFileName(PDF_FOLDER);
+        Utils.clearFolderByFileName(PICTURES_FOLDER);
+    }
 
 
     /**

@@ -1,6 +1,9 @@
 package com.example.vorspiel_backend.documentParts;
 
+import com.example.vorspiel_backend.entites.AbstractEntity;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Entity;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -15,11 +18,12 @@ import lombok.Setter;
  * 
  * @since 0.0.1
  */
+@Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class TableConfig {
+public class TableConfig extends AbstractEntity {
 
     @NotNull(message = "'numColumns' cannot be null.")
     @Min(value = 1, message = "'numColumns' has to be greater than equal 1.")
@@ -34,7 +38,7 @@ public class TableConfig {
     @Min(value = 0, message = "'startIndex' has to be greater than equal 0.")
     @Schema(defaultValue = "1")
     private Integer startIndex;
-    
+
 
     /**
      * Calls all neccessary validation methods on fields.

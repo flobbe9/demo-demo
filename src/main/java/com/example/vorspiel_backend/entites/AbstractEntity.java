@@ -33,4 +33,13 @@ public abstract class AbstractEntity {
 
     @JsonIgnore
     private LocalDateTime updated;
+
+
+    public AbstractEntity() {
+
+        if (this.created == null)
+            this.created = LocalDateTime.now();
+
+        this.updated = LocalDateTime.now();
+    }
 }

@@ -1,7 +1,6 @@
 package com.example.vorspiel_backend.exception;
 
 import org.springframework.http.HttpStatus;
-
 import lombok.Getter;
 import lombok.Setter;
 

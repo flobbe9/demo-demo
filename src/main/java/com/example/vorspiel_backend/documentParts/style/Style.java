@@ -4,7 +4,12 @@ import org.apache.poi.xwpf.usermodel.BreakType;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.springframework.lang.Nullable;
 
+import com.example.vorspiel_backend.entites.AbstractEntity;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -20,13 +25,13 @@ import lombok.Setter;
  * 
  * @since 0.0.1
  */
+@Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Style {
+public class Style extends AbstractEntity {
     
-    /**  */
     @NotNull(message = "'fontSize' cannot be null.")
     @Min(value = 8, message = "'fontSize' has to be greater than equal 8.")
     private Integer fontSize;
@@ -49,8 +54,10 @@ public class Style {
     private Boolean underline;
 
     @NotNull(message = "'textAlign' cannot be null.")
+    @Enumerated(EnumType.STRING)
     private ParagraphAlignment textAlign;
 
     @Nullable
+    @Enumerated(EnumType.STRING)
     private BreakType breakType;
 }
