@@ -3,17 +3,10 @@ version: "3.9"
 services:
     db:
         image: mysql
-        container_name: vorspiel_db
+        container_name: ${DB_NAME}_db
         ports:
             - 3306:3306
         environment:
           MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-          MYSQL_DATABASE: vorspiel
+          MYSQL_DATABASE: ${DB_NAME}
           TZ: Europe/Berlin
-
-    # mailserver:
-    #     image: maildev/maildev
-    #     container_name: vorspiel_mail_server_test
-    #     ports:
-    #         - 1080:1080
-    #         - 1025:1025
