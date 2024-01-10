@@ -14,21 +14,8 @@ public class VorspielApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(VorspielApplication.class, args);
-        initProps();
+        new Initializer().init();
 	}
-
-
-    /**
-     * Set some properties in 'application.yml' file
-     */
-    private static void initProps() {
-
-        Properties props = System.getProperties();
-        
-        // set ddl-auto (drop or update database)
-        String env = System.getenv("ENV");
-        props.setProperty("spring.jpa.hibernate.ddl-auto", env.equals("dev") ? "create-drop" : "update");
-    }
 
         
     /**

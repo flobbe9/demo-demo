@@ -1,33 +1,35 @@
 version: "3.9"
 
 services:
-    db:
-        image: mysql
-        container_name: db
-        ports:
-            - 3306:3306
-        environment:
-          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-          MYSQL_DATABASE: ${DB_NAME}
-          TZ: Europe/Berlin
+  db:
+    image: mysql
+    container_name: db
+    ports:
+        - ${DB_PORT}:${DB_PORT}
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: ${DB_NAME}
+      TZ: Europe/Berlin
 
-    # mailserver:
-    #     image: maildev/maildev
-    #     container_name: maildev_server
-    #     ports:
-    #         - 1080:1080
-    #         - 1025:1025
-    document_builder:
-        depends_on: 
-          - db
-          # - mailserver
-        build: .
-        image: flobbe9/vorspiel_backend:latest
-        container_name: document_builder
-        ports: 
-            - ${API_PORT}:${API_PORT}
-        environment:
-            - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/${DB_NAME}
-            - SPRING_DATASOURCE_USERNAME=root
-            - SPRING_DATASOURCE_PASSWORD=
-            - SPRING_JPA_HIBERNATE_DDL_AUTO=create
+  mailserver:
+      image: maildev/maildev
+      container_name: mail_server_test
+      ports:
+          - ${MAIL_INBOX_PORT}:${MAIL_INBOX_PORT} # mail inbox port (ui)
+          - ${MAIL_SERVER_PORT}:${MAIL_SERVER_PORT} # mail server port
+
+  document_builder:
+    depends_on: 
+      - db
+      # - mailserver
+    build: .
+    image: flobbe9/vorspiel_backend:latest
+    container_name: ${API_NAME}
+    ports: 
+        - ${API_PORT}:${API_PORT}
+    env_file: .env
+    environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://db:${DB_PORT}/${DB_NAME}
+        - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+        - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+        - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
