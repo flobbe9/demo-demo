@@ -1,4 +1,4 @@
-name: vorspiel_backend dev
+name: word-light_document_builder dev
 
 run-name: ${{ github.event.head_commit.message }}
 on: 

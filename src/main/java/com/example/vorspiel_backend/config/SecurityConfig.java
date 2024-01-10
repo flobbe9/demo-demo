@@ -37,6 +37,7 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         // enable csrf in prod only
+        // TODO: replace this with env variable, remove CSRF env var
         if (csrfEnabled.equalsIgnoreCase("true"))
             http.csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
