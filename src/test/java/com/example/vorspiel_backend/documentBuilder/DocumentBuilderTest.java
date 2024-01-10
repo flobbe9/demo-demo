@@ -72,6 +72,7 @@ public class DocumentBuilderTest {
 
     private List<TableConfig> tableConfigs = new ArrayList<>();
     private int numColumns;
+    private int numSingleColumnLines;
     private int numRows;
     private int startIndex;
 
@@ -107,7 +108,8 @@ public class DocumentBuilderTest {
         this.content = Arrays.asList(this.header, this.title, this.tableCell, this.picture, this.footer);
         
         // table
-        this.numColumns = 1;
+        this.numColumns = 2;
+        this.numSingleColumnLines = 3;
         this.numRows = 1;
         this.startIndex = 2;
         this.tableConfigs.add(new TableConfig(this.numColumns, this.numRows, this.startIndex));
@@ -115,7 +117,7 @@ public class DocumentBuilderTest {
         // document
         this.testDocxFileName = "test/test.docx";
         this.landscape = true;
-        this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", 2, this.landscape, this.pictures, this.tableConfigs);
+        this.documentBuilder = new DocumentBuilder(this.content, "temp.docx", this.numColumns, this.numSingleColumnLines, this.landscape, this.pictures, this.tableConfigs);
         this.docxFileName = this.documentBuilder.getDocxFileName();
         this.document = this.documentBuilder.getDocument();
         this.documentBuilder.setPictureUtils(this.pictureUtils);
@@ -137,7 +139,7 @@ public class DocumentBuilderTest {
         // should have number of paragraphs minus header, footer and table
         assertEquals(this.content.size() - 3, this.document.getParagraphs().size());        
 
-        assertEquals(this.landscape ? STPageOrientation.LANDSCAPE : STPageOrientation.PORTRAIT, this.documentBuilder.getPageSz().getOrient());
+        assertEquals(this.landscape ? STPageOrientation.LANDSCAPE : STPageOrientation.PORTRAIT, this.documentBuilder.getPgSz().getOrient());
     }
 
 

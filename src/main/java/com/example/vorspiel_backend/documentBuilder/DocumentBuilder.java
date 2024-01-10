@@ -14,7 +14,6 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.wp.usermodel.HeaderFooterType;
 import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
@@ -25,7 +24,10 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBody;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectType;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STSectionMark;
+
 import com.documents4j.api.DocumentType;
 import com.documents4j.api.IConverter;
 import com.documents4j.job.LocalConverter;
@@ -40,10 +42,13 @@ import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
@@ -58,8 +63,10 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Getter
 @Setter
+@NoArgsConstructor
 // TODO: reconsider table size for multiple columns
-// TODO: remove columns for certain line only, read prepared document
+// TODO: make more methods public and chainable, which fields are mandatory?
+// TODO: consider offering multiple sections with differen num cols, change num cols to map or something
 public class DocumentBuilder {
 
     /** paragraph indentation */
@@ -78,7 +85,8 @@ public class DocumentBuilder {
     public static final int PICTURE_HEIGHT_LANDSCAPE_HALF = 7;
 
     /** document margins */
-    public static final int MINIMUM_MARGIN_TOP_BOTTOM = 240;
+    public static final int MINIMUM_MARGIN_TOP = 240;
+    public static final int MINIMUM_MARGIN_BOTTOM = 240;
 
     /** minimum line space (Zeilenabstand) */
     public static final int NO_LINE_SPACE = 1;
@@ -86,6 +94,7 @@ public class DocumentBuilder {
     /** declares that a tab should be added here instead of the actual text */
     public static final String TAB_SYMBOL = "\\t\\t";
     
+    // comes from request body
     @NotNull(message = "'content' cannot be null.")
     private List<BasicParagraph> content;
     
@@ -105,6 +114,9 @@ public class DocumentBuilder {
 
     private int numColumns;
 
+    @Min(value = 0, message = "'numSingleColumnLines' too small. Min: 0") 
+    private int numSingleColumnLines;
+
     
     /**
      * Reading the an empty document from an existing file.<p>
@@ -118,13 +130,14 @@ public class DocumentBuilder {
      * @param pictures map of filename and bytes of pictures in the document
      * @see PictureType for allowed formats
      */
-    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape, Map<String, byte[]> pictures) {
+    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, int numSingleColumnLines, boolean landscape, Map<String, byte[]> pictures) {
 
         this.content = content;
         this.docxFileName = Utils.prependDateTime(docxFileName);
         this.pictureUtils = new PictureUtils(pictures);
         this.landscape = landscape;
         this.numColumns = numColumns;
+        this.numSingleColumnLines = numSingleColumnLines;
         this.document = new XWPFDocument();
     }
 
@@ -142,13 +155,14 @@ public class DocumentBuilder {
      * @param pictures map of filename and bytes of pictures in the document
      * @see PictureType for allowed formats    
      */
-    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, boolean landscape, Map<String, byte[]> pictures, List<TableConfig> tableConfigs) {
+    public DocumentBuilder(List<BasicParagraph> content, String docxFileName, int numColumns, int numSingleColumnLines, boolean landscape, Map<String, byte[]> pictures, List<TableConfig> tableConfigs) {
 
         this.content = content;
         this.docxFileName = Utils.prependDateTime(docxFileName);
         this.pictureUtils = new PictureUtils(pictures);
         this.landscape = landscape;
         this.numColumns = numColumns;
+        this.numSingleColumnLines = numSingleColumnLines;
         this.document = new XWPFDocument();
         this.tableUtils = !tableConfigs.isEmpty() ? new TableUtils(this.document, tableConfigs) : null;
     }
@@ -156,39 +170,127 @@ public class DocumentBuilder {
 
     /**
      * Builds a the document with given list of {@link BasicParagraph}s and writes it to a .docx file which will
-     * be located in the {@link #DOCX_FOLDER}.
+     * be located in the {@link #DOCX_FOLDER}.<p>
+     * 
+     * Configure document settings before adding content.
      */
     public DocumentBuilder build() {
         
-        log.info("Starting to build document...");
+        setOrientation();
+
+        setDocumentMargins(MINIMUM_MARGIN_TOP, null, MINIMUM_MARGIN_BOTTOM, null);
         
-        setOrientation(this.landscape ? STPageOrientation.LANDSCAPE : STPageOrientation.PORTRAIT);
-
-        addDocumentColumns(this.numColumns);
-
         addContent();
-        
-        setDocumentMargins(MINIMUM_MARGIN_TOP_BOTTOM, null, MINIMUM_MARGIN_TOP_BOTTOM, null);
-        
-        log.info("Finished building document");
+
+        // do this after addContent()!
+        setDocumentColumns();
 
         return this;
     }
     
 
     /**
-     * Iterates {@link #content} list and adds all paragraphs to the document.
+     * Iterates {@link #content} list and adds all paragraphs to the document. Separate heading section if necessary.
      */
-    void addContent() {
+    public DocumentBuilder addContent() {
+
+        log.info("Adding content...");
 
         int numParagraphs = this.content.size();
 
         // case: no content
-        if (numParagraphs == 0) 
+        if (numParagraphs == 0) {
             log.warn("Not adding any paragraphs because content list is empty.");
+            return this;
+        }
 
-        for (int i = 0; i < numParagraphs; i++) 
-            addParagraph(i);
+        // add empty paragraph above very first column to even out empty column break paragraphs
+        // TODO: is this always necessary? 
+        this.content.add(this.numSingleColumnLines + 1, new BasicParagraph("", Style.getDefaultInstance()));
+
+        for (int i = 0; i < numParagraphs; i++) {
+            XWPFParagraph paragraph = addParagraph(i);
+
+            // case: is last single column line and heading section cols differ from rest
+            if (i == this.numSingleColumnLines && this.numColumns > 1 && this.numSingleColumnLines >= 1) 
+                separateSection(paragraph);
+        }
+
+        return this;
+    }
+
+
+    /**
+     * Set the orientation for the whole document.
+     * If called multiple times the last call will be the effectiv one.
+     * 
+     * @param landscape if true use landscape mode, else portrait
+     */
+    // TODO: add test
+    public DocumentBuilder setOrientation() {
+
+        log.info("Setting orientation...");
+
+        STPageOrientation.Enum orientation = this.landscape ? STPageOrientation.LANDSCAPE : STPageOrientation.PORTRAIT;
+
+        setPageSizeDimensions(orientation);
+        getPgSz().setOrient(orientation);
+
+        return this;
+    }
+            
+
+    /**
+     * Set margins for the whole document.<p>
+     * 
+     * If null no value will be set.
+     * 
+     * @param top margin
+     * @param right margin
+     * @param bottom margin
+     * @param left margin
+     */
+    // TODO: add test
+    public DocumentBuilder setDocumentMargins(Integer top, Integer right, Integer bottom, Integer left) {
+
+        log.info("Setting document margins...");
+
+        CTPageMar pageMar = getSectPr().addNewPgMar();
+
+        if (top != null) 
+            pageMar.setTop(BigInteger.valueOf(top));
+
+        if (right != null) 
+            pageMar.setRight(BigInteger.valueOf(right));
+
+        if (bottom != null) 
+            pageMar.setBottom(BigInteger.valueOf(bottom));
+
+        if (left != null) 
+            pageMar.setLeft(BigInteger.valueOf(left));
+
+        return this;
+    }
+
+
+    /**
+     * Add MS Word columns (min 1, max 3) to {@code this.document}.
+     * 
+     */
+    // TODO: add test
+    public DocumentBuilder setDocumentColumns() {
+
+        log.info("Setting document columns...");
+
+        if (this.numColumns < 1 || this.numColumns > 3) {
+            log.warn("'setDocumentColumns()' parameter 'numColumns' must be less than equal 3 and greater than equal 1 but is: " + this.numColumns + ". Using 1 as default");
+            this.numColumns = 1;
+        }
+
+        for (int i = 0; i < this.numColumns; i++) 
+            getSectPr().addNewCols().setNum(BigInteger.valueOf(i + 1));
+
+        return this;
     }
 
 
@@ -200,7 +302,7 @@ public class DocumentBuilder {
      * 
      * @param currentContentIndex index of the {@link #content} element currently processed
      */
-    void addParagraph(int currentContentIndex) {
+    XWPFParagraph addParagraph(int currentContentIndex) {
 
         // get line
         BasicParagraph basicParagraph = this.content.get(currentContentIndex);
@@ -208,22 +310,27 @@ public class DocumentBuilder {
             throw new ApiException("Failed to add paragraph. 'basicParagraph' cannot be null");
     
         XWPFParagraph paragraph = createParagraphByContentIndex(currentContentIndex, basicParagraph.getStyle());
+        if (paragraph == null)
+            return null;
 
         // add text
         addText(paragraph, basicParagraph, currentContentIndex);
 
         // add style
         addStyle(paragraph, basicParagraph.getStyle());
+
+        return paragraph;
     }
 
 
     /**
      * Adds an {@link XWPFParagraph} to the document either for the header, the footer or the main content. <p>
      * 
-     * For the fist element (index = 0) a header paragraph will be generated and for the last element a footer paragraph.
-     * Tables wont get a paragraph since it's generated in {@link TableUtils}. <p>
+     * For the fist element (index = 0) a header paragraph will be generated and for the last element a footer paragraph. <p>
      * 
-     * Any other element gets a normal paragraph.
+     * Tables will get a table paragraph.<p>
+     * 
+     * For any other element a new normal paragraph is appended.
      * 
      * @param currentContentIndex index of the {@link #content} element currently processed
      * @param style style of {@link BasicParagraph}
@@ -235,13 +342,21 @@ public class DocumentBuilder {
         if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex))
             return this.tableUtils.createTableParagraph(currentContentIndex, style);
 
-        // case: header (not blank)
-        if (currentContentIndex == 0 && !this.content.get(currentContentIndex).getText().isBlank())
-            return this.document.createHeader(HeaderFooterType.DEFAULT).createParagraph();
+        // case: header
+        if (currentContentIndex == 0)
+            // case: no blank
+            if (!this.content.get(currentContentIndex).getText().isBlank())
+                return this.document.createHeader(HeaderFooterType.DEFAULT).createParagraph();
+            else
+                return null;
 
-        // case: footer (not blank)
-        if (currentContentIndex == this.content.size() - 1 && !this.content.get(currentContentIndex).getText().isBlank())
-            return this.document.createFooter(HeaderFooterType.DEFAULT).createParagraph();
+        // case: footer
+        if (currentContentIndex == this.content.size() - 1)
+            // case: no blank
+            if (!this.content.get(currentContentIndex).getText().isBlank())
+                return this.document.createFooter(HeaderFooterType.DEFAULT).createParagraph();
+            else
+                return null;
 
         // case: any other
         return this.document.createParagraph();
@@ -348,52 +463,7 @@ public class DocumentBuilder {
 
 
     /**
-     * Set margins for the whole document.<p>
-     * 
-     * If null value will be set.
-     * 
-     * @param top margin
-     * @param right margin
-     * @param bottom margin
-     * @param left margin
-     */
-    private void setDocumentMargins(Integer top, Integer right, Integer bottom, Integer left) {
-
-        CTSectPr sectPr = this.document.getDocument().getBody().addNewSectPr();
-        CTPageMar pageMar = sectPr.addNewPgMar();
-
-        if (top != null) 
-            pageMar.setTop(BigInteger.valueOf(top));
-
-        if (right != null) 
-            pageMar.setRight(BigInteger.valueOf(right));
-
-        if (bottom != null) 
-            pageMar.setBottom(BigInteger.valueOf(bottom));
-
-        if (left != null) 
-            pageMar.setLeft(BigInteger.valueOf(left));
-    }
-
-
-    /**
-     * Possible values are landscape or portrait.
-     * If called multiple times the last call will be the effectiv one.
-     * 
-     * @param orientation landscape or portrait
-     */
-    private void setOrientation(STPageOrientation.Enum orientation) {
-
-        if (orientation == null)
-            return;
-
-        setPageSizeDimensions(orientation);
-        getPageSz().setOrient(orientation);
-    }
-
-
-    /**
-     * Set height and width of the CTPageSz according to given orientation(landscape or portrait).
+     * Set height and width of the CTPageSz according to given orientation(landscape or portrait) and dimension constants.
      * 
      * @param orientation the page should have
      * @param pageSize CTPageSz object of page
@@ -401,7 +471,7 @@ public class DocumentBuilder {
      */
     private CTPageSz setPageSizeDimensions(STPageOrientation.Enum orientation) {
 
-        CTPageSz pageSize = getPageSz();
+        CTPageSz pageSize = getPgSz();
 
         // case: landscape
         if (orientation.equals(STPageOrientation.LANDSCAPE)) {
@@ -423,7 +493,7 @@ public class DocumentBuilder {
      * 
      * @return pageSz object of document
      */
-    public CTPageSz getPageSz() {
+    CTPageSz getPgSz() {
 
         CTSectPr sectPr = getSectPr();
 
@@ -432,15 +502,71 @@ public class DocumentBuilder {
 
 
     /**
-     * Get existing {@link CTSectPr} or add new one.
      * 
-     * @return sectPr object of document
+     * @param ctSectPr
+     * @return
+     */
+    // TODO: dont make this generic
+    private CTSectPr setUpSectPr(CTSectPr ctSectPr) {
+
+        if (ctSectPr == null)
+            ctSectPr = getSectPr();
+
+        CTSectType ctSectType = CTSectType.Factory.newInstance();
+        ctSectType.setVal(STSectionMark.CONTINUOUS);
+        ctSectPr.setType(ctSectType);
+
+        return ctSectPr;
+    }
+
+
+    /**
+     * Always gets first {@link CTSectPr} object of document (even if multiple are present) or adds new one if non has been created yet. Call {@link #setUpSectPr()} on it.
+     * 
+     * @return first sectPr object of document
      */
     private CTSectPr getSectPr() {
 
         CTBody ctBody = this.document.getDocument().getBody();
+        CTSectPr ctSectPr = ctBody.getSectPr();
 
-        return ctBody.getSectPr() == null ? ctBody.addNewSectPr() : ctBody.getSectPr();
+        // case: no sectPr created yet
+        if (ctSectPr == null)
+            return addNewSectPr();
+
+        // case: no rsidR yet
+        setUpSectPr(ctSectPr);
+
+        return ctSectPr;
+    }
+
+
+    /**
+     * @return append new {@link CTSectPr} and call {@link #setUpSectPr(CTSectPr)}
+     */
+    private CTSectPr addNewSectPr() {
+
+        CTSectPr newSectPr = this.document.getDocument().getBody().addNewSectPr();
+
+        setUpSectPr(newSectPr);
+
+        return newSectPr;
+    }
+
+
+    /**
+     * Add {@link CTSectPr} to given paragraph in order to separate paragraphs above (including given one) from paragraphs below.
+     * 
+     * @param paragraph to pass the {@link CTSectPr} to
+     */
+    private DocumentBuilder separateSection(XWPFParagraph paragraph) {
+
+        if (paragraph == null)  
+            return this;
+
+        paragraph.getCTP().getPPr().setSectPr(getSectPr());
+
+        return this;
     }
 
 
@@ -590,32 +716,5 @@ public class DocumentBuilder {
         } catch (IOException e) {
             throw new ApiException("Failed to convert .docx to .pdf.", e);
         }
-    }
-    
-
-    String getDocumentTemplateFileName(int numColumns, boolean headingIndependent) {
-
-        String headingString = headingIndependent ? "_headingIndependent" : "";
-
-        return "Empty_" + numColumns + "Columns" + headingString + ".docx";
-    }
-
-
-    /**
-     * Add MS Word columns (min 1, max 3) to {@code this.document}.
-     * 
-     * @param numColumns number of columns to add (min 1, max 3)
-     */
-    void addDocumentColumns(int numColumns) {
-
-        if (numColumns < 1 || numColumns > 3) {
-            log.warn("'addDocumentColumns()' parameter 'numColumns' must be less than equal 3 and greater than equal 1 but is: " + numColumns + ". Using 1 as default");
-            numColumns = 1;
-        }
-
-        CTSectPr ctSectPr = getSectPr();
-
-        for (int i = 0; i < numColumns; i++) 
-            ctSectPr.addNewCols().setNum(BigInteger.valueOf(i + 1));
     }
 }

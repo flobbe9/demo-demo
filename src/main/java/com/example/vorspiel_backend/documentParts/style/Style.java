@@ -60,4 +60,13 @@ public class Style extends AbstractEntity {
     @Nullable
     @Enumerated(EnumType.STRING)
     private BreakType breakType;
+
+
+    /**
+     * @return a valid {@link Style} instance using the all args constructor.
+     */
+    public static Style getDefaultInstance() {
+
+        return new Style(14, "Calibri", "000000", false, false, false, ParagraphAlignment.LEFT, null);
+    }
 }

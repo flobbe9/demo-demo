@@ -73,7 +73,7 @@ public class DocumentControllerTest {
         this.style = new Style(8, "Calibri", "000000", true, true, true, ParagraphAlignment.LEFT, null);
         this.basicParagraph = new BasicParagraph("text", this.style);
         this.tableConfigs = new ArrayList<>(List.of(new TableConfig(2, 1, 0)));
-        this.documentWrapper = new DocumentWrapper(List.of(basicParagraph), tableConfigs, "Document_1.docx", false, 1);
+        this.documentWrapper = new DocumentWrapper(List.of(basicParagraph), tableConfigs, "Document_1.docx", false, 1, 3);
     }
 
 
@@ -93,22 +93,6 @@ public class DocumentControllerTest {
     void buildAndWrite_shouldBeStatus400_null() throws Exception {
 
         MvcResult response = performPost("/buildAndWrite", null)
-                            .andExpect(status().isBadRequest())
-                            .andReturn();
-
-        String jsonResponse = response.getResponse().getContentAsString();
-
-        checkJsonApiExceptionFormat(jsonResponse, HttpStatus.BAD_REQUEST);
-    }
-
-
-    @Test 
-    @Order(1)
-    void buildAndWrite_shouldBeStatus400_emptyContent() throws Exception {
-
-        this.documentWrapper.setContent(List.of());
-
-        MvcResult response = performPost("/buildAndWrite", this.documentWrapper)
                             .andExpect(status().isBadRequest())
                             .andReturn();
 

@@ -39,7 +39,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class DocumentWrapper extends AbstractEntity {
     
-    @NotEmpty(message = "'content' cannot be null or empty.")
+    @NotNull(message = "'content' cannot be null.")
     @OneToMany(cascade = CascadeType.ALL)
     @JoinTable(
         name = "document_wrapper_basic_paragraphs",
@@ -71,19 +71,25 @@ public class DocumentWrapper extends AbstractEntity {
     @Schema(defaultValue = "1")
     private int numColumns = 1;
 
+    /** Number of lines on top of the first page in one single column ignoring 'numColumns' */
+    @Min(value = 0, message = "'numSingleColumnLines' too small. Min: 0") 
+    @Schema(defaultValue = "0")
+    private int numSingleColumnLines;
+
 
     public DocumentWrapper(
-            @NotEmpty(message = "'content' cannot be null or empty.") List<@Valid @NotNull(message = "'basicParagraph' cannot be null") BasicParagraph> content,
+            @NotNull(message = "'content' cannot be null.") List<@Valid @NotNull(message = "'basicParagraph' cannot be null") BasicParagraph> content,
             @Valid @NotNull(message = "'tableConfigs' cannot be null.") List<@Valid @NotNull(message = "'tableConfig cannot be null") TableConfig> tableConfigs,
-            @NotEmpty(message = "'fileName' cannot be empty.") String fileName, 
-            boolean landscape,
-            @Min(1) @Max(3) int numColumns) {
-
+            @NotEmpty(message = "'fileName' cannot be empty.") String fileName, boolean landscape,
+            @Min(1) @Max(3) int numColumns,
+            @Min(value = 0, message = "'numSingleColumnLines' too small. Min: 0") @Max(value = 5, message = "'numSingleColumnLines' too large. Max: 5") int numSingleColumnLines) {
+        
         this.content = content;
         this.tableConfigs = tableConfigs;
         this.fileName = fileName;
         this.landscape = landscape;
         this.numColumns = numColumns;
+        this.numSingleColumnLines = numSingleColumnLines;
     }
 
 

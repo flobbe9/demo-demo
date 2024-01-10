@@ -7,14 +7,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import com.example.vorspiel_backend.documentParts.DocumentWrapper;
-import com.example.vorspiel_backend.entites.Document;
 import com.example.vorspiel_backend.exception.ApiException;
 import com.example.vorspiel_backend.repositories.DocumentWrapperRepository;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 
-// TODO: add more methods
 // TODO: add tests
 /**
  * Class handling {@link Document} logic.

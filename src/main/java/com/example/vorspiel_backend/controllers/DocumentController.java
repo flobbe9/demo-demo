@@ -54,8 +54,8 @@ import lombok.extern.log4j.Log4j2;
 // TODO: run cron job to clear resource folders, deletion is not reliable
 public class DocumentController {
 
-    @Autowired
-    private DocumentWrapperService documentWrapperService;
+    // @Autowired
+    // private DocumentWrapperService documentWrapperService;
 
     private DocumentWrapper documentWrapper = new DocumentWrapper();
 
@@ -176,20 +176,21 @@ public class DocumentController {
 
     /**
      * Build document with {@code this.documentWrapper} and write to file
-     * @return
+     * 
+     * @return generated .docx file
      */
     private File buildAndWriteDocument() {
 
         DocumentBuilder documentBuilder = new DocumentBuilder(this.documentWrapper.getContent(), 
                                                                 this.documentWrapper.getFileName(), 
                                                                 this.documentWrapper.getNumColumns(),
+                                                                this.documentWrapper.getNumSingleColumnLines(),
                                                                 this.documentWrapper.isLandscape(),
                                                                 this.documentWrapper.getPictures(),
                                                                 this.documentWrapper.getTableConfigs());
         
-        // build
-        return documentBuilder.build()
-                              .writeDocxFile();
+        // build, order matters!
+        return documentBuilder.build().writeDocxFile();
     }
 
 
