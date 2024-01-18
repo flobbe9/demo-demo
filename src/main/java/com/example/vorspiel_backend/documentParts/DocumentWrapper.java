@@ -80,7 +80,8 @@ public class DocumentWrapper extends AbstractEntity {
     public DocumentWrapper(
             @NotNull(message = "'content' cannot be null.") List<@Valid @NotNull(message = "'basicParagraph' cannot be null") BasicParagraph> content,
             @Valid @NotNull(message = "'tableConfigs' cannot be null.") List<@Valid @NotNull(message = "'tableConfig cannot be null") TableConfig> tableConfigs,
-            @NotEmpty(message = "'fileName' cannot be empty.") String fileName, boolean landscape,
+            boolean landscape,
+            @NotEmpty(message = "'fileName' cannot be empty.") String fileName, 
             @Min(1) @Max(3) int numColumns,
             @Min(value = 0, message = "'numSingleColumnLines' too small. Min: 0") @Max(value = 5, message = "'numSingleColumnLines' too large. Max: 5") int numSingleColumnLines) {
         

@@ -135,6 +135,27 @@ public class ApiExceptionHandler {
                              .body(returnPretty(exception.getStatus(), errorMessage));
     }
 
+    
+
+    /**
+     * Logs and formats any {@link Exception} that is not handled by any of the handles above.
+     * 
+     * @param exception that was thrown
+     * @return ResponseEntity with internal server error status and an ApiExceptionFormat object
+     */
+    @ExceptionHandler(value = Exception.class) 
+    public static ResponseEntity<ApiExceptionFormat> handleAnyException(Exception exception) {
+
+        String message = exception.getMessage();
+
+        log.error(message);
+
+        // log relevant stackTrace parts
+        logPackageStackTrace(exception.getStackTrace());
+
+        return ResponseEntity.internalServerError().body(returnPretty(HttpStatus.INTERNAL_SERVER_ERROR, message));
+    }
+
 
     /**
      * Logs and formats parts of given stacktrace array that include classes of the {@link VorspielApplication} package (e.g. com.example...) but will 
