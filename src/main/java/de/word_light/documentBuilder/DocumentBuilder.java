@@ -25,8 +25,10 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectType;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTabStop;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STSectionMark;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTabJc;
 
 import com.documents4j.api.DocumentType;
 import com.documents4j.api.IConverter;
@@ -72,6 +74,11 @@ public class DocumentBuilder {
     /** paragraph indentation */
     public static final int INDENT_ONE_THIRD_PORTRAIT = 2000;
 
+    /** tab stops in twips (twentieth of an inch point) */
+    public static final int TAB_STOP_ONE_SIXTH_OF_LINE = 1440; 
+    public static final int TAB_STOP_LINE_CENTER = TAB_STOP_ONE_SIXTH_OF_LINE * 3;
+    public static final int TAB_STOP_LINE_END = TAB_STOP_ONE_SIXTH_OF_LINE * 6;
+
     /** table dimensions */
     public static final int PAGE_LONG_SIDE_WITH_BORDER = 13300;
 
@@ -92,7 +99,7 @@ public class DocumentBuilder {
     public static final int NO_LINE_SPACE = 1;
 
     /** declares that a tab should be added here instead of the actual text */
-    public static final String TAB_SYMBOL = "\\t\\t";
+    public static final String TAB_SYMBOL = "\\t";
     
     // comes from request body
     @NotNull(message = "'content' cannot be null.")
@@ -459,6 +466,18 @@ public class DocumentBuilder {
         paragraph.setAlignment(style.getTextAlign());
 
         paragraph.setSpacingAfter(NO_LINE_SPACE);
+
+        setTabSize(paragraph, style.getFontSize());
+    }
+
+
+    // TODO: continue here, make this more generic
+    private static void setTabSize(XWPFParagraph paragraph, int fontSize) {
+
+        for (int i = 0; i < 17; i++) {
+            CTTabStop tabStop = paragraph.getCTP().getPPr().addNewTabs().addNewTab();
+            tabStop.setPos(BigInteger.valueOf((i + 1) * 36 * fontSize));
+        }
     }
 
 
