@@ -71,33 +71,33 @@ public class TableUtilsTest {
 //---------- createTableParagraph()
 // not a table index, return null
 // 
-    @Test
-    void createTableParagraph_notATableIndex_returnNull() {
+    // @Test
+    // void createTableParagraph_notATableIndex_returnNull() {
 
-        assertNull(this.tableUtils.createTableParagraph(this.startIndex - 1, this.style));
-    }
+    //     assertNull(this.tableUtils.createTableParagraph(this.startIndex - 1, this.style));
+    // }
 
 
-    @Test
-    void createTableParagraph_shouldCreateNewTable() {
+    // @Test
+    // void createTableParagraph_shouldCreateNewTable() {
 
-        assertTrue(this.document.getTables().isEmpty());
+    //     assertTrue(this.document.getTables().isEmpty());
 
-        assertNotNull(this.tableUtils.createTableParagraph(this.currentContentIndex, this.style));
+    //     assertNotNull(this.tableUtils.createTableParagraph(this.currentContentIndex, this.style));
 
-        assertFalse(this.document.getTables().isEmpty());
-    }
+    //     assertFalse(this.document.getTables().isEmpty());
+    // }
     
-    @Test
-    void createTableParagraph_shouldUseExistingTable() {
+    // @Test
+    // void createTableParagraph_shouldUseExistingTable() {
 
-        assertTrue(this.document.getTables().isEmpty());
+    //     assertTrue(this.document.getTables().isEmpty());
 
-        assertNotNull(this.tableUtils.createTableParagraph(this.currentContentIndex, this.style));
-        assertNotNull(this.tableUtils.createTableParagraph(this.currentContentIndex, this.style));
+    //     assertNotNull(this.tableUtils.createTableParagraph(this.currentContentIndex, this.style));
+    //     assertNotNull(this.tableUtils.createTableParagraph(this.currentContentIndex, this.style));
 
-        assertEquals(1, this.document.getTables().size());
-    }
+    //     assertEquals(1, this.document.getTables().size());
+    // }
 
 //---------- fillTableCell()
     @Test

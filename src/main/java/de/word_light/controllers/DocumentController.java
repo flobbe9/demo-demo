@@ -51,7 +51,6 @@ import lombok.extern.log4j.Log4j2;
 @Tag(name = "Document builder logic")
 @SessionScope
 // TODO: adjust tests
-// TODO: run cron job to clear resource folders, deletion is not reliable
 public class DocumentController {
 
     // @Autowired
@@ -189,7 +188,7 @@ public class DocumentController {
                                                                 this.documentWrapper.getPictures(),
                                                                 this.documentWrapper.getTableConfigs());
         
-        // build, order matters!
+        // build
         return documentBuilder.build().writeDocxFile();
     }
 

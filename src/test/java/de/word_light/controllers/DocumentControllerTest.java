@@ -61,7 +61,7 @@ public class DocumentControllerTest {
     private String requestMapping;
 
     private Style style;
-    private BasicParagraph basicParagraph;
+    private List<BasicParagraph> content;
     private List<TableConfig> tableConfigs;
     private DocumentWrapper documentWrapper;
 
@@ -71,9 +71,9 @@ public class DocumentControllerTest {
         
         this.requestMapping = this.baseUrl + "/api/documentBuilder";
         this.style = new Style(8, "Calibri", "000000", true, true, true, ParagraphAlignment.LEFT, null);
-        this.basicParagraph = new BasicParagraph("text", this.style);
+        this.content = List.of(new BasicParagraph("header", this.style), new BasicParagraph("text", this.style), new BasicParagraph("footer", this.style));
         this.tableConfigs = new ArrayList<>(List.of(new TableConfig(2, 1, 0)));
-        this.documentWrapper = new DocumentWrapper(List.of(basicParagraph), tableConfigs, "Document_1.docx", false, 1, 3);
+        this.documentWrapper = new DocumentWrapper(this.content, tableConfigs, false, "Document_1.docx", 1, 1);
     }
 
 
@@ -123,6 +123,22 @@ public class DocumentControllerTest {
     void buildAndWrite_shouldBeStatus400_invalidNumColumns() throws Exception {
 
         this.documentWrapper.setNumColumns(0);
+        
+        MvcResult response = performPost("/buildAndWrite", this.documentWrapper)
+                            .andExpect(status().isBadRequest())
+                            .andReturn();
+
+        String jsonResponse = response.getResponse().getContentAsString();
+
+        checkJsonApiExceptionFormat(jsonResponse, HttpStatus.BAD_REQUEST);
+    }
+
+
+    @Test
+    @Order(4)
+    void buildAndWrite_shouldBeStatus400_invalidNumSingleColumnLines() throws Exception {
+
+        this.documentWrapper.setNumSingleColumnLines(this.content.size());
         
         MvcResult response = performPost("/buildAndWrite", this.documentWrapper)
                             .andExpect(status().isBadRequest())

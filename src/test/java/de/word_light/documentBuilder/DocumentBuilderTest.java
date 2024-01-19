@@ -399,14 +399,14 @@ public class DocumentBuilderTest {
     @Test
     void addStyle_paragraphNull_shouldNotThrow() {
 
-        assertDoesNotThrow(() -> DocumentBuilder.addStyle(null, this.style));
+        assertDoesNotThrow(() -> new DocumentBuilder().addStyle(null, this.style));
     }
 
 
     @Test
     void addStyle_styleNull_shouldNotThrow() {
 
-        assertDoesNotThrow(() -> DocumentBuilder.addStyle(this.document.createParagraph(), null));
+        assertDoesNotThrow(() -> new DocumentBuilder().addStyle(this.document.createParagraph(), null));
     }
 
 
@@ -416,7 +416,7 @@ public class DocumentBuilderTest {
         // add some test content
         XWPFParagraph paragraph = this.document.createParagraph();
         XWPFRun run = paragraph.createRun();
-        DocumentBuilder.addStyle(paragraph, this.style);
+        new DocumentBuilder().addStyle(paragraph, this.style);
 
         // check each style attribute
         assertEquals(this.style.getFontSize(), (int) Math.round(run.getFontSizeAsDouble()));
@@ -433,7 +433,7 @@ public class DocumentBuilderTest {
     void addStyle_breakTypeNull_shouldNotThrow() {
 
         this.style.setBreakType(null);
-        assertDoesNotThrow(() -> DocumentBuilder.addStyle(this.document.createParagraph(), this.style));
+        assertDoesNotThrow(() -> new DocumentBuilder().addStyle(this.document.createParagraph(), this.style));
     }
 
 

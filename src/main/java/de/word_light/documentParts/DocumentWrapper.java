@@ -94,19 +94,29 @@ public class DocumentWrapper extends AbstractEntity {
     }
 
 
+    /**
+     * @return false if indices of table configs are overlapping
+     */
     @AssertTrue(message = "'tableConfigs' invalid. Start and end indices cannot overlap.")
     @Schema(hidden = true)
+    // TODO: check index not greater than content.size() - 2, footer header???
     public boolean isTableConfigsValid() {
 
         // sort by startIndex
         List<TableConfig> tableConfigs = sortTableConfigsByStartIndex(this.tableConfigs);
         
         for (int i = 0; i < tableConfigs.size(); i++) {
+            TableConfig tableConfig = tableConfigs.get(i);
+
+            // case: index exceeds content size
+            if (tableConfig.getStartIndex() > this.content.size() - 1 || tableConfig.getEndIndex() > this.content.size())
+                return false;
+
             // case: last tableConfig
             if (i == tableConfigs.size() - 1)
                 break;
 
-            TableConfig tableConfig = tableConfigs.get(i);
+            // check overlap
             TableConfig nextTableConfig = tableConfigs.get(i + 1);
 
             // case: tableConfigs are overlapping
@@ -115,6 +125,17 @@ public class DocumentWrapper extends AbstractEntity {
         }
 
         return true;
+    }
+
+
+    /**
+     * @return false if there's more 'numSingleColumnLines' than lines in total (minus header and footer), else true
+     */
+    @AssertTrue(message = "'numSingleColumnLines' invalid. Cannot have more singleColumnLines than lines in total (minus header and footer).")
+    @Schema(hidden = true)
+    public boolean isNumSingleColumnLinesValid() {
+
+        return this.numSingleColumnLines <= this.content.size() - 2;
     }
 
 

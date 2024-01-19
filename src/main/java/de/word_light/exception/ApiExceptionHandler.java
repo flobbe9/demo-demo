@@ -122,9 +122,8 @@ public class ApiExceptionHandler {
             log.error(errorMessage);
 
         } else {
-            errorMessage = exception.getMessage() + " Cause: " + originalException.getMessage();
-            log.error(errorMessage);
-            log.error("     " + originalException.getClass());
+            errorMessage = exception.getMessage() + " " + originalException.getMessage();
+            log.error(originalException.getClass().getName() + ": " + errorMessage);
         }
         
         // log relevant stackTrace parts
@@ -145,14 +144,12 @@ public class ApiExceptionHandler {
     @ExceptionHandler(value = Exception.class) 
     public static ResponseEntity<ApiExceptionFormat> handleAnyException(Exception exception) {
 
-        String message = exception.getMessage();
-
-        log.error(message);
+        log.error(exception.getClass().getName() + ": " + exception.getMessage());
 
         // log relevant stackTrace parts
         logPackageStackTrace(exception.getStackTrace());
 
-        return ResponseEntity.internalServerError().body(returnPretty(HttpStatus.INTERNAL_SERVER_ERROR, message));
+        return ResponseEntity.internalServerError().body(returnPretty(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage()));
     }
 
 

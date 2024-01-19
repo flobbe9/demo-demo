@@ -28,7 +28,6 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectType;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTabStop;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STSectionMark;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTabJc;
 
 import com.documents4j.api.DocumentType;
 import com.documents4j.api.IConverter;
@@ -45,7 +44,6 @@ import com.itextpdf.text.pdf.PdfWriter;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -124,6 +122,8 @@ public class DocumentBuilder {
     @Min(value = 0, message = "'numSingleColumnLines' too small. Min: 0") 
     private int numSingleColumnLines;
 
+    private boolean isTabStopsByFontSize;
+
     
     /**
      * Reading the an empty document from an existing file.<p>
@@ -186,6 +186,8 @@ public class DocumentBuilder {
         setOrientation();
 
         setDocumentMargins(MINIMUM_MARGIN_TOP, null, MINIMUM_MARGIN_BOTTOM, null);
+
+        setIsTabStopsByFontSize(true);
         
         addContent();
 
@@ -213,6 +215,10 @@ public class DocumentBuilder {
 
         // add empty paragraph above very first column to even out empty column break paragraphs
         // TODO: is this always necessary? 
+        // if num columns == 1
+            // just add add index == 1
+        // if num columns > 1
+            // add after numSingleColumnLines
         this.content.add(this.numSingleColumnLines + 1, new BasicParagraph("", Style.getDefaultInstance()));
 
         for (int i = 0; i < numParagraphs; i++) {
@@ -281,8 +287,8 @@ public class DocumentBuilder {
 
 
     /**
-     * Add MS Word columns (min 1, max 3) to {@code this.document}.
-     * 
+     * Add MS Word columns (min 1, max 3) to {@code this.document}. Should be called after calling {@link #addContent()} 
+     * because addContent() might be adding sections.
      */
     // TODO: add test
     public DocumentBuilder setDocumentColumns() {
@@ -296,6 +302,20 @@ public class DocumentBuilder {
 
         for (int i = 0; i < this.numColumns; i++) 
             getSectPr().addNewCols().setNum(BigInteger.valueOf(i + 1));
+
+        return this;
+    }
+    
+
+    /**
+     * Override setter for {@link #isTabStopsByFontSize} to return {@code this}.
+     * 
+     * @param isTabStopsByFontSize if true, the size of tabs in word wont be fixed but be propotional to font size
+     * @return this
+     */
+    public DocumentBuilder setIsTabStopsByFontSize(boolean isTabStopsByFontSize) {
+
+        this.isTabStopsByFontSize = isTabStopsByFontSize;
 
         return this;
     }
@@ -347,7 +367,7 @@ public class DocumentBuilder {
 
         // case: table
         if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex))
-            return this.tableUtils.createTableParagraph(currentContentIndex, style);
+            return this.tableUtils.createTableParagraph(currentContentIndex, this.content.size(), style);
 
         // case: header
         if (currentContentIndex == 0)
@@ -440,7 +460,7 @@ public class DocumentBuilder {
      * @param style information to use
      * @see Style
      */
-    static void addStyle(XWPFParagraph paragraph, Style style) {
+    void addStyle(XWPFParagraph paragraph, Style style) {
 
         if (paragraph == null || style == null)
             return;
@@ -467,12 +487,18 @@ public class DocumentBuilder {
 
         paragraph.setSpacingAfter(NO_LINE_SPACE);
 
-        setTabSize(paragraph, style.getFontSize());
+        if (this.isTabStopsByFontSize)
+            setTabStopsByFontSize(paragraph, style.getFontSize());
     }
 
 
-    // TODO: continue here, make this more generic
-    private static void setTabSize(XWPFParagraph paragraph, int fontSize) {
+    /**
+     * Add tab stops proportional to given font size for the whole paragraph.
+     * 
+     * @param paragraph to set tab stops for
+     * @param fontSize to use for size calculation
+     */
+    private void setTabStopsByFontSize(XWPFParagraph paragraph, int fontSize) {
 
         for (int i = 0; i < 17; i++) {
             CTTabStop tabStop = paragraph.getCTP().getPPr().addNewTabs().addNewTab();
@@ -521,11 +547,11 @@ public class DocumentBuilder {
 
 
     /**
+     * Configures given ctSectPr sothat it works for making singleColumnLines. Not sure how it works though :).
      * 
-     * @param ctSectPr
-     * @return
+     * @param ctSectPr to configure
+     * @return setup CTSectPr
      */
-    // TODO: dont make this generic
     private CTSectPr setUpSectPr(CTSectPr ctSectPr) {
 
         if (ctSectPr == null)
@@ -553,7 +579,6 @@ public class DocumentBuilder {
         if (ctSectPr == null)
             return addNewSectPr();
 
-        // case: no rsidR yet
         setUpSectPr(ctSectPr);
 
         return ctSectPr;
