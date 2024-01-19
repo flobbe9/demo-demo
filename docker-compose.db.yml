@@ -1,12 +1,13 @@
 version: "3.9"
 
 services:
-    db:
-        image: mysql
-        container_name: ${DB_NAME}_db
-        ports:
-            - ${DB_PORT}:${DB_PORT}
-        environment:
-          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-          MYSQL_DATABASE: ${DB_NAME}
-          TZ: Europe/Berlin
+  db:
+    image: mysql
+    container_name: ${DB_NAME}_db
+    ports:
+        - ${DB_PORT}:${DB_PORT}
+    env_file: .env
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: ${DB_NAME}
+      TZ: Europe/Berlin

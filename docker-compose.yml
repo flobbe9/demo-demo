@@ -6,6 +6,7 @@ services:
     container_name: db
     ports:
         - ${DB_PORT}:${DB_PORT}
+    env_file: .env
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
       MYSQL_DATABASE: ${DB_NAME}
@@ -14,6 +15,7 @@ services:
   mailserver:
       image: maildev/maildev
       container_name: mail_server_test
+      env_file: .env
       ports:
           - ${MAIL_INBOX_PORT}:${MAIL_INBOX_PORT} # mail inbox port (ui)
           - ${MAIL_SERVER_PORT}:${MAIL_SERVER_PORT} # mail server port
