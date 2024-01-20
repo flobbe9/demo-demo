@@ -15,6 +15,11 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import de.word_light.documentParts.style.Style;
 
 
+/**
+ * Test class for {@link DocumentWrapper}.
+ * 
+ * @since 0.0.6
+ */
 @TestInstance(Lifecycle.PER_CLASS)
 public class DocumentWrapperTest {
 
@@ -24,8 +29,6 @@ public class DocumentWrapperTest {
 
     private List<TableConfig> tableConfigs;
 
-    private int numSingleColumnLines;
-
     private DocumentWrapper documentWrapper;
 
 
@@ -34,43 +37,118 @@ public class DocumentWrapperTest {
         
         this.style = new Style(8, "Calibri", "000000", true, true, true, ParagraphAlignment.LEFT, null);
         this.content = List.of(new BasicParagraph("header", this.style), 
-                               new BasicParagraph("par1", this.style), 
-                               new BasicParagraph("par2", this.style), 
-                               new BasicParagraph("par3", this.style), 
-                               new BasicParagraph("par4", this.style), 
-                               new BasicParagraph("par5", this.style), 
-                               new BasicParagraph("footer", this.style));
-        this.tableConfigs = new ArrayList<>(List.of(new TableConfig(2, 1, 1), new TableConfig(2, 1, 3), new TableConfig(2, 1, 5)));
-        this.numSingleColumnLines = 1;
-        this.documentWrapper = new DocumentWrapper(this.content, tableConfigs, false, "Document_1.docx", 1, this.numSingleColumnLines);
+                               new BasicParagraph("par1", this.style), // singleColumnLine
+                               new BasicParagraph("par2", this.style), // table
+                               new BasicParagraph("par3", this.style), // table
+                               new BasicParagraph("par4", this.style), // table
+                               new BasicParagraph("par5", this.style), // table
+                               new BasicParagraph("footer", this.style)); // table
+        this.tableConfigs = new ArrayList<>(List.of(new TableConfig(1, 1, 2),
+                                                    new TableConfig(2, 1, 3), 
+                                                    new TableConfig(2, 1, 5))); 
+        this.documentWrapper = new DocumentWrapper(this.content, this.tableConfigs, false, "Document_1.docx", 2, 1);
     }
 
 
     @Test
-    void testIsTableConfigsValid_shouldBeValid() {
+    void testIsTableConfigsNotOverlap_shouldBeValid() {
 
-        assertTrue(this.documentWrapper.isTableConfigsValid());
+        assertTrue(this.documentWrapper.isTableConfigsNotOverlap());
     }
 
 
     @Test
-    void testIsNumSingleColumnLinesValid_tooMany() {
+    void testIsTableConfigsNotOverlap_isOverlapping() {
 
-        assertTrue(this.documentWrapper.isNumSingleColumnLinesValid());
+        assertTrue(this.documentWrapper.isTableConfigsNotOverlap());
 
-        this.documentWrapper.setNumSingleColumnLines(this.content.size() - 1);
+        // set start index of second table config equal end index of first one
+        int firstTableConfigEndIndex = this.documentWrapper.getTableConfigs().get(0).getEndIndex(); 
+        this.documentWrapper.getTableConfigs().get(1).setStartIndex(firstTableConfigEndIndex);
+        assertFalse(this.documentWrapper.isTableConfigsNotOverlap());
 
-        assertFalse(this.documentWrapper.isNumSingleColumnLinesValid());
+        // set start index of second table config less than end index of first one
+        this.documentWrapper.getTableConfigs().get(1).setStartIndex(firstTableConfigEndIndex - 1);
+        assertFalse(this.documentWrapper.isTableConfigsNotOverlap());
+
+        // set start index of second table config greater than end index of first one
+        this.documentWrapper.getTableConfigs().get(1).setStartIndex(firstTableConfigEndIndex + 1);
+        assertTrue(this.documentWrapper.isTableConfigsNotOverlap());
+    }
+
+
+    @Test
+    void testIsIndicesNotExceedContentSize_shouldBeValid() {
+
+        assertTrue(this.documentWrapper.isIndicesNotExceedContentSize());
+    }
+
+
+    @Test
+    void testIsIndicesNotExceedContentSize_startIndexShouldExceedContentSize() {
+
+        assertTrue(this.documentWrapper.isIndicesNotExceedContentSize());
+
+        // increase start index
+        this.documentWrapper.getTableConfigs().get(0).setStartIndex(this.content.size());
+        assertFalse(this.documentWrapper.isIndicesNotExceedContentSize());
+    }
+
+    @Test
+    void testIsIndicesNotExceedContentSize_endIndexShouldExceedContentSize() {
+
+        assertTrue(this.documentWrapper.isIndicesNotExceedContentSize());
+
+        // increase end index
+        TableConfig firstTableConfig = this.documentWrapper.getTableConfigs().get(0);
+        firstTableConfig.setNumRows(this.content.size() + firstTableConfig.getStartIndex() + 1);
+        assertFalse(this.documentWrapper.isIndicesNotExceedContentSize());
+    }
+
+
+    @Test
+    void testIsSingleColumnLineNotInsideTable_isInsideTable() {
+
+        assertTrue(this.documentWrapper.isSingleColumnLineNotInsideTable());
+
+        int firstTableConfigStartIndex = this.documentWrapper.getTableConfigs().get(0).getStartIndex(); 
+        this.documentWrapper.setNumSingleColumnLines(firstTableConfigStartIndex);
+        assertFalse(this.documentWrapper.isSingleColumnLineNotInsideTable());
+
+        this.documentWrapper.setNumSingleColumnLines(firstTableConfigStartIndex - 1);
+        assertTrue(this.documentWrapper.isSingleColumnLineNotInsideTable());
+    }
+
+
+    @Test
+    void testIsSingleColumnLineNotInsideTable_shouldBeValid() {
+
+        assertTrue(this.documentWrapper.isSingleColumnLineNotInsideTable());
+
+        this.documentWrapper.setNumSingleColumnLines(0);
+        assertTrue(this.documentWrapper.isSingleColumnLineNotInsideTable());
     }
 
 
     @Test
     void testIsNumSingleColumnLinesValid_shouldBeValid() {
 
+        assertTrue(this.documentWrapper.isNumSingleColumnLinesValid());
+    }
+
+    
+    @Test
+    void testIsNumSingleColumnLinesValid_isTooLarge() {
+
+        assertTrue(this.documentWrapper.isNumSingleColumnLinesValid());
+
+        this.documentWrapper.setNumSingleColumnLines(this.content.size() - 1);
+        assertFalse(this.documentWrapper.isNumSingleColumnLinesValid());
+
         this.documentWrapper.setNumSingleColumnLines(this.content.size() - 2);
         assertTrue(this.documentWrapper.isNumSingleColumnLinesValid());
 
-        this.documentWrapper.setNumSingleColumnLines(0);
+        this.documentWrapper.setNumSingleColumnLines(this.content.size() - 3);
         assertTrue(this.documentWrapper.isNumSingleColumnLinesValid());
     }
 

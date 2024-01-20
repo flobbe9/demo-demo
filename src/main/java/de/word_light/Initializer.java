@@ -6,7 +6,7 @@ package de.word_light;
  * 
  * Don't inject any beans in here since this class is used in {@link WordLightApplication} where no injection is possible.
  * 
- * @since 0.0.5
+ * @since 0.0.6
  */
 public class Initializer {
 

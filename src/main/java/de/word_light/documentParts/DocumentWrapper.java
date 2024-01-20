@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.lang.Nullable;
 
+import de.word_light.documentBuilder.TableUtils;
 import de.word_light.entites.AbstractEntity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -46,7 +47,6 @@ public class DocumentWrapper extends AbstractEntity {
         inverseJoinColumns = @JoinColumn(name = "basic_paragraph_id"))
     private List<@Valid @NotNull(message = "'basicParagraph' cannot be null") BasicParagraph> content;
 
-    @Valid
     @NotNull(message = "'tableConfigs' cannot be null.")
     @OneToMany(cascade = CascadeType.ALL)
     @JoinTable(
@@ -67,7 +67,8 @@ public class DocumentWrapper extends AbstractEntity {
     private boolean landscape = false;
 
     /** Refers to 'Columns' in MS Word */
-    @Min(1) @Max(3)
+    @Min(value = 1, message = "'numColumns' too small. Min: 1") 
+    @Max(value = 3, message = "'numColumns' too large. Max: 3") 
     @Schema(defaultValue = "1")
     private int numColumns = 1;
 
@@ -97,10 +98,10 @@ public class DocumentWrapper extends AbstractEntity {
     /**
      * @return false if indices of table configs are overlapping
      */
-    @AssertTrue(message = "'tableConfigs' invalid. Start and end indices cannot overlap.")
+    // NOTE: @AssertTrue method names have to start with 'is'
+    @AssertTrue(message = "'tableConfigs' invalid. Start and end indices between tables cannot overlap.")
     @Schema(hidden = true)
-    // TODO: check index not greater than content.size() - 2, footer header???
-    public boolean isTableConfigsValid() {
+    public boolean isTableConfigsNotOverlap() {
 
         // sort by startIndex
         List<TableConfig> tableConfigs = sortTableConfigsByStartIndex(this.tableConfigs);
@@ -108,15 +109,10 @@ public class DocumentWrapper extends AbstractEntity {
         for (int i = 0; i < tableConfigs.size(); i++) {
             TableConfig tableConfig = tableConfigs.get(i);
 
-            // case: index exceeds content size
-            if (tableConfig.getStartIndex() > this.content.size() - 1 || tableConfig.getEndIndex() > this.content.size())
-                return false;
-
             // case: last tableConfig
             if (i == tableConfigs.size() - 1)
                 break;
 
-            // check overlap
             TableConfig nextTableConfig = tableConfigs.get(i + 1);
 
             // case: tableConfigs are overlapping
@@ -129,9 +125,49 @@ public class DocumentWrapper extends AbstractEntity {
 
 
     /**
+     * @return false if any table index is out of bounds of content size 
+     */
+    @AssertTrue(message = "'tableConfigs' invalid. Start and end indices cannot be out of bounds of content size - 1.")
+    @Schema(hidden = true)
+    public boolean isIndicesNotExceedContentSize() {
+
+        // sort by startIndex
+        for (TableConfig tableConfig : tableConfigs) {
+            // case: index exceeds content size
+            if (tableConfig.getStartIndex() > this.content.size() - 1 || tableConfig.getEndIndex() > this.content.size() - 1)
+                return false;
+        }
+
+        return true;
+    }
+
+
+    /**
+     * @return false if at least one singleColumnLine would be inside a table cell
+     */
+    @AssertTrue(message = "'tableConfigs' invalid. Cannot put 'singleColumnLine' inside a table.")
+    @Schema(hidden = true)
+    public boolean isSingleColumnLineNotInsideTable() {
+
+        // case: no singleColumnLines anyway
+        if (this.numColumns == 1)
+            return true;
+
+        for (TableConfig tableConfig : tableConfigs) {
+            // case: singleColumnLine inside table (this only works because singleColumnLines can only start at content index 1)
+            for (int i = 1; i <= this.numSingleColumnLines; i++) 
+                if (TableUtils.isTableIndex(tableConfig, i))
+                    return false;
+        }
+
+        return true;
+    }
+
+
+    /**
      * @return false if there's more 'numSingleColumnLines' than lines in total (minus header and footer), else true
      */
-    @AssertTrue(message = "'numSingleColumnLines' invalid. Cannot have more singleColumnLines than lines in total (minus header and footer).")
+    @AssertTrue(message = "'numSingleColumnLines' invalid. Cannot have more singleColumnLines than content size - 2.")
     @Schema(hidden = true)
     public boolean isNumSingleColumnLinesValid() {
 

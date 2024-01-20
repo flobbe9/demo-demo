@@ -67,6 +67,7 @@ import lombok.extern.log4j.Log4j2;
 // TODO: reconsider table size for multiple columns
 // TODO: make more methods public and chainable, which fields are mandatory?
 // TODO: consider offering multiple sections with differen num cols, change num cols to map or something
+
 public class DocumentBuilder {
 
     /** paragraph indentation */
@@ -213,21 +214,22 @@ public class DocumentBuilder {
             return this;
         }
 
-        // add empty paragraph above very first column to even out empty column break paragraphs
-        // TODO: is this always necessary? 
-        // if num columns == 1
-            // just add add index == 1
-        // if num columns > 1
-            // add after numSingleColumnLines
-        this.content.add(this.numSingleColumnLines + 1, new BasicParagraph("", Style.getDefaultInstance()));
+        XWPFParagraph lastSingleColumnLineParagraph = null;
 
+        // add content
         for (int i = 0; i < numParagraphs; i++) {
+            // add empty paragraph above first column on first page to even out empty column break paragraphs
+            if (i == this.numSingleColumnLines + 1)
+                applyStyle(this.document.createParagraph(), Style.getDefaultInstance());   
+
             XWPFParagraph paragraph = addParagraph(i);
 
-            // case: is last single column line and heading section cols differ from rest
+            // get last singleColumnLine
             if (i == this.numSingleColumnLines && this.numColumns > 1 && this.numSingleColumnLines >= 1) 
-                separateSection(paragraph);
+                lastSingleColumnLineParagraph = paragraph;
         }
+
+        separateSection(lastSingleColumnLineParagraph);
 
         return this;
     }
@@ -344,7 +346,7 @@ public class DocumentBuilder {
         addText(paragraph, basicParagraph, currentContentIndex);
 
         // add style
-        addStyle(paragraph, basicParagraph.getStyle());
+        applyStyle(paragraph, basicParagraph.getStyle());
 
         return paragraph;
     }
@@ -460,7 +462,7 @@ public class DocumentBuilder {
      * @param style information to use
      * @see Style
      */
-    void addStyle(XWPFParagraph paragraph, Style style) {
+    void applyStyle(XWPFParagraph paragraph, Style style) {
 
         if (paragraph == null || style == null)
             return;

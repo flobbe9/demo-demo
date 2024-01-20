@@ -37,9 +37,17 @@ public class TableUtils {
 
     private List<TableConfig> tableConfigs;
 
+    // set by createTableParagraph()
     private TableConfig currentTableConfig;
+
+    // set by getCurrentTable()
     private int currentTableIndex;
+
+    // set by createTableParagraph()
     private Style currentTableStyle;
+
+    // set by getTableFromHeaderFooter()
+    private boolean doesDocumentHaveHeaderTable;
 
 
     public TableUtils(XWPFDocument document, List<TableConfig> tableConfigs) {
@@ -98,7 +106,7 @@ public class TableUtils {
         paragraph.createRun().setText(text);
 
         // add style
-        new DocumentBuilder().addStyle(paragraph, style);
+        new DocumentBuilder().applyStyle(paragraph, style);
 
         return paragraph;
     }
@@ -125,18 +133,18 @@ public class TableUtils {
         XWPFTable currentTable = null;
 
         // case: first table config
-        if (this.currentTableIndex == 0) 
-            currentTable = getTableFromHeaderFooter(currentContentIndex, contentSize, false, currentContentIndex == 0);
+        if (this.currentTableIndex == 0)
+            currentTable = getTableFromHeader(currentContentIndex, contentSize, currentContentIndex == 0);
             
         // case: last table config
-        if (this.currentTableIndex == this.tableConfigs.size() - 1)
-            currentTable = getTableFromHeaderFooter(currentContentIndex, contentSize, true, currentContentIndex == this.tableConfigs.size() - 1);
+        if (this.currentTableIndex == this.tableConfigs.size() - 1 && currentTable == null)
+            currentTable = getTableFromFooter(currentContentIndex, contentSize, this.currentTableConfig.getEndIndex() == contentSize - 1);
 
-        // case: any other table config
+        // case: any table config that is not inside header or footer
         if (currentTable == null)
             currentTable = getTableFromBody(currentContentIndex, contentSize, true);
 
-            return currentTable;
+        return currentTable;
     }
 
 
@@ -145,22 +153,45 @@ public class TableUtils {
      * 
      * @param currentContentIndex index of the {@link #content} element currently processed
      * @param contentSize size of document content (see {@link DocumentBuilder})
-     * @param footer if true, the default footer will be searched for tables, if false the default header will be searched
-     * @param createNew if true a new table will be created inside the header / footer in case there hasn't been one, if false {@code null} is returned
-     * @return an existing {@link XWPFTable} inside the default header or footer or create new one or return null (depending on params)
+     * @param createNew if true a new table will be created inside the footer in case there hasn't been one, if false {@code null} is returned
+     * @return an existing {@link XWPFTable} inside the default footer or create new one or return null (depending on params)
      */
-    private XWPFTable getTableFromHeaderFooter(int currentContentIndex, int contentSize, boolean footer, boolean createNew) {
+    private XWPFTable getTableFromFooter(int currentContentIndex, int contentSize, boolean createNew) {
 
-        // case: found table
         try {
-            XWPFHeaderFooterPolicy headerFooterPolicy = this.document.getHeaderFooterPolicy();
-            return footer ? headerFooterPolicy.getDefaultFooter().getTables().get(this.currentTableIndex) : headerFooterPolicy.getDefaultHeader().getTables().get(currentTableIndex);
+            // try to get footer table
+            return this.document.getHeaderFooterPolicy().getDefaultFooter().getTables().get(0);
 
-        // case: no tables yet
+        // case: no table created yet
         } catch (IndexOutOfBoundsException | NullPointerException e) {
-            // case: currently inside header / footer
             if (createNew)
-                return createNewTable(currentContentIndex, contentSize, TABLE_WIDTH);
+                return createNewTable(contentSize - 1, contentSize, TABLE_WIDTH);
+        
+            return null;
+        }
+    }
+
+
+    /**
+     * Depends on {@link #createTableParagraph()} beeing called first because of some field variables.
+     * 
+     * @param currentContentIndex index of the {@link #content} element currently processed
+     * @param contentSize size of document content (see {@link DocumentBuilder})
+     * @param createNew if true a new table will be created inside the header in case there hasn't been one, if false {@code null} is returned
+     * @return an existing {@link XWPFTable} inside the default header or create new one or return null (depending on params)
+     */
+    private XWPFTable getTableFromHeader(int currentContentIndex, int contentSize, boolean createNew) {
+
+        try {
+            // try to get header table
+            return this.document.getHeaderFooterPolicy().getDefaultHeader().getTables().get(0);
+
+        // case: no table created yet
+        } catch (IndexOutOfBoundsException | NullPointerException e) {
+            if (createNew) {
+                this.doesDocumentHaveHeaderTable = true;
+                return createNewTable(0, contentSize, TABLE_WIDTH);
+            }
         
             return null;
         }
@@ -179,7 +210,7 @@ public class TableUtils {
 
         // case: found table in body
         try {
-            return this.document.getTables().get(this.currentTableIndex);
+            return this.document.getTables().get(this.doesDocumentHaveHeaderTable ? this.currentTableIndex - 1 : this.currentTableIndex);
 
         // case: no tables in body yet
         } catch (IndexOutOfBoundsException e) {
@@ -300,7 +331,7 @@ public class TableUtils {
      * @param currentContentIndex index of the {@link #content} element currently processed
      * @return true if tableConfig not null and index at a table cell
      */
-    private boolean isTableIndex(TableConfig tableConfig, int currentContentIndex) {
+    public static boolean isTableIndex(TableConfig tableConfig, int currentContentIndex) {
 
         boolean hasTableStarted = currentContentIndex >= tableConfig.getStartIndex();
 

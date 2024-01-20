@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 /**
  * Class handling endpoints using html pages in '/resources/templates' folder.
  * 
- * @since 0.0.5
+ * @since 0.0.6
  */
 @Controller
 @Tag(name = "Html template endpoints")
