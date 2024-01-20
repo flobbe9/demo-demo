@@ -25,7 +25,7 @@ services:
       - db
       # - mailserver
     build: .
-    image: flobbe9/vorspiel_backend:latest
+    image: flobbe9/word_light_document_builder
     container_name: ${API_NAME}
     ports: 
         - ${API_PORT}:${API_PORT}
