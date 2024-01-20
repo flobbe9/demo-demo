@@ -16,7 +16,7 @@ import de.word_light.documentParts.style.Style;
 
 
 /**
- * Test class for {@link DocumentWrapper}.
+ * Unit tests for {@link DocumentWrapper}.
  * 
  * @since 0.0.6
  */

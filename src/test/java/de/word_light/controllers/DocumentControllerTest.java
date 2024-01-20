@@ -46,6 +46,11 @@ import java.util.List;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 
 
+/**
+ * Integration test for {@link DocumentController}.
+ * 
+ * @since 0.0.1
+ */
 @SpringBootTest
 @TestInstance(Lifecycle.PER_CLASS)
 @AutoConfigureMockMvc(addFilters = false)

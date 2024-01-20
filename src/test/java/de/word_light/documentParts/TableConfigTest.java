@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 
 /**
- * Test class for {@link TableConfig}.
+ * Unit tests for {@link TableConfig}.
  * 
  * @since 0.0.1
  */

@@ -25,7 +25,7 @@ import de.word_light.documentParts.style.Style;
 
 
 /**
- * Test class for {@link TableUtils}.
+ * Unit tests for {@link TableUtils}.
  * 
  * @since 0.0.1
  */

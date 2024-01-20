@@ -27,7 +27,7 @@ import de.word_light.utils.Utils;
 
 
 /**
- * Test class for {@link PictureUtils}.
+ * Unit tests for {@link PictureUtils}.
  * 
  * @since 0.0.1
  */

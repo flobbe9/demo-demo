@@ -241,7 +241,6 @@ public class DocumentBuilder {
      * 
      * @param landscape if true use landscape mode, else portrait
      */
-    // TODO: add test
     public DocumentBuilder setOrientation() {
 
         log.info("Setting orientation...");
@@ -265,7 +264,6 @@ public class DocumentBuilder {
      * @param bottom margin
      * @param left margin
      */
-    // TODO: add test
     public DocumentBuilder setDocumentMargins(Integer top, Integer right, Integer bottom, Integer left) {
 
         log.info("Setting document margins...");
@@ -292,15 +290,9 @@ public class DocumentBuilder {
      * Add MS Word columns (min 1, max 3) to {@code this.document}. Should be called after calling {@link #addContent()} 
      * because addContent() might be adding sections.
      */
-    // TODO: add test
     public DocumentBuilder setDocumentColumns() {
 
         log.info("Setting document columns...");
-
-        if (this.numColumns < 1 || this.numColumns > 3) {
-            log.warn("'setDocumentColumns()' parameter 'numColumns' must be less than equal 3 and greater than equal 1 but is: " + this.numColumns + ". Using 1 as default");
-            this.numColumns = 1;
-        }
 
         for (int i = 0; i < this.numColumns; i++) 
             getSectPr().addNewCols().setNum(BigInteger.valueOf(i + 1));
@@ -316,6 +308,8 @@ public class DocumentBuilder {
      * @return this
      */
     public DocumentBuilder setIsTabStopsByFontSize(boolean isTabStopsByFontSize) {
+
+        log.info("Setting tab stops by font size to " + isTabStopsByFontSize + "...");
 
         this.isTabStopsByFontSize = isTabStopsByFontSize;
 

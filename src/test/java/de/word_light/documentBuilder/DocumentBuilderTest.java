@@ -7,6 +7,7 @@ import static de.word_light.utils.Utils.prependSlash;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -30,6 +32,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -73,6 +77,8 @@ public class DocumentBuilderTest {
     private List<TableConfig> tableConfigs = new ArrayList<>();
     private int numColumns;
     private int numSingleColumnLines;
+
+    private int numTableColumns;
     private int numRows;
     private int startIndex;
 
@@ -109,10 +115,11 @@ public class DocumentBuilderTest {
         
         // table
         this.numColumns = 2;
-        this.numSingleColumnLines = 3;
+        this.numTableColumns = 1;
+        this.numSingleColumnLines = 1;
         this.numRows = 1;
         this.startIndex = 2;
-        this.tableConfigs.add(new TableConfig(this.numColumns, this.numRows, this.startIndex));
+        this.tableConfigs.add(new TableConfig(this.numTableColumns, this.numRows, this.startIndex));
         
         // document
         this.testDocxFileName = "test/test.docx";
@@ -126,7 +133,7 @@ public class DocumentBuilderTest {
 
 //----------- build()
     @Test
-    void build_paragarphShouldExist() {
+    void build_paragraphShouldExist() {
 
         // should have no paragraphs
         assertTrue(this.document.getParagraphs().size() == 0);
@@ -136,9 +143,17 @@ public class DocumentBuilderTest {
 
         this.documentBuilder.build();
 
-        // should have number of paragraphs minus header, footer and table
-        assertEquals(this.content.size() - 3, this.document.getParagraphs().size());        
+        // should have number of paragraphs minus header, footer
+        assertEquals(this.content.size() - 2, this.document.getParagraphs().size());  
+        
+        // should have empty paragraph at i == numSingleColumnLines + 1
+        assertTrue(StringUtils.isBlank(this.document.getParagraphs().get(this.numSingleColumnLines + 1).getText()));
 
+        // should have section
+        XWPFParagraph lastSingleColumnLineParagraph = this.document.getParagraphs().get(0);
+        assertTrue(lastSingleColumnLineParagraph.getCTP().getPPr().xmlText().contains("</main:sectPr>"));
+
+        // check orientation
         assertEquals(this.landscape ? STPageOrientation.LANDSCAPE : STPageOrientation.PORTRAIT, this.documentBuilder.getPgSz().getOrient());
     }
 
@@ -166,8 +181,66 @@ public class DocumentBuilderTest {
 
         this.documentBuilder.addContent();
 
-        // should have number of paragraphs minus header, footer and table
-        assertEquals(this.content.size() - 3, this.document.getParagraphs().size());
+        // should have number of paragraphs minus header, footer
+        assertEquals(this.content.size() - 2, this.document.getParagraphs().size());
+    }
+
+
+//----------- setDocumentMargins()
+    @Test
+    void setDocumentMargins_shouldWork() {
+
+        assertNull(this.document.getDocument().getBody().getSectPr());
+
+        int right = 100;
+        int left = 110;
+        this.documentBuilder.setDocumentMargins(DocumentBuilder.MINIMUM_MARGIN_TOP, right, DocumentBuilder.MINIMUM_MARGIN_BOTTOM, left);
+
+        CTPageMar pageMar = this.document.getDocument().getBody().getSectPr().getPgMar();
+        assertEquals(DocumentBuilder.MINIMUM_MARGIN_TOP, Integer.parseInt(pageMar.getTop().toString()));
+        assertEquals(DocumentBuilder.MINIMUM_MARGIN_BOTTOM, Integer.parseInt(pageMar.getBottom().toString()));
+        assertEquals(right, Integer.parseInt(pageMar.getRight().toString()));
+        assertEquals(left, Integer.parseInt(pageMar.getLeft().toString()));
+    }
+
+
+//----------- setDocumentColumns()
+    @Test
+    void setDocumentColumns_shouldWork() {
+
+        assertNull(this.document.getDocument().getBody().getSectPr());
+
+        this.documentBuilder.setNumColumns(2);
+        this.documentBuilder.setDocumentColumns();
+
+        CTSectPr ctSectPr = this.document.getDocument().getBody().getSectPr();
+        String xmlCol1Tag = "<main:cols main:num=\"1\"/>";
+        String xmlCol2Tag = "<main:cols main:num=\"2\"/>";
+        String ctSectPrString = ctSectPr.toString();
+
+        assertTrue(ctSectPrString.contains(xmlCol1Tag));
+        assertTrue(ctSectPrString.contains(xmlCol2Tag));
+    }
+
+
+//----------- setIsTabStopsByFontSize()
+    @Test 
+    void setIsTabStopsByFontSize_shouldWork() {
+
+        XWPFParagraph paragraph = this.document.createParagraph();
+
+        assertThrows(NullPointerException.class, () -> paragraph.getCTP().getPPr().getTabs().getTabList());
+        
+        // dont set tab stops by font size
+        this.documentBuilder.setIsTabStopsByFontSize(false);
+        this.documentBuilder.applyStyle(paragraph, this.style);
+        assertNull(paragraph.getCTP().getPPr().getTabs());
+
+        // set tab stops by font size
+        this.documentBuilder.setIsTabStopsByFontSize(true);
+        this.documentBuilder.applyStyle(paragraph, this.style);
+
+        assertDoesNotThrow(() -> paragraph.getCTP().getPPr().getTabs().getTabList().get(0));
     }
 
 
@@ -227,8 +300,7 @@ public class DocumentBuilderTest {
         
         this.documentBuilder.createParagraphByContentIndex(this.startIndex, this.style);
 
-        // should have one cell
-        assertEquals(1, this.documentBuilder.getDocument().getTables().get(0).getRows().get(0).getTableCells().size());
+        assertEquals(this.numTableColumns * this.numRows, this.documentBuilder.getDocument().getTables().get(0).getRows().get(0).getTableCells().size());
     }
 
 
@@ -340,9 +412,8 @@ public class DocumentBuilderTest {
         // should start without pictures
         assertEquals(0, this.document.getAllPictures().size());
 
-        int pictureIndex = this.content.indexOf(this.picture);
-
-        this.documentBuilder.addText(this.document.createParagraph(), this.picture, pictureIndex);
+        // add inside header to avoid table
+        this.documentBuilder.addText(this.document.createParagraph(), this.picture, 0);
 
         // expect picture
         assertEquals(1, this.document.getAllPictures().size());

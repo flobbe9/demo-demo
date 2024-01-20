@@ -50,7 +50,6 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Tag(name = "Document builder logic")
 @SessionScope
-// TODO: adjust tests
 public class DocumentController {
 
     // @Autowired
