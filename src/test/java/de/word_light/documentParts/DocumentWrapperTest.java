@@ -51,14 +51,14 @@ public class DocumentWrapperTest {
 
 
     @Test
-    void testIsTableConfigsNotOverlap_shouldBeValid() {
+    void isTableConfigsNotOverlap_shouldBeValid() {
 
         assertTrue(this.documentWrapper.isTableConfigsNotOverlap());
     }
 
 
     @Test
-    void testIsTableConfigsNotOverlap_isOverlapping() {
+    void isTableConfigsNotOverlap_isOverlapping() {
 
         assertTrue(this.documentWrapper.isTableConfigsNotOverlap());
 
@@ -78,14 +78,14 @@ public class DocumentWrapperTest {
 
 
     @Test
-    void testIsIndicesNotExceedContentSize_shouldBeValid() {
+    void isIndicesNotExceedContentSize_shouldBeValid() {
 
         assertTrue(this.documentWrapper.isIndicesNotExceedContentSize());
     }
 
 
     @Test
-    void testIsIndicesNotExceedContentSize_startIndexShouldExceedContentSize() {
+    void isIndicesNotExceedContentSize_startIndexShouldExceedContentSize() {
 
         assertTrue(this.documentWrapper.isIndicesNotExceedContentSize());
 
@@ -95,7 +95,7 @@ public class DocumentWrapperTest {
     }
 
     @Test
-    void testIsIndicesNotExceedContentSize_endIndexShouldExceedContentSize() {
+    void isIndicesNotExceedContentSize_endIndexShouldExceedContentSize() {
 
         assertTrue(this.documentWrapper.isIndicesNotExceedContentSize());
 
@@ -107,7 +107,7 @@ public class DocumentWrapperTest {
 
 
     @Test
-    void testIsSingleColumnLineNotInsideTable_isInsideTable() {
+    void isSingleColumnLineNotInsideTable_isInsideTable() {
 
         assertTrue(this.documentWrapper.isSingleColumnLineNotInsideTable());
 
@@ -121,7 +121,7 @@ public class DocumentWrapperTest {
 
 
     @Test
-    void testIsSingleColumnLineNotInsideTable_shouldBeValid() {
+    void isSingleColumnLineNotInsideTable_shouldBeValid() {
 
         assertTrue(this.documentWrapper.isSingleColumnLineNotInsideTable());
 
@@ -131,14 +131,14 @@ public class DocumentWrapperTest {
 
 
     @Test
-    void testIsNumSingleColumnLinesValid_shouldBeValid() {
+    void isNumSingleColumnLinesValid_shouldBeValid() {
 
         assertTrue(this.documentWrapper.isNumSingleColumnLinesValid());
     }
 
     
     @Test
-    void testIsNumSingleColumnLinesValid_isTooLarge() {
+    void isNumSingleColumnLinesValid_isTooLarge() {
 
         assertTrue(this.documentWrapper.isNumSingleColumnLinesValid());
 

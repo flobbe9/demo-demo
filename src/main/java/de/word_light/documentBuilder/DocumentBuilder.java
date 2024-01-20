@@ -421,7 +421,7 @@ public class DocumentBuilder {
         
         // case: table cell
         else if (this.tableUtils != null && this.tableUtils.isTableIndex(currentContentIndex))
-            this.tableUtils.fillTableCell(paragraph, currentContentIndex, text, basicParagraph.getStyle());
+            this.tableUtils.fillTableCell(paragraph, text, basicParagraph.getStyle());
             
         // case: plain text
         else

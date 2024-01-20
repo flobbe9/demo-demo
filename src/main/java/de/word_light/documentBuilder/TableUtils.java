@@ -95,11 +95,10 @@ public class TableUtils {
     /**
      * Adds content to a single table cell. Adds one {@link BasicParagraph} per cell.
      * 
-     * @param currentContentIndex index of the {@link #content} element currently processed
      * @param text to add to table cell
      * @param style to apply to text
      */
-    XWPFParagraph fillTableCell(XWPFParagraph paragraph, int currentContentIndex, String text, Style style) {
+    XWPFParagraph fillTableCell(XWPFParagraph paragraph, String text, Style style) {
 
         // add text
         paragraph.createRun().setText(text);
@@ -108,6 +107,21 @@ public class TableUtils {
         new DocumentBuilder().applyStyle(paragraph, style);
 
         return paragraph;
+    }
+    
+
+    /**
+     * Overloading {@link #isTableIndex(TableConfig, int)} using {@link #getCurrentTable(int, Style)} as
+     * {@link TableConfig}.
+     * 
+     * @param currentContentIndex index of the {@link #content} element currently processed
+     * @return true if tableConfig not null and index at a table cell
+     */
+    boolean isTableIndex(int currentContentIndex) {
+
+        TableConfig tableConfig = getCurrentTableConfig(currentContentIndex);
+
+        return tableConfig != null && isTableIndex(tableConfig, currentContentIndex);
     }
 
 
@@ -152,30 +166,6 @@ public class TableUtils {
      * 
      * @param currentContentIndex index of the {@link #content} element currently processed
      * @param contentSize size of document content (see {@link DocumentBuilder})
-     * @param createNew if true a new table will be created inside the footer in case there hasn't been one, if false {@code null} is returned
-     * @return an existing {@link XWPFTable} inside the default footer or create new one or return null (depending on params)
-     */
-    private XWPFTable getTableFromFooter(int currentContentIndex, int contentSize, boolean createNew) {
-
-        try {
-            // try to get footer table
-            return this.document.getHeaderFooterPolicy().getDefaultFooter().getTables().get(0);
-
-        // case: no table created yet
-        } catch (IndexOutOfBoundsException | NullPointerException e) {
-            if (createNew)
-                return createNewTable(contentSize - 1, contentSize, TABLE_WIDTH);
-        
-            return null;
-        }
-    }
-
-
-    /**
-     * Depends on {@link #createTableParagraph()} beeing called first because of some field variables.
-     * 
-     * @param currentContentIndex index of the {@link #content} element currently processed
-     * @param contentSize size of document content (see {@link DocumentBuilder})
      * @param createNew if true a new table will be created inside the header in case there hasn't been one, if false {@code null} is returned
      * @return an existing {@link XWPFTable} inside the default header or create new one or return null (depending on params)
      */
@@ -207,8 +197,8 @@ public class TableUtils {
      */
     private XWPFTable getTableFromBody(int currentContentIndex, int contentSize, boolean createNew) {
 
-        // case: found table in body
         try {
+            // try to get body table
             return this.document.getTables().get(this.doesDocumentHaveHeaderTable ? this.currentTableIndex - 1 : this.currentTableIndex);
 
         // case: no tables in body yet
@@ -216,6 +206,30 @@ public class TableUtils {
             if (createNew)
                 return createNewTable(currentContentIndex, contentSize, TABLE_WIDTH);
 
+            return null;
+        }
+    }
+
+
+    /**
+     * Depends on {@link #createTableParagraph()} beeing called first because of some field variables.
+     * 
+     * @param currentContentIndex index of the {@link #content} element currently processed
+     * @param contentSize size of document content (see {@link DocumentBuilder})
+     * @param createNew if true a new table will be created inside the footer in case there hasn't been one, if false {@code null} is returned
+     * @return an existing {@link XWPFTable} inside the default footer or create new one or return null (depending on params)
+     */
+    private XWPFTable getTableFromFooter(int currentContentIndex, int contentSize, boolean createNew) {
+
+        try {
+            // try to get footer table
+            return this.document.getHeaderFooterPolicy().getDefaultFooter().getTables().get(0);
+
+        // case: no table created yet
+        } catch (IndexOutOfBoundsException | NullPointerException e) {
+            if (createNew)
+                return createNewTable(contentSize - 1, contentSize, TABLE_WIDTH);
+        
             return null;
         }
     }
@@ -306,21 +320,6 @@ public class TableUtils {
         // set table width
         table.setWidth(tableWidth);
     }    
-
-
-    /**
-     * Overloading {@link #isTableIndex(TableConfig, int)} using {@link #getCurrentTable(int, Style)} as
-     * {@link TableConfig}.
-     * 
-     * @param currentContentIndex index of the {@link #content} element currently processed
-     * @return true if tableConfig not null and index at a table cell
-     */
-    boolean isTableIndex(int currentContentIndex) {
-
-        TableConfig tableConfig = getCurrentTableConfig(currentContentIndex);
-
-        return tableConfig != null && isTableIndex(tableConfig, currentContentIndex);
-    }
 
 
     /**
