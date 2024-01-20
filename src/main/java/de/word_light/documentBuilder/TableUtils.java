@@ -3,7 +3,6 @@ package de.word_light.documentBuilder;
 import java.util.List;
 
 import org.apache.poi.wp.usermodel.HeaderFooterType;
-import org.apache.poi.xwpf.model.XWPFHeaderFooterPolicy;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.TableRowAlign;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;

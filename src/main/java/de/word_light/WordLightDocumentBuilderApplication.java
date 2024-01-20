@@ -10,10 +10,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
 @SpringBootApplication
-public class WordLightApplication {
+public class WordLightDocumentBuilderApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(WordLightApplication.class, args);
+		SpringApplication.run(WordLightDocumentBuilderApplication.class, args);
         new Initializer().init();
 	}
 

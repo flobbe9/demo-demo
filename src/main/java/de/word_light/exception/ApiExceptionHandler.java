@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import de.word_light.WordLightApplication;
+import de.word_light.WordLightDocumentBuilderApplication;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.log4j.Log4j2;
@@ -154,7 +154,7 @@ public class ApiExceptionHandler {
 
 
     /**
-     * Logs and formats parts of given stacktrace array that include classes of the {@link WordLightApplication} package (e.g. com.example...) but will 
+     * Logs and formats parts of given stacktrace array that include classes of the {@link WordLightDocumentBuilderApplication} package (e.g. com.example...) but will 
      * exclude any other package (like java.lang etc.).
      * 
      * @param stackTrace array to format and log elements from
@@ -169,14 +169,14 @@ public class ApiExceptionHandler {
 
 
     /**
-     * Checks if given {@link StackTraceElement} references a class of the {@link WordLightApplication} package.
+     * Checks if given {@link StackTraceElement} references a class of the {@link WordLightDocumentBuilderApplication} package.
      * 
      * @param trace to check
-     * @return true if referenced class is in {@link WordLightApplication} package
+     * @return true if referenced class is in {@link WordLightDocumentBuilderApplication} package
      */
     private static boolean isPackageStackTrace(StackTraceElement trace) {
 
-        return trace.getClassName().startsWith(WordLightApplication.class.getPackage().getName());
+        return trace.getClassName().startsWith(WordLightDocumentBuilderApplication.class.getPackage().getName());
     }
 
 
