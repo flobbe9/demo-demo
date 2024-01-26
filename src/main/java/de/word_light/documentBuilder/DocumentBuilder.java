@@ -2,7 +2,6 @@ package de.word_light.documentBuilder;
 
 import static de.word_light.utils.Utils.DOCX_FOLDER;
 import static de.word_light.utils.Utils.PDF_FOLDER;
-import static de.word_light.utils.Utils.RESOURCE_FOLDER;
 import static de.word_light.utils.Utils.prependSlash;
 
 import java.io.File;
@@ -38,9 +37,6 @@ import de.word_light.documentParts.style.Style;
 import de.word_light.exception.ApiException;
 import de.word_light.exception.ApiExceptionHandler;
 import de.word_light.utils.Utils;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.PdfWriter;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Min;
@@ -670,43 +666,6 @@ public class DocumentBuilder {
 
 
     /**
-     * Convert any .docx file to .pdf file and store in {@link #PDF_FOLDER}.
-
-     * @param docxInputStream inputStream of .docx file
-     * @param pdfFileName name and suffix of pdf file (no relative path, file is expected to be located inside {@link #PDF_FOLDER})
-     * @return pdf file if conversion was successful
-     * @throws ApiException
-     */
-    public static File docxToPdfIText(InputStream docxInputStream, String pdfFileName) {
-
-        log.info("Converting .docx to .pdf...");
-
-        try (XWPFDocument document = new XWPFDocument(docxInputStream);
-            OutputStream pdfOutputStream = new FileOutputStream(pdfFileName = RESOURCE_FOLDER + prependSlash(pdfFileName))) {
-
-            Document pdfDocument = new Document();
-            PdfWriter.getInstance(pdfDocument, pdfOutputStream);
-            pdfDocument.open();
-
-            List<XWPFParagraph> paragraphs = document.getParagraphs();
-            for (XWPFParagraph paragraph : paragraphs) {
-                Paragraph pdfParagraph = new Paragraph(paragraph.getText());
-                pdfParagraph.cloneShallow(false);
-                
-                pdfDocument.add(pdfParagraph);
-            }
-            
-            pdfDocument.close();
-
-            return new File(pdfFileName);
-
-        } catch (Exception e) {
-            throw new ApiException("Failed to convert .docx to .pdf.", e);
-        }
-    }
-
-
-    /**
      * Convert any .docx file to .pdf file and store in {@link #PDF_FOLDER}.<p>
      * 
      * @param docxInputStream inputStream of .docx file
@@ -718,7 +677,7 @@ public class DocumentBuilder {
 
         log.info("Converting .docx to .pdf...");
         
-        try (OutputStream os = new FileOutputStream(pdfFileName = PDF_FOLDER + prependSlash(pdfFileName))) {
+        try (OutputStream os = new FileOutputStream(PDF_FOLDER + prependSlash(pdfFileName))) {
             IConverter converter = LocalConverter.builder().build();
             
             converter.convert(docxInputStream)
@@ -729,12 +688,14 @@ public class DocumentBuilder {
 
             converter.shutDown();
 
-            return new File((pdfFileName));
+            return new File(PDF_FOLDER + prependSlash(pdfFileName));
 
         } catch (Exception e) {
             throw new ApiException("Failed to convert .docx to .pdf.", e);
             
         } finally {
+            // remove .docx file
+            Utils.clearFolderByFileName(DOCX_FOLDER, pdfFileName);
             log.info("Finished converting .docx to .pdf");
         }
     }

@@ -120,7 +120,7 @@ public class Utils {
      * Prepends a '/' to given String if there isn't already one.
      * 
      * @param str String to prepend the slash to
-     * @return the altered (or not altered) string or "/" if given str is null
+     * @return sring with "/" prepended or just "/" if given string is null. Does not alter given str
      */
     public static String prependSlash(String str) {
 

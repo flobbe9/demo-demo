@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -51,6 +52,9 @@ import lombok.extern.log4j.Log4j2;
 @Tag(name = "Document builder logic")
 @SessionScope
 public class DocumentController {
+
+    @Value("${ENV}")
+    private String env;
 
     // @Autowired
     // private DocumentWrapperService documentWrapperService;
@@ -103,8 +107,9 @@ public class DocumentController {
         if (this.documentWrapper == null || this.file == null || !this.file.exists()) 
             throw new ApiException(HttpStatus.CONFLICT, "Failed to download document. No document created yet.");
         
+        // INFO: disabled in prod until I find a way to install ms word on linux
         // case: pdf
-        if (pdf)
+        if (pdf && env.equals("dev"))
             file = convertDocxToPdf(file);
 
         try {
@@ -199,7 +204,7 @@ public class DocumentController {
      */
     private File convertDocxToPdf(File docxFile) {
 
-        String pdfFileName = Utils.prependDateTime(docxFile.getName());
+        String pdfFileName = docxFile.getName();
 
         return DocumentBuilder.docxToPdfDocuments4j(docxFile, pdfFileName);
     }

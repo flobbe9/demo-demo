@@ -62,6 +62,7 @@ public class DocumentWrapper extends AbstractEntity {
     private Map<String, byte[]> pictures;
 
     @NotEmpty(message = "'fileName' cannot be empty.")
+    @Schema(defaultValue = "document1.docx")
     private String fileName;
 
     private boolean landscape = false;
@@ -171,7 +172,7 @@ public class DocumentWrapper extends AbstractEntity {
     @Schema(hidden = true)
     public boolean isNumSingleColumnLinesValid() {
 
-        return this.numSingleColumnLines <= this.content.size() - 2;
+        return this.numSingleColumnLines == 0 || this.numSingleColumnLines <= this.content.size() - 2;
     }
 
 

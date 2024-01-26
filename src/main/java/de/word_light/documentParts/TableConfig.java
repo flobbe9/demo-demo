@@ -36,7 +36,6 @@ public class TableConfig extends AbstractEntity {
     /** The index in content list with the first table element. */
     @NotNull(message = "'startIndex' cannot be null.")
     @Min(value = 0, message = "'startIndex' has to be greater than equal 0.")
-    @Schema(defaultValue = "1")
     private Integer startIndex;
 
 
@@ -56,6 +55,7 @@ public class TableConfig extends AbstractEntity {
     /**
      * @return the index in content list with the last table element
      */
+    @Schema(hidden = true)
     public int getEndIndex() {
 
         return this.startIndex + this.numColumns * this.numRows - 1;
