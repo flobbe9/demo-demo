@@ -32,9 +32,6 @@ dependencies {
     // pdf converter
 	implementation 'com.documents4j:documents4j-transformer-msoffice-word:1.1.12'
 	implementation 'com.documents4j:documents4j-local:1.1.12'
-    implementation 'com.documents4j:documents4j-server-standalone:1.1.12'
-	implementation 'com.documents4j:documents4j-client:1.1.12'
-    implementation 'com.itextpdf:itextpdf:5.5.13.3'
 
     // openAPI
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
