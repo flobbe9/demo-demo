@@ -51,10 +51,11 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Tag(name = "Document builder logic")
 @SessionScope
+// TODO: learn about reactive rest controllers
 public class DocumentController {
 
     @Value("${ENV}")
-    private String env;
+    private String ENV;
 
     // @Autowired
     // private DocumentWrapperService documentWrapperService;
@@ -78,6 +79,10 @@ public class DocumentController {
     @PostMapping("/buildAndWrite")
     @Operation(summary = "Build document and write to .docx.")
     public ApiExceptionFormat buildAndWrite(@RequestBody @Valid DocumentWrapper wrapper, BindingResult bindingResult) {
+
+        // pictures may have been uploaded before
+        // TODO: may cause problems, should not always be done
+        wrapper.setPictures(this.documentWrapper.getPictures());
 
         this.documentWrapper = wrapper;
 
@@ -109,7 +114,7 @@ public class DocumentController {
         
         // INFO: disabled in prod until I find a way to install ms word on linux
         // case: pdf
-        if (pdf && env.equals("dev"))
+        if (pdf && ENV.equals("dev"))
             file = convertDocxToPdf(file);
 
         try {
@@ -146,7 +151,7 @@ public class DocumentController {
         String fileName = picture.getOriginalFilename();
         // case: not a picture
         if (!PictureUtils.isPicture(fileName)) 
-            throw new ApiException(UNPROCESSABLE_ENTITY, "Faile to upload picture. File " + fileName + " is not recognized as picture.");
+            throw new ApiException(UNPROCESSABLE_ENTITY, "Failed to upload picture. File " + fileName + " is not recognized as picture.");
 
         String completeFileName = PICTURES_FOLDER + prependSlash(fileName);
         try (OutputStream os = new FileOutputStream(completeFileName);

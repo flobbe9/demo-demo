@@ -12,18 +12,9 @@ services:
         MYSQL_DATABASE: ${DB_NAME}
         TZ: Europe/Berlin
 
-  # mailserver:
-  #     image: maildev/maildev
-  #     container_name: mail_server_test
-        # env_file: .env
-  #     ports:
-  #         - ${MAIL_INBOX_PORT}:${MAIL_INBOX_PORT} # mail inbox port (ui)
-  #         - ${MAIL_SERVER_PORT}:${MAIL_SERVER_PORT} # mail server port
-
   api:
       depends_on: 
         - db
-        # - mailserver
       build: .
       container_name: api
       ports: 

@@ -1,5 +1,7 @@
 package de.word_light.documentParts;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +27,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
@@ -37,7 +38,6 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
 public class DocumentWrapper extends AbstractEntity {
     
     @NotNull(message = "'content' cannot be null.")
@@ -79,6 +79,14 @@ public class DocumentWrapper extends AbstractEntity {
     private int numSingleColumnLines;
 
 
+    public DocumentWrapper() {
+        
+        this.content = new ArrayList<>();
+        this.tableConfigs = new ArrayList<>();
+        this.pictures = new HashMap<>();
+    }
+
+
     public DocumentWrapper(
             @NotNull(message = "'content' cannot be null.") List<@Valid @NotNull(message = "'basicParagraph' cannot be null") BasicParagraph> content,
             @Valid @NotNull(message = "'tableConfigs' cannot be null.") List<@Valid @NotNull(message = "'tableConfig cannot be null") TableConfig> tableConfigs,
@@ -89,6 +97,7 @@ public class DocumentWrapper extends AbstractEntity {
         
         this.content = content;
         this.tableConfigs = tableConfigs;
+        this.pictures = new HashMap<>();
         this.fileName = fileName;
         this.landscape = landscape;
         this.numColumns = numColumns;

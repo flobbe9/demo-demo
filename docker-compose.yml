@@ -6,29 +6,20 @@ services:
     container_name: db
     ports:
         - ${DB_PORT}:${DB_PORT}
-    env_file: .env
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
       MYSQL_DATABASE: ${DB_NAME}
       TZ: Europe/Berlin
 
-  mailserver:
-      image: maildev/maildev
-      container_name: mail_server_test
-      env_file: .env
-      ports:
-          - ${MAIL_INBOX_PORT}:${MAIL_INBOX_PORT} # mail inbox port (ui)
-          - ${MAIL_SERVER_PORT}:${MAIL_SERVER_PORT} # mail server port
-
   document_builder:
     depends_on: 
       - db
-      # - mailserver
     build: .
     image: flobbe9/word_light_document_builder
     container_name: ${API_NAME}
     ports: 
         - ${API_PORT}:${API_PORT}
+    # use ./.env as .env file for application (not only for docker-compose file)
     env_file: .env
     environment:
         - SPRING_DATASOURCE_URL=jdbc:mysql://db:${DB_PORT}/${DB_NAME}

@@ -20,27 +20,27 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class ThymeleafController {
 
     @Value("${WEBSITE_NAME}")
-    private String websiteName;
+    private String WEBSITE_NAME;
 
     @Value("${API_NAME}")
-    private String apiName;
+    private String API_NAME;
 
     @Value("${BASE_URL}")
-    private String baseUrl;
+    private String BASE_URL;
 
     @Value("${DB_VERSION}")
-    private String dbVersion;
+    private String DB_VERSION;
 
     
     @GetMapping("/")
     @Operation(summary = "View basic information about api.")
     public String getIndex(Model model) {
 
-        model.addAttribute("WEBSITE_NAME", this.websiteName);
-        model.addAttribute("API_NAME", this.apiName);
-        model.addAttribute("BASE_URL", this.baseUrl);
+        model.addAttribute("WEBSITE_NAME", this.WEBSITE_NAME);
+        model.addAttribute("API_NAME", this.API_NAME);
+        model.addAttribute("BASE_URL", this.BASE_URL);
         model.addAttribute("API_VERSION", WordLightDocumentBuilderApplication.getApiVersion());
-        model.addAttribute("DB_VERSION", this.dbVersion);
+        model.addAttribute("DB_VERSION", this.DB_VERSION);
 
         return "index";
     }

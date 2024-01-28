@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -21,24 +20,32 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
  * @since 0.0.1
  */
 @Configuration
-@EnableMethodSecurity // for @PreAuthorize
 @EnableWebSecurity
+// TODO: 
+    // check csrf
+    // enable ssl?
+    // set datasource credentials, but dont write them inside .env
+// TODO: update prod .env eventually
+// TODO: add artifact id to folder structure
+// TODO: register for eureka somehow
 public class SecurityConfig {
     
-    @Value("${FRONTEND_BASE_URL}")
-    private String frontendBaseUrl;
+    @Value("${GATEWAY_BASE_URL}")
+    private String GATEWAY_BASE_URL;
 
     @Value("${CSRF_ENABLED}")
-    private String csrfEnabled;
+    private String CSRF_ENABLED;
+
+    @Value("${API_MAPPING}")
+    private String API_MAPPING;
 
     
     @Bean
-    // TODO: set to true in prod, as soon as login is added
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         // enable csrf in prod only
         // TODO: replace this with env variable, remove CSRF env var
-        if (csrfEnabled.equalsIgnoreCase("true"))
+        if (CSRF_ENABLED.equalsIgnoreCase("true"))
             http.csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
         else
@@ -55,21 +62,21 @@ public class SecurityConfig {
 
 
     /**
-     * Allow methods {@code GET, POST, UPDATE, DELETE}, origins {@code frontendBaseUrl}, headers {@code "*"}, credentials and
-     * only mappings for {@code /api/documentBuilder/**}.
+     * Allow methods {@code GET, POST, UPDATE, DELETE}, origins {@code GATEWAY_BASE_URL}, headers {@code "*"}, credentials and
+     * only mappings for {@link #API_MAPPING}.
      * 
      * @return the configured {@link CorsConfigurationSource}
      */
     private CorsConfigurationSource corsConfig() {
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(frontendBaseUrl));
-        configuration.setAllowedMethods(List.of("GET", "POST", "UPDATE", "DELETE"));
+        configuration.setAllowedOrigins(List.of(GATEWAY_BASE_URL));
+        configuration.setAllowedMethods(List.of("GET", "POST", "UPDATE", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/documentBuilder/**", configuration);
+        source.registerCorsConfiguration("/" + API_MAPPING + "/**", configuration);
 
         return source;
     }

@@ -25,7 +25,7 @@ public abstract class AbstractEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(example = "1")
+    @Schema(hidden = true)
     private Long id;
 
     @JsonIgnore

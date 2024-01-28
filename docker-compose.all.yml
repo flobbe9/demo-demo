@@ -1,10 +1,26 @@
 version: "3.9"
 
 services: 
+  discovery_service:
+    image: flobbe9/word_light_discovery_service
+    container_name: discovery_service
+    ports:
+      - ${DISCOVERY_SERVICE_PORT}:${DISCOVERY_SERVICE_PORT}
+
+  gateway:
+    depends_on:
+      - discovery_service
+    image: flobbe9/word_light_gateway
+    container_name: gateway
+    ports:
+      - ${GATEWAY_PORT}:${GATEWAY_PORT}
+
   frontend:
+    depends_on: 
+      - discovery_service
+      - gateway
     image: flobbe9/word_light_frontend
     container_name: frontend
-    env_file: .env
     ports:
       - ${FRONTEND_PORT}:${FRONTEND_PORT}
       
@@ -13,23 +29,15 @@ services:
     container_name: db
     ports:
         - ${DB_PORT}:${DB_PORT}
-    env_file: .env
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
       MYSQL_DATABASE: ${DB_NAME}
 
-  # mailserver:
-  #     image: maildev/maildev
-  #     container_name: mail_server_test
-        # env_file: .env
-  #     ports:
-  #         - ${MAIL_INBOX_PORT}:${MAIL_INBOX_PORT} # mail inbox port (ui)
-  #         - ${MAIL_SERVER_PORT}:${MAIL_SERVER_PORT} # mail server port
-
-  backend:
+  document_builder:
     depends_on: 
+      - discovery_service
+      - gateway
       - db
-      # - mailserver
     build: .
     image: flobbe9/word_light_document_builder
     container_name: ${API_NAME}

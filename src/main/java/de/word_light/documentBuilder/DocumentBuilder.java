@@ -64,6 +64,8 @@ import lombok.extern.log4j.Log4j2;
 // TODO: make more methods public and chainable, which fields are mandatory?
 // TODO: consider offering multiple sections with differen num cols, change num cols to map or something
 
+// TODO: getting two pages even if content does not need to, only with content.size() > 2
+// TODO: add cron job clearing usergenerated folder every 24h or so
 public class DocumentBuilder {
 
     /** paragraph indentation */
