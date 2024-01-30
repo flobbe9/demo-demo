@@ -1,5 +1,7 @@
 package de.word_light.document_builder.config;
 
+import java.util.HashMap;
+import java.util.Map;
 import io.micrometer.common.util.StringUtils;
 import lombok.extern.log4j.Log4j2;
 
@@ -9,17 +11,17 @@ import lombok.extern.log4j.Log4j2;
  * 
  * Don't inject any beans in here, does not work for some reason. <p>
  * 
- * Main method arguments: <p>
- * {@code args[0] == SSL_KEY_STORE_PASSWORD} <p>
- * 
  * @since 0.0.6
  */
 @Log4j2
 public class ApplicationInitializer {
 
+    private static final String SSL_PASSWORD_ARG_NAME = "--sslPassword"; 
+
     private String[] args;
 
-    private String keyStorePassword;
+    private Map<String, String> argKeyValues;
+
 
 
     /**
@@ -28,7 +30,8 @@ public class ApplicationInitializer {
     public ApplicationInitializer(String ...args) {
 
         this.args = args;
-        this.keyStorePassword = retrieveArgsItem(0);
+        this.argKeyValues = new HashMap<>();
+        setupArgKeyValues();
     }
 
 
@@ -36,10 +39,6 @@ public class ApplicationInitializer {
      * Doing some initializing after successful api start.
      */
     public void init() {
-
-        // case: no args passed
-        if (args == null || args.length == 0)
-            return;
         
         log.info("Initializing API...");
 
@@ -48,20 +47,31 @@ public class ApplicationInitializer {
 
 
     /**
-     * Set ssl password and disabled ssl if no valid password is present.
-     * 
-     * @param keyStorePassword password for https certificate to work
-     */
+    * Set ssl password if not blank.
+    * 
+    * @param sslPassword password for https certificate to work
+    */
     private void initSSL() {
 
-        // case: no ssl password
-        if (StringUtils.isBlank(this.keyStorePassword)) {
-            log.warn("Failed to set ssl password. Disabling ssl...");
-            System.setProperty("SSL_ENABLED", "false");
-            
-        } else {
+        String sslPassword = retrieveArgItem(SSL_PASSWORD_ARG_NAME);
+        String sslPasswordPropName = "server.ssl.key-store-password";
+
+        if (!StringUtils.isBlank(sslPassword)) {
             log.info("Setting ssl password...");
-            System.setProperty("SSL_KEY_STORE_PASSWORD", this.keyStorePassword);
+            System.setProperty(sslPasswordPropName, sslPassword);
+        }
+    }
+
+
+    private void setupArgKeyValues() {
+
+        for (String arg : this.args) {
+            if (!arg.startsWith("--"))
+                continue;
+            
+            int argValueStartIndex = arg.indexOf("=");
+
+            this.argKeyValues.put(arg.substring(0, argValueStartIndex), arg.substring(argValueStartIndex + 1));
         }
     }
 
@@ -70,7 +80,7 @@ public class ApplicationInitializer {
      * @param argsIndex index of element in args array passed from command line
      * @return the arguemnt passed from command line at given index of {@code ""} if index out of bounds
      */
-    private String retrieveArgsItem(int argsIndex) {
+    private String retrieveArgItem(int argsIndex) {
 
         try {
             return this.args[argsIndex];
@@ -78,5 +88,17 @@ public class ApplicationInitializer {
         } catch (ArrayIndexOutOfBoundsException e) {
             return "";
         }
+    }
+
+
+    /**
+     * @param argKey of element in args array passed from command line, i.e. {@code --someKey}
+     * @return the arguemnt value matching given argKey, i.e. if arsg are {@code --args=--someKey=someValue} then 
+     *         {@code argKey} is expected to equal {@code "--someKey"} and the return value would be {@code "someValue"}.
+     *          Return {@code null} if {@code argKey} not present
+     */
+    private String retrieveArgItem(String argKey) {
+
+        return this.argKeyValues.get(argKey);
     }
 }

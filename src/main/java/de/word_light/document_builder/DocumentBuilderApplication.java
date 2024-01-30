@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
@@ -18,7 +20,7 @@ public class DocumentBuilderApplication {
 
 	public static void main(String[] args) {
         new ApplicationInitializer(args).init();
-		SpringApplication.run(DocumentBuilderApplication.class, args);
+        SpringApplication.run(DocumentBuilderApplication.class, args);
 	}
 
         
