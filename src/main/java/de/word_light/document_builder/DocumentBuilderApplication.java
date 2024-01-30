@@ -7,16 +7,18 @@ import java.util.Properties;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.servlet.ServletComponentScan;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+import de.word_light.document_builder.config.ApplicationInitializer;
 
 
 @SpringBootApplication
-@ServletComponentScan
-public class WordLightDocumentBuilderApplication {
+@EnableDiscoveryClient
+public class DocumentBuilderApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(WordLightDocumentBuilderApplication.class, args);
-        new Initializer().init();
+        new ApplicationInitializer(args).init();
+		SpringApplication.run(DocumentBuilderApplication.class, args);
 	}
 
         
