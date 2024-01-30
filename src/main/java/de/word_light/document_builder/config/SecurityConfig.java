@@ -24,11 +24,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 // TODO: add webhook to linux server for easier deploy
 
-// TODO: 
-    // set datasource credentials, but dont write them inside .env
 // TODO: update prod .env eventually
 // TODO: edit documentation, docker-compose must be used with .env file in same directory
-// TODO: figure docker-compose args out, optimize main pipeline
+// TODO: upadte readme, make a not of ssl
 public class SecurityConfig {
     
     @Value("${GATEWAY_BASE_URL}")

@@ -9,6 +9,7 @@ services:
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       TZ: Europe/Berlin
 
   document_builder:

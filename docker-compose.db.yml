@@ -6,8 +6,8 @@ services:
     container_name: ${DB_NAME}_db
     ports:
         - ${DB_PORT}:${DB_PORT}
-    env_file: .env
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       TZ: Europe/Berlin
