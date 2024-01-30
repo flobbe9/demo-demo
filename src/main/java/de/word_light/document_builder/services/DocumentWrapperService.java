@@ -13,7 +13,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 
-// TODO: add tests
 /**
  * Class handling {@link Document} logic.
  * 
@@ -21,6 +20,8 @@ import jakarta.validation.constraints.NotNull;
  */
 @Service
 @Validated
+// TODO: add tests
+
 public class DocumentWrapperService extends AbstractService<DocumentWrapper, DocumentWrapperRepository> {
 
     @Autowired
