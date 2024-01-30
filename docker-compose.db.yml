@@ -8,6 +8,6 @@ services:
         - ${DB_PORT}:${DB_PORT}
     env_file: .env
     environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       TZ: Europe/Berlin
