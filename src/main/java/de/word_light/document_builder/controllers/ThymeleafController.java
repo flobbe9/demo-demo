@@ -5,7 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import de.word_light.document_builder.WordLightDocumentBuilderApplication;
+import de.word_light.document_builder.DocumentBuilderApplication;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -39,7 +39,7 @@ public class ThymeleafController {
         model.addAttribute("WEBSITE_NAME", this.WEBSITE_NAME);
         model.addAttribute("API_NAME", this.API_NAME);
         model.addAttribute("BASE_URL", this.BASE_URL);
-        model.addAttribute("API_VERSION", WordLightDocumentBuilderApplication.getApiVersion());
+        model.addAttribute("API_VERSION", DocumentBuilderApplication.getApiVersion());
         model.addAttribute("DB_VERSION", this.DB_VERSION);
 
         return "index";

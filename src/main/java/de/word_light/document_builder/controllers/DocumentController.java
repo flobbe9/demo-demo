@@ -10,6 +10,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +23,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,7 +54,6 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Tag(name = "Document builder logic")
 @SessionScope
-// TODO: learn about reactive rest controllers
 public class DocumentController {
 
     @Value("${ENV}")
@@ -78,7 +80,7 @@ public class DocumentController {
      */
     @PostMapping("/buildAndWrite")
     @Operation(summary = "Build document and write to .docx.")
-    public ApiExceptionFormat buildAndWrite(@RequestBody @Valid DocumentWrapper wrapper, BindingResult bindingResult) {
+    public ApiExceptionFormat buildAndWrite(@RequestBody @Valid DocumentWrapper wrapper, BindingResult bindingResult, @RequestHeader Map<String, String> headers) {
 
         // pictures may have been uploaded before
         // TODO: may cause problems, should not always be done
@@ -102,9 +104,9 @@ public class DocumentController {
      * @param fileName to use for downloaded file
      * @return {@link StreamingResponseBody} of file with correct headers for download
      */
-    @GetMapping(path = "/download", produces = {"application/octet-stream", "application/json"})
+    @PostMapping(path = "/download", produces = {"application/octet-stream", "application/json"})
     @Operation(summary = "Download existing .docx or .pdf file. Needs a call to '/buildAndWrite' first.")
-    public ResponseEntity<StreamingResponseBody> downloadDocument(@RequestParam boolean pdf) {
+    public ResponseEntity<StreamingResponseBody> downloadDocument(@RequestParam(name = "pdf") boolean pdf) {
 
         log.info("Downloading document...");
 
@@ -179,6 +181,19 @@ public class DocumentController {
         }
 
         return ApiExceptionHandler.returnPrettySuccess(OK);
+    }
+
+
+    /**
+     * Exists for frontend to get cookies if not set already.
+     * 
+     * @return csrf token from request header
+     */
+    @GetMapping("/getCsrfToken")
+    @Operation(summary = "Return csrf token from request header. Exists for frontend to get cookies if not set already.")
+    public String getCsrfToken(@RequestHeader("X-Xsrf-Token") String csrfToken) {
+
+        return csrfToken;
     }
 
 

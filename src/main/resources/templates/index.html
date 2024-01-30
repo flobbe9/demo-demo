@@ -8,12 +8,17 @@
         <style>
             body {
                 font-family: "Calibri";
+                margin: 8px 27px;
             }
 
             code {
                 background-color: rgb(221, 221, 221);
                 border-radius: 4px;
                 padding: 2px 4px;
+            }
+
+            hr {
+                margin-top: 2em;
             }
         </style>
     </head>
@@ -29,17 +34,18 @@
         <div>
             <h3>Run</h3>
 
-            <div th:text="@{${API_NAME} + ':'}"></div>
             <div>
-                <li><code>$ docker-compose up</code> (using latest image from Dockerhub)</li>
+                <p>Using latest image from Dockerhub</p>
+                <li><code>$ docker-compose up</code></li>
                 <p>or</p>
-                <li><code>$ docker-compose -f 'docker-compose.local.yml' up</code> (using Dockerfile)</li>
+                <p>Using local Dockerfile</p>
+                <li><code>$ docker-compose -f 'docker-compose.local.yml' up</code></li>
             </div>
             <hr>
         </div>
 
         <div>
-            <h3>Endpoint documentation</h3>
+            <h3>Endpoints</h3>
 
             <a th:href="@{${BASE_URL} + '/swagger-ui/index.html#/'}" target="_blank">
                 <span th:text="${BASE_URL}"></span>/swagger-ui/index.html#/

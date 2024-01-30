@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -21,35 +22,42 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
  */
 @Configuration
 @EnableWebSecurity
+// TODO: add webhook to linux server for easier deploy
+
 // TODO: 
-    // check csrf
-    // enable ssl?
     // set datasource credentials, but dont write them inside .env
 // TODO: update prod .env eventually
-// TODO: register for eureka somehow
+// TODO: edit documentation, docker-compose must be used with .env file in same directory
+// TODO: figure docker-compose args out, optimize main pipeline
 public class SecurityConfig {
     
     @Value("${GATEWAY_BASE_URL}")
     private String GATEWAY_BASE_URL;
 
-    @Value("${CSRF_ENABLED}")
-    private String CSRF_ENABLED;
-
     @Value("${API_MAPPING}")
     private String API_MAPPING;
+
+    @Value("${ENV}")
+    private String ENV;
 
     
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
+        
         // enable csrf in prod only
-        // TODO: replace this with env variable, remove CSRF env var
-        if (CSRF_ENABLED.equalsIgnoreCase("true"))
+        if (ENV.equalsIgnoreCase("prod")) {
+            // necessary for csrf token to be passed on every request as cooky to browser
+            CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+            requestHandler.setCsrfRequestAttributeName(null);
+
             http.csrf(csrf -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
-        else
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(requestHandler));
+
+        } else
             http.csrf(csrf -> csrf.disable());
         
+        // routes
         http.authorizeHttpRequests(request -> request
                 .anyRequest()
                 .permitAll())
