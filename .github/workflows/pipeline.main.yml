@@ -1,4 +1,4 @@
-name: vorspiel_backend main
+name: word-light_document_builder main
 
 run-name: ${{ github.event.head_commit.message }}
 on: 
@@ -18,9 +18,9 @@ jobs:
         with: 
           distribution: 'temurin'
           java-version: '17'
-      - name: Start db and mail server
+      - name: Start db
         run: docker-compose -f 'docker-compose.db.yml' up -d
-      - run: gradle clean build
+      - run: gradle clean build --args=${{ secrets.SSL_KEY_STORE_PASSWORD }}
   
   push_to_DockerHub_and_Google_Cloud:
     runs-on: ubuntu-latest
@@ -43,4 +43,4 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/vorspiel_backend:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/word_light_document_builder:latest

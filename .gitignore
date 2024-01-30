@@ -39,3 +39,4 @@ out/
 
 ### Other ###
 *.md
+.env.local

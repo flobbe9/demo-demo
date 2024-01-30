@@ -1,27 +1,30 @@
 version: "3.9"
 
 services:
-    db:
-        image: mysql
-        container_name: vorspiel_db
-        ports:
-            - 3306:3306
-        environment:
-          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-          MYSQL_DATABASE: vorspiel
+  db:
+    image: mysql
+    container_name: db
+    ports:
+        - ${DB_PORT}:${DB_PORT}
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${SPRING_DATASOURCE_USERNAME}
+      MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: Europe/Berlin
 
-    # mailserver:
-    #     image: maildev/maildev
-    #     container_name: vorspiel_mail_server_test
-    #     ports:
-    #         - 1080:1080
-    #         - 1025:1025
-    api:
-        depends_on: 
-          - db
-          # - mailserver
-        build: .
-        image: flobbe9/vorspiel_backend:latest
-        container_name: vorspiel_backend
-        ports: 
-            - 4001:4001
+  document_builder:
+    depends_on: 
+      - db
+    build: .
+    image: flobbe9/word_light_document_builder
+    container_name: ${API_NAME}
+    ports: 
+        - ${API_PORT}:${API_PORT}
+    # use ./.env as .env file for application (not for docker-compose file)
+    env_file: .env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:${DB_PORT}/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
