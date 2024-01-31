@@ -20,8 +20,6 @@ import com.fasterxml.jackson.databind.ObjectReader;
 
 import de.word_light.document_builder.exception.ApiException;
 import de.word_light.document_builder.exception.ApiExceptionFormat;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 
 
 /**
@@ -29,14 +27,22 @@ import lombok.NoArgsConstructor;
  * 
  * @since 0.0.6
  */
-@AllArgsConstructor
-@NoArgsConstructor
 public class TestUtils {
 
     private MockMvc mockMvc;
     private String baseUrl;
+
+
+    public TestUtils() {}
     
     
+    public TestUtils(MockMvc mockMvc, String baseUrl) {
+
+        this.mockMvc = mockMvc;
+        this.baseUrl = baseUrl;
+    }
+
+
     /**
      * Perform http post request using {@link #APPLICATION_JSON} as content type and {@link #baseUrl}.
      * 

@@ -1,28 +1,11 @@
 version: "3.9"
 
 services: 
-  discovery_service:
-    image: flobbe9/word_light_discovery_service
-    container_name: discovery_service
-    ports:
-      - ${DISCOVERY_SERVICE_PORT}:${DISCOVERY_SERVICE_PORT}
-
   gateway:
-    depends_on:
-      - discovery_service
     image: flobbe9/word_light_gateway
     container_name: gateway
     ports:
       - ${GATEWAY_PORT}:${GATEWAY_PORT}
-
-  frontend:
-    depends_on: 
-      - discovery_service
-      - gateway
-    image: flobbe9/word_light_frontend
-    container_name: frontend
-    ports:
-      - ${FRONTEND_PORT}:${FRONTEND_PORT}
       
   db:
     image: mysql
@@ -37,16 +20,22 @@ services:
 
   document_builder:
     depends_on: 
-      - discovery_service
       - gateway
       - db
-    build: .
     image: flobbe9/word_light_document_builder
     container_name: ${API_NAME}
     ports:
       - ${API_PORT}:${API_PORT}
     environment:
-        - SPRING_DATASOURCE_URL=jdbc:mysql://db:${DB_PORT}/${DB_NAME}
-        - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-        - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-        - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:${DB_PORT}/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
+
+  frontend:
+    depends_on: 
+      - document_builder
+    image: flobbe9/word_light_frontend
+    container_name: frontend
+    ports:
+      - ${FRONTEND_PORT}:${FRONTEND_PORT}

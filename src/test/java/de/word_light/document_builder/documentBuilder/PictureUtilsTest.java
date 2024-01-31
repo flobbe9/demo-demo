@@ -162,6 +162,51 @@ public class PictureUtilsTest {
     }
 
 
+//----------- isPicture()
+    @Test 
+    void isPicture_shouldBeTrue() {
+
+        String pictureName = "${" + this.testPictureName + "}";
+        assertTrue(PictureUtils.isPicture(pictureName));
+
+        pictureName = "${s.png}";
+        assertTrue(PictureUtils.isPicture(pictureName));
+
+        pictureName = "${.png}";
+        assertTrue(PictureUtils.isPicture(pictureName));
+    }
+
+
+    @Test
+    void isPicture_shouldBeFalse() {
+
+        String pictureName = "${" + this.testPictureName + "}";
+        assertTrue(PictureUtils.isPicture(pictureName));
+
+        pictureName = "{" + this.testPictureName + "}";
+        assertFalse(PictureUtils.isPicture(pictureName));
+
+        pictureName = "$" + this.testPictureName + "}";
+        assertFalse(PictureUtils.isPicture(pictureName));
+
+        pictureName = "" + this.testPictureName + "}";
+        assertFalse(PictureUtils.isPicture(pictureName));
+
+        pictureName = "${" + this.testPictureName + "";
+        assertFalse(PictureUtils.isPicture(pictureName));
+
+        pictureName = "" + this.testPictureName + "";
+        assertFalse(PictureUtils.isPicture(pictureName));
+
+        pictureName = "${png}";
+        assertFalse(PictureUtils.isPicture(pictureName));
+
+        assertFalse(PictureUtils.isPicture(null));
+
+        assertFalse(PictureUtils.isPicture(""));
+    }
+
+
     @AfterAll
     void cleanUp() throws IOException {
 

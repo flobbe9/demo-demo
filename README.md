@@ -2,8 +2,7 @@
 REST service handling the document building logic for the Word light API. Uses Java 17 with Spring Boot.
 
 ## Run
-```docker-compose up``` <br>
+```docker-compose -f docker-compose.local.yml up``` <br>
 
-## More information
-<!-- TODO: add prod version when going live -->
-http://localhost:4001
+## Documentation
+Run api, then visit http://localhost:4001

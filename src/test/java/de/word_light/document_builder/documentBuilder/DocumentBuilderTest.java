@@ -109,7 +109,7 @@ public class DocumentBuilderTest {
         this.header = new BasicParagraph("This is the header", this.style);
         this.title = new BasicParagraph("This is the title", this.style);
         this.tableCell = new BasicParagraph("This is a table cell", this.style);
-        this.picture = new BasicParagraph(testPictureName, style);
+        this.picture = new BasicParagraph("${" + this.testPictureName + "}", style);
         this.footer = new BasicParagraph("This is the footer", this.style);
         this.content = Arrays.asList(this.header, this.title, this.tableCell, this.picture, this.footer);
         

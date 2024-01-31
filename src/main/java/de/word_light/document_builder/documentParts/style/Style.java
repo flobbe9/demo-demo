@@ -59,6 +59,7 @@ public class Style extends AbstractEntity {
 
     @Nullable
     @Enumerated(EnumType.STRING)
+    @Schema(defaultValue = "TEXT_WRAPPING")
     private BreakType breakType;
 
 

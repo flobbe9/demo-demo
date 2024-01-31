@@ -21,8 +21,6 @@ services:
     container_name: ${API_NAME}
     ports: 
         - ${API_PORT}:${API_PORT}
-    # use ./.env as .env file for application (not for docker-compose file)
-    env_file: .env
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:${DB_PORT}/${DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
