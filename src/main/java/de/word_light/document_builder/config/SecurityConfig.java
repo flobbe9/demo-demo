@@ -30,8 +30,8 @@ import lombok.extern.log4j.Log4j2;
 
 public class SecurityConfig {
     
-    @Value("${GATEWAY_BASE_URL}")
-    private String GATEWAY_BASE_URL;
+    @Value("${FRONTEND_BASE_URL}")
+    private String FRONTEND_BASE_URL;
 
     @Value("${API_MAPPING}")
     private String API_MAPPING;
@@ -75,7 +75,7 @@ public class SecurityConfig {
 
 
     /**
-     * Allow methods {@code GET, POST, UPDATE, DELETE}, origins {@code GATEWAY_BASE_URL}, headers {@code "*"}, credentials and
+     * Allow methods {@code GET, POST, UPDATE, DELETE}, origins {@code FRONTEND_BASE_URL}, headers {@code "*"}, credentials and
      * only mappings for {@link #API_MAPPING}.
      * 
      * @return the configured {@link CorsConfigurationSource}
@@ -83,7 +83,7 @@ public class SecurityConfig {
     private CorsConfigurationSource corsConfig() {
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(GATEWAY_BASE_URL));
+        configuration.setAllowedOrigins(List.of(FRONTEND_BASE_URL));
         configuration.setAllowedMethods(List.of("GET", "POST", "UPDATE", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
