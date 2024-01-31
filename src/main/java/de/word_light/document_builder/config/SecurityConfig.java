@@ -25,7 +25,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 // TODO: add webhook to linux server for easier deploy
 
 // TODO: edit documentation, docker-compose must be used with .env file in same directory
-// TODO: upadte readme, make a not of ssl
+// TODO: upadte readme, make a note of ssl
+// TODO: session expiry date? 
+// TODO: pipeline insecure?
+// TODO: add ssl password to all other main pipelines except frontend
 public class SecurityConfig {
     
     @Value("${GATEWAY_BASE_URL}")

@@ -20,7 +20,7 @@ jobs:
           java-version: '17'
       - name: Start db
         run: docker-compose -f 'docker-compose.db.yml' up -d
-      - run: gradle clean build --args=${{ secrets.SSL_KEY_STORE_PASSWORD }}
+      - run: gradle clean build --args=--sslPassword=${{ secrets.SSL_KEY_STORE_PASSWORD }}
   
   push_to_DockerHub_and_Google_Cloud:
     runs-on: ubuntu-latest
