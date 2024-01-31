@@ -14,6 +14,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import jakarta.annotation.PostConstruct;
+import lombok.extern.log4j.Log4j2;
+
 
 /**
  * Configuration class to authentiacate requests.<p>
@@ -22,13 +25,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
  */
 @Configuration
 @EnableWebSecurity
+@Log4j2
 // TODO: add webhook to linux server for easier deploy
 
-// TODO: edit documentation, docker-compose must be used with .env file in same directory
-// TODO: upadte readme, make a note of ssl
-// TODO: session expiry date? 
-// TODO: pipeline insecure?
-// TODO: add ssl password to all other main pipelines except frontend
 public class SecurityConfig {
     
     @Value("${GATEWAY_BASE_URL}")
@@ -39,6 +38,13 @@ public class SecurityConfig {
 
     @Value("${ENV}")
     private String ENV;
+
+
+    @PostConstruct
+    void init() {
+
+        log.info("Configuring api security...");
+    }
 
     
     @Bean

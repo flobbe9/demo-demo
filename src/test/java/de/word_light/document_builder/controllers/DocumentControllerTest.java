@@ -62,6 +62,7 @@ public class DocumentControllerTest {
     private List<BasicParagraph> content;
     private List<TableConfig> tableConfigs;
     private DocumentWrapper documentWrapper;
+    private String docxFileName;
 
 
     @BeforeEach
@@ -71,7 +72,8 @@ public class DocumentControllerTest {
         this.style = new Style(8, "Calibri", "000000", true, true, true, ParagraphAlignment.LEFT, null);
         this.content = List.of(new BasicParagraph("header", this.style), new BasicParagraph("text", this.style), new BasicParagraph("footer", this.style));
         this.tableConfigs = new ArrayList<>(List.of(new TableConfig(2, 1, 0)));
-        this.documentWrapper = new DocumentWrapper(this.content, tableConfigs, false, "Document_1.docx", 1, 1);
+        this.docxFileName = "Document_1.docx";
+        this.documentWrapper = new DocumentWrapper(this.content, tableConfigs, false, this.docxFileName, 1, 1);
     }
 
 

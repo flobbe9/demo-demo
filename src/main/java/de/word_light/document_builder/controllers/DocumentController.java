@@ -48,12 +48,17 @@ import jakarta.validation.constraints.NotNull;
 import lombok.extern.log4j.Log4j2;
 
 
+/**
+ * REST controller handling all requests related to document building logic.
+ * 
+ * @since 0.0.1
+ */
 @RestController
-@RequestMapping("/api/documentBuilder")
+@RequestMapping("${API_MAPPING}")
+@SessionScope
 @Validated
 @Log4j2
 @Tag(name = "Document builder logic")
-@SessionScope
 public class DocumentController {
 
     @Value("${ENV}")
@@ -83,7 +88,6 @@ public class DocumentController {
     public ApiExceptionFormat buildAndWrite(@RequestBody @Valid DocumentWrapper wrapper, BindingResult bindingResult, @RequestHeader Map<String, String> headers) {
 
         // pictures may have been uploaded before
-        // TODO: may cause problems, should not always be done
         wrapper.setPictures(this.documentWrapper.getPictures());
 
         this.documentWrapper = wrapper;
@@ -98,7 +102,9 @@ public class DocumentController {
 
 
     /**
-     * Convert given file to stream and delete file afterwards.
+     * Convert given file to stream and delete file afterwards.<p>
+     * 
+     * Deletes {@link #file} and clears {@code this.documentWrapper.getPictures()} after download (successful or not).
      * 
      * @param file to download
      * @param fileName to use for downloaded file
@@ -116,7 +122,7 @@ public class DocumentController {
         
         // INFO: disabled in prod until I find a way to install ms word on linux
         // case: pdf
-        if (pdf && ENV.equals("dev"))
+        if (pdf && !ENV.equals("prod"))
             file = convertDocxToPdf(file);
 
         try {
@@ -130,6 +136,7 @@ public class DocumentController {
 
                                     } finally {
                                         file.delete();
+                                        this.documentWrapper.getPictures().clear();
                                     }
                                 });
 
@@ -152,7 +159,7 @@ public class DocumentController {
 
         String fileName = picture.getOriginalFilename();
         // case: not a picture
-        if (!PictureUtils.isPicture(fileName)) 
+        if (PictureUtils.getPictureType(fileName) == null) 
             throw new ApiException(UNPROCESSABLE_ENTITY, "Failed to upload picture. File " + fileName + " is not recognized as picture.");
 
         String completeFileName = PICTURES_FOLDER + prependSlash(fileName);
