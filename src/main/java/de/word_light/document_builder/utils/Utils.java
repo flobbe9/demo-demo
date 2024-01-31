@@ -9,7 +9,10 @@ import java.io.FileWriter;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.nio.file.Files;
+import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -235,14 +238,14 @@ public class Utils {
      * 
      * @param bytes content of file
      * @param fileName name of the file
-     * @return file
+     * @return file or {@code null} if a param is invalid
      */
     public static File byteArrayToFile(byte[] bytes, String fileName) {
 
         String completeFileName = STATIC_FOLDER + prependSlash(fileName);
 
         if (bytes == null) 
-            throw new ApiException("Failed to write byte array to file. 'bytes' is null");
+            return null;
         
         try (OutputStream fos = new FileOutputStream(completeFileName)) {
             fos.write(bytes);
@@ -250,7 +253,7 @@ public class Utils {
             return new File(completeFileName);
 
         } catch (Exception e) {
-            throw new ApiException("Failed to write byte array to file.", e);
+            return null;
         }
     }
 
@@ -305,6 +308,33 @@ public class Utils {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             throw new ApiException("Failed to convert object to json String.", e);
+        }
+    }
+
+
+    /**
+     * @param millis time to convert in milli seconds
+     * @param timeZone to use for conversion, i.e. {@code "UTC"} or {@code "Europe/Berlin"}. If invalid, system default will be used.
+     * @return given time as {@link LocalDateTime} object or null if {@code millis} is invalid
+     */
+    public static LocalDateTime millisToLocalDateTime(long millis, @Nullable String timeZone) {
+
+        ZoneId zoneId;
+        try {
+            zoneId = ZoneId.of(timeZone);
+
+        // case: invalid timeZone
+        } catch (DateTimeException | NullPointerException e) {
+            zoneId = ZoneId.systemDefault();
+        }
+
+        try {
+            Instant instant = Instant.ofEpochMilli(millis);
+            return LocalDateTime.ofInstant(instant, zoneId);
+            
+        // case: invalid millis
+        } catch (DateTimeException e) {
+            return null;
         }
     }
 }

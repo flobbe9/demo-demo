@@ -15,7 +15,7 @@ import org.apache.poi.xwpf.usermodel.XWPFRun;
 
 import de.word_light.document_builder.exception.ApiException;
 import de.word_light.document_builder.utils.Utils;
-
+import io.micrometer.common.util.StringUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
@@ -54,24 +54,29 @@ public class PictureUtils {
      * 
      * @param run to add the picture to
      * @param fileName of the picture. Has to match at least one file name from {@link #pictures}.
-     * In case of duplicates the first match will be used
+     *                 In case of duplicates the first match will be used.
+     *                 Assuming format like "${someFileName.png}"
      * @param pictureType format of the picture
      */
     void addPicture(XWPFRun run, String fileName) {
 
+        // remove ${} braces
+        fileName = getRawPictureName(fileName);
+
         PictureType pictureType = getPictureType(fileName);
 
+        // case: invalid picture format
         if (pictureType == null)
             throw new ApiException("Did not add pictures. " + fileName + " is not of a valid picture type.");
         
-        
+        // case: no pictures uploaded
         if (this.pictures == null || this.pictures.isEmpty()) {
             log.warn("Did not add pictures. 'pictures' list is either null or empty.");
             return;
         }
         
         File picture = Utils.byteArrayToFile(this.pictures.get(fileName), fileName);
-
+        
         // add picture
         try (InputStream fis = new FileInputStream(picture)) {
 
@@ -88,7 +93,8 @@ public class PictureUtils {
             throw new ApiException("Failed to add picture.", e);
         
         } finally {
-            picture.delete();
+            if (picture != null)
+                picture.delete();
         }
     }
 
@@ -101,7 +107,7 @@ public class PictureUtils {
      * @param fileName to find the pictureType of
      * @return the pictureType if fileName ends on an extension from {@link PictureType} or null
      */
-    static PictureType getPictureType(String fileName) {
+    public static PictureType getPictureType(String fileName) {
 
         if (fileName == null)
             return null;
@@ -117,10 +123,21 @@ public class PictureUtils {
     }
 
 
-    // TODO: make condition more complex
+    /**
+     * Determine if given text should be treated as file name for a picture in a document.
+     * 
+     * @param text of basic paragraph to check
+     * @return true if text is formatted like: "${someFileName.someValidPictureSuffix}", i.e. "${beautifulView.png}".
+     */
     public static boolean isPicture(String text) {
 
-        return getPictureType(text) != null;
+        // case: null or blank
+        if (StringUtils.isBlank(text))
+            return false;
+
+        boolean hasBraces = text.startsWith("${") && text.endsWith("}");
+
+        return hasBraces && getPictureType(getRawPictureName(text)) != null;
     }
 
 
@@ -146,5 +163,27 @@ public class PictureUtils {
     private int dxaToEMUs(double dxa) {
 
         return (int) Math.round(Units.EMU_PER_DXA * dxa) * 2;
+    }
+
+    
+    /**
+     * @param pictureName unaltered text from basicParagraph that is expected to be formatted like {@code "${somePictureName.png}"}
+     * @return given picture name without curly braces, i.e. {@code getRawPictureName("${somePictureName.png}")} would return
+     *         {@code "somePictureName.png"}. Does not alter {@code pictureName}.
+     *         If picture is not formatted as expected, return {@code pictureName}.
+     *         Return {@code null} if {@code pictureName} is {@code null} or too short
+     */
+    private static String getRawPictureName(String pictureName) {
+
+        try {
+            // case: not formatted correctly, assuming is raw already
+            if (!pictureName.startsWith("${") || !pictureName.endsWith("}"))
+                return pictureName;
+
+            return pictureName.substring(2, pictureName.length() - 1);
+
+        } catch (IndexOutOfBoundsException | NullPointerException e) {
+            return null;
+        }
     }
 }
