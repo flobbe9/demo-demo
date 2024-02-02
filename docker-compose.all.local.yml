@@ -1,47 +1,46 @@
 version: "3.9"
 
-services: 
+# Note: gateway and api services have to run either both in Docker using this compose file or both locally, but not separated. Otherwise their IPAddresses wont match and cors wont work
+
+services:
   frontend:
     depends_on: 
-      - document_builder
-    image: flobbe9/word_light_frontend
-    container_name: frontend
+      - api
+    image: word_light_frontend-api
+    container_name: frontend_local
     ports:
       - ${FRONTEND_PORT}:${FRONTEND_PORT}
-      # replace prod ip for local testing
-      - API_HOST=localhost
 
   gateway:
-    image: flobbe9/word_light_gateway
-    container_name: gateway
-    ports:
+    image: word_light_gateway-api
+    container_name: gateway_local
+    ports: 
       - ${GATEWAY_PORT}:${GATEWAY_PORT}
     environment:
       - DOCUMENT_BUILDER_HOST=api
-      # replace prod ip for local testing
-      - HOST=localhost
+
+  # Note: service name cannot be 'document_builder' for some reason. gateway will crash otherwise
   api:
     depends_on: 
-      - gateway
       - db
-    image: flobbe9/word_light_document_builder
-    container_name: ${API_NAME}
-    ports:
-      - ${PORT}:${PORT}
+    build: .
+    container_name: document_builder_local
+    ports: 
+        - ${PORT}:${PORT}
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:${DB_PORT}/${DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
-      # replace prod ip for local testing
-      - HOST=localhost
+      
   db:
     image: mysql
-    container_name: db
+    container_name: db_local
     ports:
-      - ${DB_PORT}:${DB_PORT}
+        - ${DB_PORT}:${DB_PORT}
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${SPRING_DATASOURCE_USERNAME}
       MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: Europe/Berlin
