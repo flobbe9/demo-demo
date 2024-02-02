@@ -5,11 +5,15 @@ version: "3.9"
 services:
   frontend:
     depends_on: 
-      - api
+      api:
+        condition: service_healthy
+      gateway: 
+        condition: service_started
     image: word_light_frontend-api
     container_name: frontend_local
     ports:
       - ${FRONTEND_PORT}:${FRONTEND_PORT}
+    restart: on-failure
 
   gateway:
     image: word_light_gateway-api
@@ -18,12 +22,14 @@ services:
       - ${GATEWAY_PORT}:${GATEWAY_PORT}
     environment:
       - DOCUMENT_BUILDER_HOST=api
+    restart: on-failure
 
   # Note: service name cannot be 'document_builder' for some reason. gateway will crash otherwise
   api:
     depends_on: 
-      - db
-    build: .
+      db:
+        condition: service_healthy
+    image: word_light_document_builder-api
     container_name: document_builder_local
     ports: 
         - ${PORT}:${PORT}
@@ -32,6 +38,13 @@ services:
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider ${BASE_URL} || exit 1
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: on-failure
       
   db:
     image: mysql
@@ -44,3 +57,10 @@ services:
       MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       TZ: Europe/Berlin
+    healthcheck:
+      test: mysql -u${SPRING_DATASOURCE_USERNAME} -p${SPRING_DATASOURCE_PASSWORD}
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 55
+    restart: on-failure

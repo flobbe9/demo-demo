@@ -28,7 +28,6 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 // TODO: add webhook to linux server for easier deploy
 
-// TODO: docker-compose healthy check
 public class SecurityConfig {
     
     @Value("${FRONTEND_BASE_URL}")

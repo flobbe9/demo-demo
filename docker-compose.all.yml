@@ -10,6 +10,7 @@ services:
       - ${FRONTEND_PORT}:${FRONTEND_PORT}
       # replace prod ip for local testing
       - API_HOST=localhost
+    restart: on-failure
 
   gateway:
     image: flobbe9/word_light_gateway
@@ -20,6 +21,8 @@ services:
       - DOCUMENT_BUILDER_HOST=api
       # replace prod ip for local testing
       - HOST=localhost
+    restart: on-failure
+
   api:
     depends_on: 
       - gateway
@@ -35,6 +38,14 @@ services:
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
       # replace prod ip for local testing
       - HOST=localhost
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider ${BASE_URL} || exit 1
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: on-failure
+
   db:
     image: mysql
     container_name: db
@@ -45,3 +56,10 @@ services:
       MYSQL_USER: ${SPRING_DATASOURCE_USERNAME}
       MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    healthcheck:
+      test: mysql -u${SPRING_DATASOURCE_USERNAME} -p${SPRING_DATASOURCE_PASSWORD}
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 55
+    restart: on-failure
