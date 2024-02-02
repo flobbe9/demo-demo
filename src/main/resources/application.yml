@@ -1,18 +1,10 @@
 server:
-    port: ${API_PORT}
+    port: ${PORT}
     error:
         include-message: always
     servlet:
         session:
             timeout: 15m
-
-    ### SSL
-    ssl:
-        key-store-type: ${SSL_KEY_STORE_TYPE}
-        key-store: ${SSL_KEY_STORE}
-        key-store-password: ${SSL_KEY_STORE_PASSWORD}
-        key-alias: ${SSL_KEY_ALIAS}
-        enabled: ${SSL_ENABLED}
 
 spring:
     application:
@@ -31,7 +23,7 @@ spring:
 
     ### DB
     datasource:
-        url: jdbc:mysql://localhost:${DB_PORT}/${DB_NAME}
+        url: jdbc:mysql://${HOST}:${DB_PORT}/${DB_NAME}
         # url: jdbc:h2:mem:${DB_NAME}.db
         username: ${SPRING_DATASOURCE_USERNAME}
         password: ${SPRING_DATASOURCE_PASSWORD}

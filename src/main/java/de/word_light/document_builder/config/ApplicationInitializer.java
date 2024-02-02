@@ -2,7 +2,6 @@ package de.word_light.document_builder.config;
 
 import java.util.HashMap;
 import java.util.Map;
-import io.micrometer.common.util.StringUtils;
 import lombok.extern.log4j.Log4j2;
 
 
@@ -15,8 +14,6 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 public class ApplicationInitializer {
-
-    private static final String SSL_PASSWORD_ARG_NAME = "--sslPassword"; 
 
     private String[] args;
 
@@ -41,25 +38,6 @@ public class ApplicationInitializer {
     public void init() {
         
         log.info("Initializing API...");
-
-        initSSL();
-    }
-
-
-    /**
-    * Set ssl password if not blank.
-    * 
-    * @param sslPassword password for https certificate to work
-    */
-    private void initSSL() {
-
-        String sslPassword = retrieveArgItem(SSL_PASSWORD_ARG_NAME);
-        String sslPasswordPropName = "server.ssl.key-store-password";
-
-        if (!StringUtils.isBlank(sslPassword)) {
-            log.info("Setting ssl password...");
-            System.setProperty(sslPasswordPropName, sslPassword);
-        }
     }
 
 
