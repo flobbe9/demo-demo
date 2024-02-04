@@ -1,10 +1,10 @@
-name: word-light_document_builder dev
+name: word-light_document_builder stage
 
 run-name: ${{ github.event.head_commit.message }}
 on: 
   push: 
     branches:
-      - dev
+      - stage
 
 jobs:
   build:

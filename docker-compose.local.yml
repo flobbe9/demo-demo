@@ -1,27 +1,24 @@
 version: "3.9"
 
 services:
-  document_builder:
+  api:
     depends_on: 
       - db
     build: .
-    image: flobbe9/word_light_document_builder
-    container_name: ${API_NAME}
+    container_name: api
     ports: 
-      - ${PORT}:${PORT}
+        - ${PORT}:${PORT}
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:${DB_PORT}/${DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
-      # replace prod ip for local testing
-      - HOST=localhost
-      
+  
   db:
     image: mysql
     container_name: db
     ports:
-      - ${DB_PORT}:${DB_PORT}
+        - ${DB_PORT}:${DB_PORT}
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${SPRING_DATASOURCE_USERNAME}
