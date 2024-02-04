@@ -4,7 +4,7 @@ REST service handling the document building logic for the Word light API. Uses J
 # Run 
 ### Locally
 ```docker-compose -f docker-compose.local.yml up``` <br>
-Call this inside project root folder of repository. <br>
+Call this inside project root folder of repository inside dev or stage branch. <br>
 
 ### Dockerhub
 ```docker-compose up``` <br>

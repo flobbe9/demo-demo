@@ -96,12 +96,8 @@ public class DocumentBuilder {
     /** declares that a tab should be added here instead of the actual text */
     public static final String TAB_SYMBOL = "\\t";
     
-    // comes from request body
-    @NotNull(message = "'content' cannot be null.")
     private List<BasicParagraph> content;
     
-    @NotEmpty(message = "'docxFileName' cannot be empty or null.")
-    @Pattern(regexp = ".*\\.docx$", message = "Wrong format of 'docxFileName'. Only '.docx' permitted.")
     private String docxFileName;
 
     @Nullable
@@ -116,7 +112,6 @@ public class DocumentBuilder {
 
     private int numColumns;
 
-    @Min(value = 0, message = "'numSingleColumnLines' too small. Min: 0") 
     private int numSingleColumnLines;
 
     private boolean isTabStopsByFontSize;
