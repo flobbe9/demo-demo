@@ -26,6 +26,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -62,6 +63,8 @@ public class DocumentWrapper extends AbstractEntity {
     private Map<String, byte[]> pictures;
 
     @NotEmpty(message = "'fileName' cannot be empty.")
+    // TODO: add pdf as possible pattern
+    @Pattern(regexp = ".*\\.docx$", message = "Wrong format of 'docxFileName'. Only '.docx' permitted.")
     @Schema(defaultValue = "document1.docx")
     private String fileName;
 

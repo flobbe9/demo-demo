@@ -50,8 +50,8 @@ public class DocumentControllerTest {
     @Value("${BASE_URL}")
     private String BASE_URL;
     
-    @Value("${API_MAPPING}")
-    private String API_MAPPING;
+    @Value("${MAPPING}")
+    private String MAPPING;
 
     private TestUtils testUtils;
 
@@ -68,7 +68,7 @@ public class DocumentControllerTest {
     @BeforeEach
     void setup() {
         
-        this.testUtils = new TestUtils(mockMvc, this.BASE_URL + "/" + this.API_MAPPING);
+        this.testUtils = new TestUtils(mockMvc, this.BASE_URL + "/" + this.MAPPING);
         this.style = new Style(8, "Calibri", "000000", true, true, true, ParagraphAlignment.LEFT, null);
         this.content = List.of(new BasicParagraph("header", this.style), new BasicParagraph("text", this.style), new BasicParagraph("footer", this.style));
         this.tableConfigs = new ArrayList<>(List.of(new TableConfig(2, 1, 0)));

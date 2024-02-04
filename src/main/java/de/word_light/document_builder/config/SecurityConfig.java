@@ -33,8 +33,8 @@ public class SecurityConfig {
     @Value("${FRONTEND_BASE_URL}")
     private String FRONTEND_BASE_URL;
 
-    @Value("${API_MAPPING}")
-    private String API_MAPPING;
+    @Value("${MAPPING}")
+    private String MAPPING;
 
     @Value("${ENV}")
     private String ENV;
@@ -75,8 +75,7 @@ public class SecurityConfig {
 
 
     /**
-     * Allow methods {@code GET, POST, UPDATE, DELETE}, origins {@code FRONTEND_BASE_URL}, headers {@code "*"}, credentials and
-     * only mappings for {@link #API_MAPPING}.
+     * Configure cors.
      * 
      * @return the configured {@link CorsConfigurationSource}
      */
@@ -89,7 +88,7 @@ public class SecurityConfig {
         configuration.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/" + API_MAPPING + "/**", configuration);
+        source.registerCorsConfiguration("/" + MAPPING + "/**", configuration);
 
         return source;
     }

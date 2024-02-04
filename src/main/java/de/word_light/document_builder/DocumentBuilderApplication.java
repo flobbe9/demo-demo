@@ -8,15 +8,13 @@ import java.util.Properties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import de.word_light.document_builder.config.ApplicationInitializer;
-
 
 @SpringBootApplication
 public class DocumentBuilderApplication {
 
 	public static void main(String[] args) {
         
-        new ApplicationInitializer(args).init();
+        // new ApplicationInitializer(args).init();
         SpringApplication.run(DocumentBuilderApplication.class, args);
 	}
 

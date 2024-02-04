@@ -12,7 +12,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -38,7 +37,6 @@ import de.word_light.document_builder.documentParts.DocumentWrapper;
 import de.word_light.document_builder.exception.ApiException;
 import de.word_light.document_builder.exception.ApiExceptionFormat;
 import de.word_light.document_builder.exception.ApiExceptionHandler;
-import de.word_light.document_builder.services.DocumentWrapperService;
 import de.word_light.document_builder.utils.Utils;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,7 +52,7 @@ import lombok.extern.log4j.Log4j2;
  * @since 0.0.1
  */
 @RestController
-@RequestMapping("${API_MAPPING}")
+@RequestMapping("${MAPPING}")
 @SessionScope
 @Validated
 @Log4j2
@@ -63,9 +61,6 @@ public class DocumentController {
 
     @Value("${ENV}")
     private String ENV;
-
-    // @Autowired
-    // private DocumentWrapperService documentWrapperService;
 
     private DocumentWrapper documentWrapper = new DocumentWrapper();
 
