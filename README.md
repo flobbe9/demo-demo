@@ -16,4 +16,4 @@ Call this with .env file in same folder as docker-compose.yml. <br>
 Will start the whole microservice including frontend etc.. No further configuration needed.
 
 # More documentation
-Run api, then visit http://localhost:4001
+Run api, then visit http://localhost:4001 or https://localhost:4001 (if run on stage branch)
