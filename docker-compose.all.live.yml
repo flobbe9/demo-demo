@@ -1,12 +1,9 @@
 version: "3.3"
 
-# TDOO: condition not available??
-# TODO: decrease size of images
 services: 
   frontend:
     depends_on: 
       - api
-        # condition: service_healthy
     image: flobbe9/word_light_frontend
     container_name: frontend
     ports:
@@ -25,18 +22,19 @@ services:
   api:
     depends_on: 
       - db
-        # condition: service_healthy
     image: flobbe9/word_light_document_builder
     container_name: ${API_NAME}
     ports:
       - ${PORT}:${PORT}
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://localhost:${DB_PORT}/${DB_NAME}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:${DB_PORT}/${DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      - SSL_KEY_STORE=classpath:ssl/api.p12
+      - SSL_KEY_ALIAS=api
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider ${BASE_URL} || exit 1
+      test: wget --no-verbose --no-check-certificate --tries=1 --spider ${BASE_URL} || exit 1
       interval: 15s
       timeout: 10s
       retries: 10

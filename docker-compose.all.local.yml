@@ -1,6 +1,6 @@
 version: "3.9"
 
-# Note: gateway and api services have to run either both in Docker using this compose file or both locally, but not separated. Otherwise their IPAddresses wont match and cors wont work
+# Assume that images have been created locally
 
 services:
   frontend:
@@ -25,6 +25,7 @@ services:
     restart: on-failure
 
   # Note: service name cannot be 'document_builder' for some reason. gateway will crash otherwise
+  # Note: gateway and api services have to run either both in Docker using this compose file or both locally, but not separated. Otherwise their IPAddresses wont match and cors wont work
   api:
     depends_on: 
       db:

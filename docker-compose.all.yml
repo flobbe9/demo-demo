@@ -1,5 +1,7 @@
 version: "3.3"
 
+# Use images from Dockerhub, access api at https://localhost
+
 services: 
   frontend:
     depends_on: 
@@ -9,9 +11,8 @@ services:
     container_name: frontend
     ports:
       - ${FRONTEND_PORT}:${FRONTEND_PORT}
-    # uncomment this for local testing
-    # environment:
-      # - API_HOST=localhost
+    environment:
+      - API_HOST=localhost
     restart: on-failure
 
   gateway:
@@ -21,8 +22,7 @@ services:
       - ${GATEWAY_PORT}:${GATEWAY_PORT}
     environment:
       - DOCUMENT_BUILDER_HOST=api
-      # uncomment this for local testing
-      # - HOST=localhost
+      - HOST=localhost
     restart: on-failure
 
   api:
@@ -38,12 +38,11 @@ services:
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
-      # uncomment this for local testing
-      # - HOST=localhost
-      # - SSL_KEY_STORE=classpath:ssl/api.p12
-      # - SSL_KEY_ALIAS=api
+      - HOST=localhost
+      - SSL_KEY_STORE=classpath:ssl/api.p12
+      - SSL_KEY_ALIAS=api
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider ${BASE_URL} || exit 1
+      test: wget --no-verbose --no-check-certificate --tries=1 --spider ${BASE_URL} || exit 1
       interval: 10s
       timeout: 10s
       retries: 10
