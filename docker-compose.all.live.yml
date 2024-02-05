@@ -2,8 +2,6 @@ version: "3.3"
 
 # TDOO: condition not available??
 # TODO: decrease size of images
-# TODO: try killing port 80 processes
-# TODO: use proxy on port 80? use https, but route with http? use nginx?
 services: 
   frontend:
     depends_on: 
