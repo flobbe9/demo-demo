@@ -13,6 +13,8 @@ services:
       - ${FRONTEND_PORT}:${FRONTEND_PORT}
     environment:
       - API_HOST=localhost
+      - SSL_CRT_FILE=ssl/localhost.crt.pem
+      - SSL_KEY_FILE=ssl/localhost.key.pem
     restart: on-failure
 
   gateway:
@@ -42,7 +44,7 @@ services:
       - SSL_KEY_STORE=classpath:ssl/api.p12
       - SSL_KEY_ALIAS=api
     healthcheck:
-      test: wget --no-verbose --no-check-certificate --tries=1 --spider ${BASE_URL} || exit 1
+      test: wget --no-verbose --no-check-certificate --tries=1 --spider ${PROTOCOL}://localhost:${PORT} || exit 1
       interval: 10s
       timeout: 10s
       retries: 10
