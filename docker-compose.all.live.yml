@@ -1,17 +1,18 @@
 version: "3.3"
 
+# TDOO: condition not available??
+# TODO: decrease size of images
+# TODO: try killing port 80 processes
+# TODO: use proxy on port 80? use https, but route with http? use nginx?
 services: 
   frontend:
     depends_on: 
-      api:
-        condition: service_healthy
+      - api
+        # condition: service_healthy
     image: flobbe9/word_light_frontend
     container_name: frontend
     ports:
       - ${FRONTEND_PORT}:${FRONTEND_PORT}
-      # replace prod ip for local testing
-    environment:
-      - API_HOST=localhost
     restart: on-failure
 
   gateway:
@@ -21,31 +22,26 @@ services:
       - ${GATEWAY_PORT}:${GATEWAY_PORT}
     environment:
       - DOCUMENT_BUILDER_HOST=api
-      # replace prod ip for local testing
-      - HOST=localhost
     restart: on-failure
 
   api:
     depends_on: 
-      db:
-        condition: service_healthy
+      - db
+        # condition: service_healthy
     image: flobbe9/word_light_document_builder
     container_name: ${API_NAME}
     ports:
       - ${PORT}:${PORT}
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:${DB_PORT}/${DB_NAME}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://localhost:${DB_PORT}/${DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
-      # replace prod ip for local testing
-      - HOST=localhost
     healthcheck:
       test: wget --no-verbose --tries=1 --spider ${BASE_URL} || exit 1
-      interval: 10s
+      interval: 15s
       timeout: 10s
       retries: 10
-      start_period: 30s
     restart: on-failure
 
   db:
@@ -60,7 +56,6 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     healthcheck:
       test: mysql -u${SPRING_DATASOURCE_USERNAME} -p${SPRING_DATASOURCE_PASSWORD}
-      start_period: 5s
       interval: 5s
       timeout: 5s
       retries: 55

@@ -300,7 +300,7 @@ public class DocumentBuilder {
      */
     public DocumentBuilder setIsTabStopsByFontSize(boolean isTabStopsByFontSize) {
 
-        log.info("Setting tab stops by font size to " + isTabStopsByFontSize + "...");
+        log.info((isTabStopsByFontSize ? "S" : "Not s") + "etting tab stops by font size...");
 
         this.isTabStopsByFontSize = isTabStopsByFontSize;
 
