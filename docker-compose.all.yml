@@ -1,6 +1,7 @@
 version: "3.3"
 
 # Use images from Dockerhub, access api at https://localhost
+# TODO: add to readme for local part that all images have to be built first
 
 services: 
   frontend:
@@ -25,6 +26,9 @@ services:
     environment:
       - DOCUMENT_BUILDER_HOST=api
       - HOST=localhost
+      - SSL_KEY_STORE=classpath:ssl/localhost.p12
+      - SSL_KEY_ALIAS=localhost
+      - SSL_KEY_STORE_PASSWORD=password
     restart: on-failure
 
   api:
@@ -43,12 +47,13 @@ services:
       - HOST=localhost
       - SSL_KEY_STORE=classpath:ssl/api.p12
       - SSL_KEY_ALIAS=api
+      - SSL_KEY_STORE_PASSWORD=password
     healthcheck:
-      test: wget --no-verbose --no-check-certificate --tries=1 --spider ${PROTOCOL}://localhost:${PORT} || exit 1
+      test: wget --no-verbose --no-check-certificate --tries=1 --spider ${PROTOCOL}://api:${PORT} || exit 1
       interval: 10s
       timeout: 10s
       retries: 10
-      start_period: 30s
+      start_period: 60s
     restart: on-failure
 
   db:
