@@ -17,6 +17,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,6 +43,7 @@ import de.word_light.document_builder.utils.Utils;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.log4j.Log4j2;
@@ -57,6 +60,10 @@ import lombok.extern.log4j.Log4j2;
 @Validated
 @Log4j2
 @Tag(name = "Document builder logic")
+// TODO: 
+    // when is session generated?
+    // create session on load?
+    // create csrf token on load?
 public class DocumentController {
 
     @Value("${ENV}")
@@ -187,15 +194,15 @@ public class DocumentController {
 
 
     /**
-     * Exists for frontend to get cookies if not set already.
+     * Extracts csrf token from session of given http request.
      * 
-     * @return csrf token from request header
+     * @return csrf token from request header or {@code ""} if null
      */
     @GetMapping("/getCsrfToken")
-    @Operation(summary = "Return csrf token from request header. Exists for frontend to get cookies if not set already.")
-    public String getCsrfToken(@RequestHeader("X-Xsrf-Token") String csrfToken) {
+    @Operation(summary = "Extracts csrf token from session of given http request and returns token string or '' if token is null.")
+    public String getCsrfToken(CsrfToken csrfToken) {
 
-        return csrfToken;
+        return csrfToken == null ? "" : csrfToken.getToken();
     }
 
 
