@@ -4,6 +4,7 @@ version: "3.3"
 # TODO: add to readme for local part that all images have to be built first
 # TODO: port 4000 has to be exposed, not safe (?), csrf token can be obtained, not safe
 # TODO: https not valid yet, generate new csr, replace crt and key files in frontend with results from csr command, replace crt in gateway eventually, replace .p12 files(?)
+# TODO: remove restart? too expensive for cpu...
 
 
 services: 

@@ -46,8 +46,8 @@ services:
       test: wget --no-verbose --no-check-certificate --tries=1 --spider ${BASE_URL} || exit 1
       interval: 10s
       timeout: 10s
-      retries: 10
-      start_period: 40s
+      retries: 30
+      start_period: 60s
     restart: on-failure
       
   db:
