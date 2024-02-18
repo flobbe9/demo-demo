@@ -56,9 +56,9 @@ jobs:
           username: ${{ secrets.SSH_USER_NAME }}
           password: ${{ secrets.SSH_PASSWORD }}
           debug: true
-          # pull new images, remove left overs from old images, start microservice
+          # pull new image, remove left overs from old image, start microservice
           script: |
-            docker-compose pull
+            docker-compose pull api
             yes | docker rm $(docker container ls --all --filter=ancestor=$(docker images -f "dangling=true" -q) --format "{{.ID}}") --force
             yes | docker image rm $(docker images -f "dangling=true" -q)
             docker-compose up -d
