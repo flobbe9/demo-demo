@@ -2,9 +2,6 @@ server:
     port: ${PORT}
     error:
         include-message: always
-    servlet:
-        session:
-            timeout: 15m
 
     ### SSL
     ssl:

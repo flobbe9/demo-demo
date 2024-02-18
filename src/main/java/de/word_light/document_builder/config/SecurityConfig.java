@@ -8,9 +8,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -27,8 +24,6 @@ import lombok.extern.log4j.Log4j2;
 @Configuration
 @EnableWebSecurity
 @Log4j2
-// TODO: add webhook to linux server for easier deploy
-
 public class SecurityConfig {
     
     @Value("${FRONTEND_BASE_URL}")
@@ -51,8 +46,8 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         
-        // enable csrf in prod only
-        if (!ENV.equalsIgnoreCase("prod"))
+        // enable csrf in prod onlye
+        if (!this.ENV.equalsIgnoreCase("prod"))
             http.csrf(csrf -> csrf.disable());
         
         // routes
@@ -74,13 +69,13 @@ public class SecurityConfig {
     private CorsConfigurationSource corsConfig() {
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(FRONTEND_BASE_URL));
+        configuration.setAllowedOrigins(List.of(this.FRONTEND_BASE_URL));
         configuration.setAllowedMethods(List.of("GET", "POST", "UPDATE", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/" + MAPPING + "/**", configuration);
+        source.registerCorsConfiguration("/" + this.MAPPING + "/**", configuration);
 
         return source;
     }

@@ -40,6 +40,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class DocumentWrapper extends AbstractEntity {
+
+    public static final String FILE_NAME_PATTERN = "^[\\w\\-. ]+.(docx|pdf)$";
     
     @NotNull(message = "'content' cannot be null.")
     @OneToMany(cascade = CascadeType.ALL)
@@ -63,8 +65,8 @@ public class DocumentWrapper extends AbstractEntity {
     private Map<String, byte[]> pictures;
 
     @NotEmpty(message = "'fileName' cannot be empty.")
-    // TODO: add pdf as possible pattern
-    @Pattern(regexp = ".*\\.docx$", message = "Wrong format of 'docxFileName'. Only '.docx' permitted.")
+    // TODO: test this regex
+    @Pattern(regexp = FILE_NAME_PATTERN, message = "Wrong format of 'fileName'. Check file format and remove special chars (only - . _ are permitted).")
     @Schema(defaultValue = "document1.docx")
     private String fileName;
 
