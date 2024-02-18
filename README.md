@@ -12,7 +12,7 @@ Call this with .env file in same folder as docker-compose.yml. <br>
 
 ### The whole thing
 ```docker-compose -f docker-compose.all.yml up``` <br>
-Call this with .env file in same folder as docker-compose.yml. <br>
+Call this with .env file in same folder as docker-compose.all.yml file. <br>
 Will start the whole microservice including frontend etc. using images from Dockerhub. No further configuration needed. Access api at https://localhost
 
 # More documentation

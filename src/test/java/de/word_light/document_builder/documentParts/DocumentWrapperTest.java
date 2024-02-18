@@ -152,4 +152,15 @@ public class DocumentWrapperTest {
         assertTrue(this.documentWrapper.isNumSingleColumnLinesValid());
     }
 
+
+    // TODO: add pattern tests
+    // no special chars at start
+    // correct chars at start -_. 
+    // ...
+    @Test
+    void fileNamePattern_shouldBeInvalid() {
+
+
+    }
+
 }

@@ -2,6 +2,6 @@ FROM gradle:jdk17-alpine
 
 WORKDIR /app
 
-COPY . ./
+COPY . .
 
 ENTRYPOINT gradle bootRun
