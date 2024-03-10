@@ -13,6 +13,8 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.wp.usermodel.HeaderFooterType;
 import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
@@ -37,12 +39,7 @@ import de.word_light.document_builder.documentParts.style.Style;
 import de.word_light.document_builder.exception.ApiException;
 import de.word_light.document_builder.exception.ApiExceptionHandler;
 import de.word_light.document_builder.utils.Utils;
-
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -64,6 +61,7 @@ import lombok.extern.log4j.Log4j2;
 // TODO: make more methods public and chainable, which fields are mandatory?
 // TODO: consider offering multiple sections with differen num cols, change num cols to map or something
 
+// TODO: empty lines dont get font size applied
 public class DocumentBuilder {
 
     /** paragraph indentation */
@@ -95,7 +93,7 @@ public class DocumentBuilder {
 
     /** declares that a tab should be added here instead of the actual text */
     public static final String TAB_SYMBOL = "\\t";
-    
+
     private List<BasicParagraph> content;
     
     private String docxFileName;
@@ -211,7 +209,7 @@ public class DocumentBuilder {
         for (int i = 0; i < numParagraphs; i++) {
             // add empty paragraph above first column on first page to even out empty column break paragraphs
             if (i == this.numSingleColumnLines + 1)
-                applyStyle(this.document.createParagraph(), Style.getDefaultInstance());   
+                addEmptyParagraph();
 
             XWPFParagraph paragraph = addParagraph(i);
 
@@ -327,11 +325,17 @@ public class DocumentBuilder {
         if (paragraph == null)
             return null;
 
-        // add text
-        addText(paragraph, basicParagraph, currentContentIndex);
+        // case: blank text
+        if (StringUtils.isBlank(basicParagraph.getText())) 
+            addEmptyParagraph(paragraph, basicParagraph.getStyle());
 
-        // add style
-        applyStyle(paragraph, basicParagraph.getStyle());
+        else {
+            // add text
+            addText(paragraph, basicParagraph, currentContentIndex);
+            
+            // add style
+            applyStyle(paragraph, basicParagraph.getStyle());
+        }
 
         return paragraph;
     }
@@ -358,7 +362,7 @@ public class DocumentBuilder {
 
         // case: header
         if (currentContentIndex == 0)
-            // case: no blank
+            // case: not blank
             if (!this.content.get(currentContentIndex).getText().isBlank())
                 return this.document.createHeader(HeaderFooterType.DEFAULT).createParagraph();
             else
@@ -366,7 +370,7 @@ public class DocumentBuilder {
 
         // case: footer
         if (currentContentIndex == this.content.size() - 1)
-            // case: no blank
+            // case: not blank
             if (!this.content.get(currentContentIndex).getText().isBlank())
                 return this.document.createFooter(HeaderFooterType.DEFAULT).createParagraph();
             else
@@ -374,6 +378,61 @@ public class DocumentBuilder {
 
         // case: any other
         return this.document.createParagraph();
+    }
+
+
+    /**
+     * Overloading {@link #addEmptyParagraph(XWPFParagraph, Style)} using newly created paragraph and default style.
+     * 
+     * @see Style
+     */
+    private XWPFParagraph addEmptyParagraph() {
+
+        return addEmptyParagraph(this.document.createParagraph(), Style.getDefaultInstance());
+    }
+
+
+    /**
+     * Overloading {@link #addEmptyParagraph(XWPFParagraph, Style)} using default style
+     * 
+     * @param paragraph to add text and styles to
+     * @return the altered paragraph
+     * @see Style
+     */
+    private XWPFParagraph addEmptyParagraph(XWPFParagraph paragraph) {
+
+        return addEmptyParagraph(paragraph, Style.getDefaultInstance());
+    }
+
+
+    /**
+     * Adds a "_" char in white color to first run sothat font size will be applied to that line. Follow up with a run whit just
+     * a white space char but in black color, sothat it doesn't have to be changed in word manually.
+     * 
+     * @param paragraph to add text and styles to
+     * @param style to use
+     * @return the altered paragraph
+     */
+    private XWPFParagraph addEmptyParagraph(XWPFParagraph paragraph, Style style) {
+        
+        if (paragraph == null)
+            paragraph = this.document.createParagraph();
+
+        paragraph.createRun();
+        // apply default style
+        applyStyle(paragraph, style);
+        
+        // add invisible text
+        XWPFRun fillerRun = paragraph.getRuns().get(0);
+        fillerRun.setText("_");
+        fillerRun.setColor("ffffff");
+
+        // add visible space char
+        paragraph.createRun();
+        XWPFRun secondRun = paragraph.getRuns().get(1);
+        secondRun.setText(" ");
+        
+        return paragraph;
     }
 
 
