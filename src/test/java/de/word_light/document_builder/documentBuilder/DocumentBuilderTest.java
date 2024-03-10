@@ -311,7 +311,6 @@ public class DocumentBuilderTest {
 
         XWPFRun spaceCharRun = paragraph.getRuns().get(1);
         assertEquals(" ", spaceCharRun.text());
-        assertEquals("000000", spaceCharRun.getColor());
     }
 
 
@@ -335,7 +334,6 @@ public class DocumentBuilderTest {
 
         XWPFRun spaceCharRun = paragraph.getRuns().get(1);
         assertEquals(" ", spaceCharRun.text());
-        assertEquals("000000", spaceCharRun.getColor());
     }
 
 

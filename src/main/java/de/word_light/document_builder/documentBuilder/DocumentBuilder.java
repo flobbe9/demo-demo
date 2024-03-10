@@ -327,7 +327,7 @@ public class DocumentBuilder {
 
         // case: blank text
         if (StringUtils.isBlank(basicParagraph.getText())) 
-            addEmptyParagraph(paragraph);
+            addEmptyParagraph(paragraph, basicParagraph.getStyle());
 
         else {
             // add text
@@ -419,8 +419,6 @@ public class DocumentBuilder {
             paragraph = this.document.createParagraph();
 
         paragraph.createRun();
-        paragraph.createRun();
-
         // apply default style
         applyStyle(paragraph, style);
         
@@ -430,6 +428,7 @@ public class DocumentBuilder {
         fillerRun.setColor("ffffff");
 
         // add visible space char
+        paragraph.createRun();
         XWPFRun secondRun = paragraph.getRuns().get(1);
         secondRun.setText(" ");
         
