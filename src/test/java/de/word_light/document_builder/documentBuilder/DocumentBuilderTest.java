@@ -291,6 +291,54 @@ public class DocumentBuilderTest {
     }
 
 
+    @Test
+    void addParagraph_shouldAddEmptyLineIfTextBlank() {
+
+        // turn title text blank
+        int currentContentIndex = this.content.indexOf(this.title);
+        BasicParagraph basicParagraph = this.content.get(currentContentIndex);
+        basicParagraph.setText(" ");
+
+        XWPFParagraph paragraph = this.documentBuilder.addParagraph(currentContentIndex);
+
+        List<XWPFRun> runs = paragraph.getRuns();
+        // should have created two runs
+        assertEquals(2, runs.size());
+
+        XWPFRun invisibleRun = paragraph.getRuns().get(0);
+        assertEquals("_", invisibleRun.text());
+        assertEquals("FFFFFF", invisibleRun.getColor());
+
+        XWPFRun spaceCharRun = paragraph.getRuns().get(1);
+        assertEquals(" ", spaceCharRun.text());
+        assertEquals("000000", spaceCharRun.getColor());
+    }
+
+
+    @Test
+    void addParagraph_shouldAddEmptyLineIfTextHasTabsOnly() {
+
+        // turn title text blank
+        int currentContentIndex = this.content.indexOf(this.title);
+        BasicParagraph basicParagraph = this.content.get(currentContentIndex);
+        basicParagraph.setText("\t ");
+
+        XWPFParagraph paragraph = this.documentBuilder.addParagraph(currentContentIndex);
+
+        List<XWPFRun> runs = paragraph.getRuns();
+        // should have created two runs
+        assertEquals(2, runs.size());
+
+        XWPFRun invisibleRun = paragraph.getRuns().get(0);
+        assertEquals("_", invisibleRun.text());
+        assertEquals("FFFFFF", invisibleRun.getColor());
+
+        XWPFRun spaceCharRun = paragraph.getRuns().get(1);
+        assertEquals(" ", spaceCharRun.text());
+        assertEquals("000000", spaceCharRun.getColor());
+    }
+
+
 //----------- createParagraphByContentIndex()
     @Test
     void createParagraphByContentIndex_isTableIndex_shouldReturnTableParagraph() {
